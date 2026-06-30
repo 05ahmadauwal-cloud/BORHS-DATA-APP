@@ -1,13 +1,15 @@
-import { Menu, Bell, Wallet } from 'lucide-react';
+import { Menu, Bell, Wallet, Sun, Moon } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationAPI } from '../../api';
 import useAuthStore from '../../store/authStore';
+import useThemeStore from '../../store/themeStore';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 
 export default function Topbar({ onMenuClick }) {
   const { user } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef(null);
   const queryClient = useQueryClient();
@@ -70,6 +72,16 @@ export default function Topbar({ onMenuClick }) {
             ₦{balance.toLocaleString()}
           </span>
         </Link>
+
+        {/* Theme toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-xl transition-colors hover:bg-dark-700/60"
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          style={{ color: 'var(--text-muted)' }}
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
 
         {/* Notifications */}
         <div className="relative" ref={notifRef}>

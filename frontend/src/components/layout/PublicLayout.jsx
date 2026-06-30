@@ -1,11 +1,15 @@
 import { Outlet, Link, NavLink } from 'react-router-dom';
-import { useState } from 'react';
-import { Menu, X, Zap } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Menu, X, Zap, Sun, Moon } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import useThemeStore from '../../store/themeStore';
 
 export default function PublicLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { isAuthenticated } = useAuthStore();
+  const { theme, toggleTheme, initTheme } = useThemeStore();
+
+  useEffect(() => { initTheme(); }, []);
 
   return (
     <div className="min-h-screen bg-dark-950">
@@ -35,6 +39,14 @@ export default function PublicLayout() {
             </div>
 
             <div className="hidden md:flex items-center gap-3">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-xl transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+                title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              >
+                {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+              </button>
               {isAuthenticated ? (
                 <Link to="/dashboard" className="btn-primary btn-sm">Dashboard</Link>
               ) : (

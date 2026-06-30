@@ -38,11 +38,10 @@ export default function Sidebar({ isOpen, onClose }) {
   const isAgentOrAdmin = ['agent', 'admin', 'super_admin'].includes(user?.role);
 
   return (
-    <aside className={`
-      fixed inset-y-0 left-0 z-30 w-64 bg-dark-900 border-r border-dark-700/50
-      transform transition-transform duration-300 ease-in-out flex flex-col
-      ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
-    `}>
+    <aside
+      className={`fixed inset-y-0 left-0 z-30 w-64 border-r flex flex-col transform transition-all duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+      style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}
+    >
       {/* Logo */}
       <div className="flex items-center justify-between p-6 border-b border-dark-700/50">
         <div className="flex items-center gap-3">
