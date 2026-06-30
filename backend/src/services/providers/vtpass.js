@@ -1,31 +1,71 @@
 const axios = require('axios');
 const logger = require('../../utils/logger');
 
+// In dev/sandbox use sandbox URL, in production use live URL
 const BASE_URL = process.env.NODE_ENV === 'production'
   ? process.env.VTPASS_BASE_URL
   : process.env.VTPASS_SANDBOX_URL;
 
-const vtpassAxios = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    'api-key': process.env.VTPASS_API_KEY,
-    'public-key': process.env.VTPASS_PUBLIC_KEY,
-    'Content-Type': 'application/json',
-  },
+// VTpass uses Basic Auth (api-key : secret-key) for POST, and api-key + public-key headers for GET
+const getAuthHeaders = () => ({
+  'api-key': process.env.VTPASS_API_KEY,
+  'public-key': process.env.VTPASS_PUBLIC_KEY,
+  'Content-Type': 'application/json',
 });
 
-const NETWORK_MAP = { mtn: 'mtn-data', airtel: 'airtel-data', glo: 'glo-data', '9mobile': '9mobile-data' };
-const AIRTIME_MAP = { mtn: 'mtn', airtel: 'airtel', glo: 'glo', '9mobile': '9mobile' };
+const getBasicAuth = () => ({
+  username: process.env.VTPASS_API_KEY,
+  password: process.env.VTPASS_SECRET_KEY,
+});
+
+const vtpassGet = (path) =>
+  axios.get(`${BASE_URL}${path}`, { headers: getAuthHeaders() });
+
+const vtpassPost = (path, data) =>
+  axios.post(`${BASE_URL}${path}`, data, {
+    headers: getAuthHeaders(),
+    auth: getBasicAuth(),
+  });
+
+// ─── Network / Service Maps ────────────────────────────────────────────────────
+const NETWORK_DATA_MAP = {
+  mtn: 'mtn-data',
+  airtel: 'airtel-data',
+  glo: 'glo-data',
+  '9mobile': 'etisalat-data',
+};
+const NETWORK_AIRTIME_MAP = {
+  mtn: 'mtn',
+  airtel: 'airtel',
+  glo: 'glo',
+  '9mobile': 'etisalat',
+};
 const DISCO_MAP = {
-  ikedc: 'ikeja-electric', ekedc: 'eko-electric', aedc: 'abuja-electric',
-  kedco: 'kano-electric', jed: 'jos-electric', phed: 'portharcourt-electric',
+  ikedc: 'ikeja-electric',
+  ekedc: 'eko-electric',
+  aedc: 'abuja-electric',
+  kedco: 'kano-electric',
+  jed: 'jos-electric',
+  phed: 'portharcourt-electric',
 };
 const CABLE_MAP = { dstv: 'dstv', gotv: 'gotv', startimes: 'startimes' };
-const EXAM_MAP = { waec: 'waec', neco: 'neco', nabteb: 'nabteb', jamb: 'jamb' };
+const EXAM_MAP = { waec: 'waec', neco: 'neco', nabteb: 'nabteb', jamb: 'jamb-utme' };
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const isSuccess = (data) =>
+  data?.code === '000' ||
+  data?.content?.transactions?.status === 'delivered' ||
+  data?.response_description?.toLowerCase().includes('successful');
+
+const getError = (data) =>
+  data?.response_description || data?.content?.error || 'Transaction failed';
+
+// ─── Data Purchase ─────────────────────────────────────────────────────────────
 const purchaseData = async ({ network, planCode, phone, reference }) => {
-  const serviceID = NETWORK_MAP[network];
-  const response = await vtpassAxios.post('/pay', {
+  const serviceID = NETWORK_DATA_MAP[network];
+  if (!serviceID) throw new Error(`Unsupported network: ${network}`);
+
+  const { data } = await vtpassPost('/pay', {
     request_id: reference,
     serviceID,
     billersCode: phone,
@@ -33,16 +73,23 @@ const purchaseData = async ({ network, planCode, phone, reference }) => {
     amount: '',
     phone,
   });
-  const data = response.data;
-  if (data.code !== '000' && data.content?.transactions?.status !== 'delivered') {
-    throw new Error(data.response_description || 'Data purchase failed');
-  }
-  return { providerReference: data.content?.transactions?.transactionId, response: data };
+
+  logger.info(`VTpass data response: ${JSON.stringify(data?.content?.transactions)}`);
+  if (!isSuccess(data)) throw new Error(getError(data));
+
+  return {
+    providerReference: data.content?.transactions?.transactionId,
+    token: data.content?.transactions?.token,
+    response: data,
+  };
 };
 
+// ─── Airtime Purchase ──────────────────────────────────────────────────────────
 const purchaseAirtime = async ({ network, phone, amount, reference }) => {
-  const serviceID = AIRTIME_MAP[network];
-  const response = await vtpassAxios.post('/pay', {
+  const serviceID = NETWORK_AIRTIME_MAP[network];
+  if (!serviceID) throw new Error(`Unsupported network: ${network}`);
+
+  const { data } = await vtpassPost('/pay', {
     request_id: reference,
     serviceID,
     billersCode: phone,
@@ -50,29 +97,46 @@ const purchaseAirtime = async ({ network, phone, amount, reference }) => {
     amount,
     phone,
   });
-  const data = response.data;
-  if (data.code !== '000') throw new Error(data.response_description || 'Airtime purchase failed');
-  return { providerReference: data.content?.transactions?.transactionId, response: data };
-};
 
-const verifyMeter = async ({ provider, meterNumber, meterType }) => {
-  const serviceID = DISCO_MAP[provider] + (meterType === 'prepaid' ? '-prepaid' : '-postpaid');
-  const response = await vtpassAxios.post('/merchant-verify', {
-    billersCode: meterNumber,
-    serviceID,
-  });
-  const data = response.data;
-  if (!data.content?.Customer_Name) throw new Error('Meter verification failed');
+  logger.info(`VTpass airtime response: ${JSON.stringify(data?.content?.transactions)}`);
+  if (!isSuccess(data)) throw new Error(getError(data));
+
   return {
-    customerName: data.content.Customer_Name,
-    customerAddress: data.content.Address,
-    meterNumber: data.content.Meter_Number,
+    providerReference: data.content?.transactions?.transactionId,
+    response: data,
   };
 };
 
+// ─── Meter Verification ────────────────────────────────────────────────────────
+const verifyMeter = async ({ provider, meterNumber, meterType }) => {
+  const disco = DISCO_MAP[provider];
+  if (!disco) throw new Error(`Unsupported provider: ${provider}`);
+  const serviceID = `${disco}-${meterType}`;
+
+  const { data } = await vtpassPost('/merchant-verify', {
+    billersCode: meterNumber,
+    serviceID,
+  });
+
+  if (!data?.content?.Customer_Name) {
+    throw new Error(data?.content?.error || 'Meter not found');
+  }
+
+  return {
+    customerName: data.content.Customer_Name,
+    customerAddress: data.content.Address || '',
+    meterNumber: data.content.Meter_Number || meterNumber,
+    minAmount: data.content.Minimum_Amount,
+  };
+};
+
+// ─── Electricity Purchase ──────────────────────────────────────────────────────
 const purchaseElectricity = async ({ provider, meterNumber, meterType, amount, phone, reference }) => {
-  const serviceID = DISCO_MAP[provider] + (meterType === 'prepaid' ? '-prepaid' : '-postpaid');
-  const response = await vtpassAxios.post('/pay', {
+  const disco = DISCO_MAP[provider];
+  if (!disco) throw new Error(`Unsupported provider: ${provider}`);
+  const serviceID = `${disco}-${meterType}`;
+
+  const { data } = await vtpassPost('/pay', {
     request_id: reference,
     serviceID,
     billersCode: meterNumber,
@@ -80,30 +144,45 @@ const purchaseElectricity = async ({ provider, meterNumber, meterType, amount, p
     amount,
     phone,
   });
-  const data = response.data;
-  if (data.code !== '000') throw new Error(data.response_description || 'Electricity purchase failed');
+
+  logger.info(`VTpass electricity response: ${JSON.stringify(data?.content?.transactions)}`);
+  if (!isSuccess(data)) throw new Error(getError(data));
+
   return {
-    token: data.content?.transactions?.product_name,
+    token: data.content?.transactions?.token,
     units: data.content?.transactions?.units,
     providerReference: data.content?.transactions?.transactionId,
     response: data,
   };
 };
 
+// ─── Smart Card Verification ───────────────────────────────────────────────────
 const verifySmartCard = async ({ provider, smartCardNumber }) => {
   const serviceID = CABLE_MAP[provider];
-  const response = await vtpassAxios.post('/merchant-verify', {
+  if (!serviceID) throw new Error(`Unsupported cable provider: ${provider}`);
+
+  const { data } = await vtpassPost('/merchant-verify', {
     billersCode: smartCardNumber,
     serviceID,
   });
-  const data = response.data;
-  if (!data.content?.Customer_Name) throw new Error('Smart card verification failed');
-  return { customerName: data.content.Customer_Name, status: data.content.Status };
+
+  if (!data?.content?.Customer_Name) {
+    throw new Error(data?.content?.error || 'Smart card not found');
+  }
+
+  return {
+    customerName: data.content.Customer_Name,
+    status: data.content.Status,
+    dueDate: data.content.Due_Date,
+  };
 };
 
+// ─── Cable Purchase ────────────────────────────────────────────────────────────
 const purchaseCable = async ({ provider, smartCardNumber, packageCode, amount, phone, reference }) => {
   const serviceID = CABLE_MAP[provider];
-  const response = await vtpassAxios.post('/pay', {
+  if (!serviceID) throw new Error(`Unsupported cable provider: ${provider}`);
+
+  const { data } = await vtpassPost('/pay', {
     request_id: reference,
     serviceID,
     billersCode: smartCardNumber,
@@ -111,14 +190,22 @@ const purchaseCable = async ({ provider, smartCardNumber, packageCode, amount, p
     amount,
     phone,
   });
-  const data = response.data;
-  if (data.code !== '000') throw new Error(data.response_description || 'Cable purchase failed');
-  return { providerReference: data.content?.transactions?.transactionId, response: data };
+
+  logger.info(`VTpass cable response: ${JSON.stringify(data?.content?.transactions)}`);
+  if (!isSuccess(data)) throw new Error(getError(data));
+
+  return {
+    providerReference: data.content?.transactions?.transactionId,
+    response: data,
+  };
 };
 
+// ─── Exam PIN Purchase ─────────────────────────────────────────────────────────
 const purchaseExamPin = async ({ examType, quantity, amount, reference }) => {
   const serviceID = EXAM_MAP[examType];
-  const response = await vtpassAxios.post('/pay', {
+  if (!serviceID) throw new Error(`Unsupported exam type: ${examType}`);
+
+  const { data } = await vtpassPost('/pay', {
     request_id: reference,
     serviceID,
     billersCode: '',
@@ -127,19 +214,39 @@ const purchaseExamPin = async ({ examType, quantity, amount, reference }) => {
     quantity,
     phone: '',
   });
-  const data = response.data;
-  if (data.code !== '000') throw new Error(data.response_description || 'Exam PIN purchase failed');
+
+  logger.info(`VTpass exam response: ${JSON.stringify(data?.content?.transactions)}`);
+  if (!isSuccess(data)) throw new Error(getError(data));
+
   const pins = (data.content?.transactions?.cards || []).map((c) => ({
     serial: c.Serial,
     pin: c.Pin,
   }));
-  return { pins, providerReference: data.content?.transactions?.transactionId, response: data };
+
+  return {
+    pins,
+    providerReference: data.content?.transactions?.transactionId,
+    response: data,
+  };
 };
 
+// ─── Get Data Variations (plan list from VTpass) ───────────────────────────────
 const getDataVariations = async (network) => {
-  const serviceID = NETWORK_MAP[network];
-  const response = await vtpassAxios.get(`/service-variations?serviceID=${serviceID}`);
-  return response.data.content?.varations || [];
+  const serviceID = NETWORK_DATA_MAP[network];
+  if (!serviceID) return [];
+  try {
+    const { data } = await vtpassGet(`/service-variations?serviceID=${serviceID}`);
+    return data?.content?.varations || [];
+  } catch (e) {
+    logger.error(`Failed to fetch VTpass variations for ${network}: ${e.message}`);
+    return [];
+  }
+};
+
+// ─── Wallet Balance Check (useful for testing credentials) ────────────────────
+const checkBalance = async () => {
+  const { data } = await vtpassGet('/balance');
+  return data;
 };
 
 module.exports = {
@@ -152,4 +259,5 @@ module.exports = {
   purchaseCable,
   purchaseExamPin,
   getDataVariations,
+  checkBalance,
 };

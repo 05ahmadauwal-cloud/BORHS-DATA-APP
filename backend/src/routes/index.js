@@ -16,7 +16,25 @@ router.use('/notifications', require('../modules/notification/notification.route
 router.use('/admin', require('../modules/admin/admin.routes'));
 
 router.get('/health', (req, res) => {
-  res.json({ success: true, message: 'BORHS VTU API is running', timestamp: new Date().toISOString() });
+  res.json({
+    success: true,
+    message: 'BORHS VTU API is running',
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
+  });
 });
+
+// Test VTpass credentials (admin only, development only)
+if (process.env.NODE_ENV !== 'production') {
+  router.get('/test/vtpass-balance', async (req, res) => {
+    try {
+      const vtpass = require('../services/providers/vtpass');
+      const balance = await vtpass.checkBalance();
+      res.json({ success: true, balance });
+    } catch (err) {
+      res.status(400).json({ success: false, message: err.message });
+    }
+  });
+}
 
 module.exports = router;
