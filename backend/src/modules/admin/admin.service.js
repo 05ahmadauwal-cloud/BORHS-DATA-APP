@@ -13,7 +13,8 @@ const getUsers = async (query = {}) => {
   const skip = (page - 1) * limit;
   const filter = {};
   if (role) filter.role = role;
-  if (isActive !== undefined) filter.isActive = isActive === 'true';
+  if (isActive === 'true') filter.isActive = true;
+  if (isActive === 'false') filter.isActive = false;
   if (kycStatus) filter.kycStatus = kycStatus;
   if (search) {
     filter.$or = [
