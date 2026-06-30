@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { walletAPI, paymentAPI } from '../../api';
+import { useSearchParams } from 'react-router-dom';
 import { Wallet as WalletIcon, Send, CreditCard, ArrowUpRight, CheckCircle, XCircle, Clock, ArrowDownLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -14,7 +15,47 @@ export default function Wallet() {
   const [fundAmount, setFundAmount] = useState('');
   const [gateway, setGateway] = useState('paystack');
   const [transferForm, setTransferForm] = useState({ recipient: '', amount: '', pin: '' });
+  const [verifyStatus, setVerifyStatus] = useState(null);
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Auto-verify Paystack payment after redirect
+  useEffect(() => {
+    const ref = searchParams.get('reference') || searchParams.get('trxref');
+    const txId = searchParams.get('transaction_id');
+
+    if (ref) {
+      setVerifyStatus('verifying');
+      paymentAPI.verifyPaystack(ref)
+        .then((res) => {
+          setVerifyStatus('success');
+          toast.success(`₦${res.data.amount?.toLocaleString()} added to your wallet!`);
+          queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+          queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
+          setSearchParams({});
+        })
+        .catch(() => {
+          setVerifyStatus('failed');
+          toast.error('Payment verification failed. Contact support.');
+        });
+    }
+
+    if (txId) {
+      setVerifyStatus('verifying');
+      paymentAPI.verifyFlutterwave(txId)
+        .then((res) => {
+          setVerifyStatus('success');
+          toast.success(`₦${res.data.amount?.toLocaleString()} added to your wallet!`);
+          queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+          queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
+          setSearchParams({});
+        })
+        .catch(() => {
+          setVerifyStatus('failed');
+          toast.error('Payment verification failed. Contact support.');
+        });
+    }
+  }, []);
 
   const { data: balance } = useQuery({
     queryKey: ['wallet-balance'],
@@ -57,9 +98,23 @@ export default function Wallet() {
   return (
     <div className="max-w-2xl mx-auto space-y-5">
       <div>
-        <h1 className="text-xl md:text-2xl font-black text-dark-50">Wallet</h1>
-        <p className="text-dark-400 text-xs mt-0.5">Fund, transfer and track your balance</p>
+        <h1 className="text-xl md:text-2xl font-black" style={{ color: 'var(--text-primary)' }}>Wallet</h1>
+        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Fund, transfer and track your balance</p>
       </div>
+
+      {/* Payment verification banner */}
+      {verifyStatus === 'verifying' && (
+        <div className="card p-4 border-primary-500/30 bg-primary-500/5 flex items-center gap-3 animate-pulse">
+          <span className="w-5 h-5 border-2 border-primary-400/40 border-t-primary-400 rounded-full animate-spin shrink-0" />
+          <p className="text-sm text-primary-400 font-semibold">Verifying your payment, please wait...</p>
+        </div>
+      )}
+      {verifyStatus === 'success' && (
+        <div className="card p-4 border-success-500/30 bg-success-500/5 flex items-center gap-3">
+          <CheckCircle size={18} className="text-success-500 shrink-0" />
+          <p className="text-sm text-success-500 font-semibold">Payment verified! Your wallet has been credited.</p>
+        </div>
+      )}
 
       {/* Balance Card */}
       <div className="relative rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary-600 to-primary-900 p-5 sm:p-7 overflow-hidden shadow-2xl shadow-primary-900/40">

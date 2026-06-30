@@ -28,6 +28,8 @@ export const paymentAPI = {
   initializePaystack: (amount) => api.post('/payment/paystack/initialize', { amount }),
   verifyPaystack: (reference) => api.get(`/payment/paystack/verify/${reference}`),
   initializeFlutterwave: (amount) => api.post('/payment/flutterwave/initialize', { amount }),
+  verifyFlutterwave: (transactionId) => api.get(`/payment/flutterwave/verify/${transactionId}`),
+  verifyPaystack: (reference) => api.get(`/payment/paystack/verify/${reference}`),
 };
 
 // Data

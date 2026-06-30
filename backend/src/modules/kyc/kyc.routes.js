@@ -1,27 +1,32 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
 const kycService = require('./kyc.service');
 const { authenticate, authorize } = require('../../middleware/auth');
 const ApiResponse = require('../../utils/apiResponse');
 const asyncHandler = require('express-async-handler');
 
-const storage = multer.diskStorage({
-  destination: 'uploads/kyc/',
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `kyc-${req.user._id}-${Date.now()}${ext}`);
-  },
-});
+// Store files in memory as Buffer (no disk needed — Render compatible)
 const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
     if (/image\/(jpeg|jpg|png|webp)/.test(file.mimetype)) cb(null, true);
-    else cb(new Error('Only image files are allowed'));
+    else cb(new Error('Only image files are allowed (jpeg, jpg, png, webp)'));
   },
 });
+
+// Convert uploaded buffers to base64 data URIs for MongoDB storage
+const filesToBase64 = (files = {}) => {
+  const result = {};
+  for (const [key, arr] of Object.entries(files)) {
+    if (arr?.[0]) {
+      const { buffer, mimetype } = arr[0];
+      result[key] = `data:${mimetype};base64,${buffer.toString('base64')}`;
+    }
+  }
+  return result;
+};
 
 router.use(authenticate);
 
@@ -35,16 +40,20 @@ router.post('/tier1', asyncHandler(async (req, res) => {
   return ApiResponse.success(res, data, 'Tier 1 KYC completed');
 }));
 
-router.post('/tier2', upload.fields([{ name: 'idFront', maxCount: 1 }, { name: 'idBack', maxCount: 1 }]),
+router.post('/tier2',
+  upload.fields([{ name: 'idFront', maxCount: 1 }, { name: 'idBack', maxCount: 1 }]),
   asyncHandler(async (req, res) => {
-    const data = await kycService.submitTier2(req.user._id, req.body, req.files);
+    const images = filesToBase64(req.files);
+    const data = await kycService.submitTier2(req.user._id, req.body, images);
     return ApiResponse.success(res, data, 'Tier 2 KYC submitted for review');
   })
 );
 
-router.post('/tier3', upload.fields([{ name: 'selfie', maxCount: 1 }]),
+router.post('/tier3',
+  upload.fields([{ name: 'selfie', maxCount: 1 }]),
   asyncHandler(async (req, res) => {
-    const data = await kycService.submitTier3(req.user._id, req.files);
+    const images = filesToBase64(req.files);
+    const data = await kycService.submitTier3(req.user._id, images);
     return ApiResponse.success(res, data, 'Tier 3 KYC submitted for review');
   })
 );

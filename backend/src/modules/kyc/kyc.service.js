@@ -18,7 +18,7 @@ const submitTier1 = async (userId) => {
   return { tier: 1, status: 'approved' };
 };
 
-const submitTier2 = async (userId, body, files) => {
+const submitTier2 = async (userId, body, images = {}) => {
   const { idType, idNumber, bvn } = body;
   const user = await User.findById(userId);
 
@@ -29,9 +29,7 @@ const submitTier2 = async (userId, body, files) => {
   const existing = await KYC.findOne({ user: userId, tier: 2, status: KYC_APPROVAL_STATUS.PENDING });
   if (existing) throw Object.assign(new Error('Tier 2 KYC already under review'), { statusCode: 400 });
 
-  const idFrontImage = files?.idFront?.[0]?.path || null;
-  const idBackImage = files?.idBack?.[0]?.path || null;
-
+  // images contains base64 data URIs (Render-compatible — stored in MongoDB)
   await KYC.findOneAndUpdate(
     { user: userId, tier: 2 },
     {
@@ -41,8 +39,8 @@ const submitTier2 = async (userId, body, files) => {
       idType,
       idNumber,
       bvn,
-      idFrontImage,
-      idBackImage,
+      idFrontImage: images.idFront || null,
+      idBackImage: images.idBack || null,
       submittedAt: new Date(),
     },
     { upsert: true, new: true }
@@ -51,17 +49,21 @@ const submitTier2 = async (userId, body, files) => {
   return { tier: 2, status: 'pending' };
 };
 
-const submitTier3 = async (userId, files) => {
+const submitTier3 = async (userId, images = {}) => {
   const user = await User.findById(userId);
   if (user.kycStatus !== KYC_STATUS.TIER2) {
     throw Object.assign(new Error('Complete Tier 2 KYC approval first'), { statusCode: 400 });
   }
 
-  const selfieImage = files?.selfie?.[0]?.path || null;
-
   await KYC.findOneAndUpdate(
     { user: userId, tier: 3 },
-    { user: userId, tier: 3, status: KYC_APPROVAL_STATUS.PENDING, selfieImage, submittedAt: new Date() },
+    {
+      user: userId,
+      tier: 3,
+      status: KYC_APPROVAL_STATUS.PENDING,
+      selfieImage: images.selfie || null,
+      submittedAt: new Date(),
+    },
     { upsert: true, new: true }
   );
 

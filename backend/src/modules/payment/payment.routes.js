@@ -15,5 +15,6 @@ router.use(authenticate);
 router.post('/paystack/initialize', [body('amount').isNumeric().toFloat()], validate, asyncHandler(ctrl.initializePaystack));
 router.get('/paystack/verify/:reference', asyncHandler(ctrl.verifyPaystack));
 router.post('/flutterwave/initialize', [body('amount').isNumeric().toFloat()], validate, asyncHandler(ctrl.initializeFlutterwave));
+router.get('/flutterwave/verify/:transaction_id', asyncHandler(ctrl.verifyFlutterwave));
 
 module.exports = router;
