@@ -2,8 +2,9 @@ const clubkonnect = require('./clubkonnect');
 const vtpass = require('./vtpass');
 const logger = require('../../utils/logger');
 
-// ClubKonnect is primary; VTpass is fallback
-const providers = [clubkonnect, vtpass];
+// VTpass is primary (no IP restriction); ClubKonnect is secondary
+// Switch order once ClubKonnect IP is whitelisted on their dashboard
+const providers = [vtpass, clubkonnect];
 
 const getProvider = (name = null) => {
   if (name) return providers.find((p) => p.name === name) || providers[0];
