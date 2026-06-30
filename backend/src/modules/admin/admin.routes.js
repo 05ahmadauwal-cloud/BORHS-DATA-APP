@@ -98,6 +98,27 @@ router.patch('/settings', asyncHandler(async (req, res) => {
   return ApiResponse.success(res, { settings }, 'Settings updated');
 }));
 
+// ─── Provider Health Check (admin only, works in production) ─────────────────
+router.get('/test/clubkonnect', asyncHandler(async (req, res) => {
+  try {
+    const ck = require('../../services/providers/clubkonnect');
+    const data = await ck.checkBalance();
+    return ApiResponse.success(res, { provider: 'clubkonnect', data }, 'ClubKonnect reachable');
+  } catch (err) {
+    return ApiResponse.error(res, `ClubKonnect error: ${err.message}`, 400);
+  }
+}));
+
+router.get('/test/clubkonnect-plans/:network', asyncHandler(async (req, res) => {
+  try {
+    const ck = require('../../services/providers/clubkonnect');
+    const plans = await ck.getDataVariations(req.params.network);
+    return ApiResponse.success(res, { plans, count: plans.length });
+  } catch (err) {
+    return ApiResponse.error(res, `Failed: ${err.message}`, 400);
+  }
+}));
+
 // ─── ClubKonnect Sync ─────────────────────────────────────────────────────────
 const { syncDataPlans, updateAllCommissions } = require('./sync.service');
 
