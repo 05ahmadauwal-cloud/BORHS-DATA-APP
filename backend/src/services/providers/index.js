@@ -1,33 +1,34 @@
+const clubkonnect = require('./clubkonnect');
 const vtpass = require('./vtpass');
 const logger = require('../../utils/logger');
 
-const providers = [vtpass];
+// ClubKonnect is primary; VTpass is fallback
+const providers = [clubkonnect, vtpass];
 
-const getProvider = (preferredProvider = null) => {
-  if (preferredProvider) {
-    const found = providers.find((p) => p.name === preferredProvider);
-    if (found) return found;
-  }
+const getProvider = (name = null) => {
+  if (name) return providers.find((p) => p.name === name) || providers[0];
   return providers[0];
 };
 
-const withFallback = async (operation, args, providerName = null) => {
-  const orderedProviders = providerName
-    ? [getProvider(providerName), ...providers.filter((p) => p.name !== providerName)]
+const withFallback = async (operation, args, preferredProviderName = null) => {
+  const ordered = preferredProviderName
+    ? [getProvider(preferredProviderName), ...providers.filter((p) => p.name !== preferredProviderName)]
     : providers;
 
   let lastError;
-  for (const provider of orderedProviders) {
+  for (const provider of ordered) {
+    if (typeof provider[operation] !== 'function') continue;
     try {
-      logger.info(`Trying VTU provider: ${provider.name}`);
+      logger.info(`[VTU] Trying provider: ${provider.name} → ${operation}`);
       const result = await provider[operation](args);
+      logger.info(`[VTU] Success: ${provider.name} → ${operation}`);
       return { ...result, provider: provider.name };
     } catch (error) {
-      logger.warn(`Provider ${provider.name} failed for ${operation}: ${error.message}`);
+      logger.warn(`[VTU] ${provider.name} failed for ${operation}: ${error.message}`);
       lastError = error;
     }
   }
-  throw lastError || new Error('All VTU providers failed');
+  throw lastError || new Error('All VTU providers failed. Please try again later.');
 };
 
 module.exports = { getProvider, withFallback };

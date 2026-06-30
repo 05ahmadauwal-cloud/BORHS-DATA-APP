@@ -24,15 +24,25 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Test VTpass credentials (admin only, development only)
+// Test provider credentials — development only
 if (process.env.NODE_ENV !== 'production') {
+  router.get('/test/clubkonnect-balance', async (req, res) => {
+    try {
+      const ck = require('../services/providers/clubkonnect');
+      const data = await ck.checkBalance();
+      res.json({ success: true, provider: 'clubkonnect', data });
+    } catch (err) {
+      res.status(400).json({ success: false, provider: 'clubkonnect', message: err.message });
+    }
+  });
+
   router.get('/test/vtpass-balance', async (req, res) => {
     try {
-      const vtpass = require('../services/providers/vtpass');
-      const balance = await vtpass.checkBalance();
-      res.json({ success: true, balance });
+      const vt = require('../services/providers/vtpass');
+      const data = await vt.checkBalance();
+      res.json({ success: true, provider: 'vtpass', data });
     } catch (err) {
-      res.status(400).json({ success: false, message: err.message });
+      res.status(400).json({ success: false, provider: 'vtpass', message: err.message });
     }
   });
 }
