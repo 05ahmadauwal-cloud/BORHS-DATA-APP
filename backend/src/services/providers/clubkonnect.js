@@ -13,33 +13,56 @@ const auth = () => ({
   APIKey: process.env.CLUBKONNECT_API_KEY,
 });
 
-// ─── Response parser — ClubKonnect can return JSON, URL-encoded, or pipe-delimited ──
+// ─── Response parser — handles JSON, URL-encoded, pipe-delimited, and HTML ────
 const parseResponse = (raw) => {
   if (!raw) return {};
 
-  // Already an object (axios parsed JSON)
+  // Already parsed object
   if (typeof raw === 'object') return raw;
 
+  const str = String(raw).trim();
+
+  // Detect HTML response — means auth failed or wrong endpoint
+  if (str.startsWith('<!') || str.startsWith('<html') || str.includes('<body')) {
+    logger.error('[ClubKonnect] Received HTML instead of API response — check API credentials or IP whitelist');
+    throw new Error(
+      'ClubKonnect API returned an HTML page. This means:\n' +
+      '1. Your API key is not activated — go to clubkonnect.com → Account → API Settings → Enable API\n' +
+      '2. Your IP is not whitelisted — add your server IP in ClubKonnect API Settings\n' +
+      '3. Wrong credentials — verify UserID and APIKey in your .env'
+    );
+  }
+
   // Try JSON parse
-  try { return JSON.parse(raw); } catch {}
+  try { return JSON.parse(str); } catch {}
 
   // URL-encoded: status=200&message=success&Balance=5000
-  if (typeof raw === 'string' && raw.includes('=')) {
+  if (str.includes('=') && str.includes('&')) {
     const obj = {};
-    raw.split('&').forEach((pair) => {
-      const [k, v] = pair.split('=');
-      if (k) obj[decodeURIComponent(k.trim())] = decodeURIComponent((v || '').trim());
+    str.split('&').forEach((pair) => {
+      const idx = pair.indexOf('=');
+      if (idx > -1) {
+        const k = decodeURIComponent(pair.slice(0, idx).trim());
+        const v = decodeURIComponent(pair.slice(idx + 1).trim());
+        obj[k] = v;
+      }
     });
-    return obj;
+    if (Object.keys(obj).length > 0) return obj;
+  }
+
+  // Single key=value: Balance=5000.00
+  if (str.includes('=') && !str.includes('&')) {
+    const [k, v] = str.split('=');
+    if (k && v) return { [k.trim()]: v.trim() };
   }
 
   // Pipe-delimited: 200|success|5000
-  if (typeof raw === 'string' && raw.includes('|')) {
-    const parts = raw.split('|');
+  if (str.includes('|')) {
+    const parts = str.split('|');
     return { status: parts[0], message: parts[1], data: parts[2] };
   }
 
-  return { raw };
+  return { raw: str };
 };
 
 const isSuccess = (data) => {
