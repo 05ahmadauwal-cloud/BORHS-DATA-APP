@@ -111,22 +111,6 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Demo Credentials */}
-        <div className="mt-4 card p-4">
-          <p className="text-xs text-dark-400 text-center mb-3 font-medium">Demo Credentials</p>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {[
-              { label: 'Customer', email: 'customer@borhsdata.com', pass: 'Customer@1234' },
-              { label: 'Admin', email: 'admin@borhsdata.com', pass: 'Admin@1234' },
-            ].map((cred) => (
-              <div key={cred.label} className="bg-dark-700/50 rounded-lg p-2.5">
-                <p className="font-semibold text-primary-400 mb-1">{cred.label}</p>
-                <p className="text-dark-300">{cred.email}</p>
-                <p className="text-dark-300">{cred.pass}</p>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
