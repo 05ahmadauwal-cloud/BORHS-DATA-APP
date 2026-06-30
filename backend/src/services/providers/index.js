@@ -2,9 +2,8 @@ const clubkonnect = require('./clubkonnect');
 const vtpass = require('./vtpass');
 const logger = require('../../utils/logger');
 
-// VTpass is primary (no IP restriction); ClubKonnect is secondary
-// Switch order once ClubKonnect IP is whitelisted on their dashboard
-const providers = [vtpass, clubkonnect];
+// VTpass only — no IP restrictions, works from any server
+const providers = [vtpass];
 
 const getProvider = (name = null) => {
   if (name) return providers.find((p) => p.name === name) || providers[0];

@@ -3,56 +3,44 @@ const DataPlan = require('../../models/DataPlan');
 const Settings = require('../../models/Settings');
 const logger = require('../../utils/logger');
 
-const CK_BASE = 'https://www.clubkonnect.com';
-const auth = () => ({
-  UserID: process.env.CLUBKONNECT_USER_ID,
-  APIKey: process.env.CLUBKONNECT_API_KEY,
-});
+const VTPASS_BASE = process.env.VTPASS_BASE_URL || 'https://api-service.vtpass.com/api';
 
-// ClubKonnect network codes → our network names
-const NETWORK_MAP = {
-  '01': 'mtn',
-  '02': 'glo',
-  '03': 'airtel',
-  '04': '9mobile',
-};
-
-// Reverse map for fetching
-const FETCH_NETWORKS = [
-  { code: '01', name: 'mtn' },
-  { code: '02', name: 'glo' },
-  { code: '03', name: 'airtel' },
-  { code: '04', name: '9mobile' },
+const NETWORKS = [
+  { name: 'mtn',     serviceID: 'mtn-data' },
+  { name: 'airtel',  serviceID: 'airtel-data' },
+  { name: 'glo',     serviceID: 'glo-data' },
+  { name: '9mobile', serviceID: 'etisalat-data' },
 ];
 
-// Data type detection from plan name
-const detectDataType = (planName = '') => {
-  const name = planName.toLowerCase();
-  if (name.includes('sme')) return 'sme';
-  if (name.includes('corporate') || name.includes('corp')) return 'corporate';
-  if (name.includes('gift') || name.includes('share')) return 'gifting';
-  return 'sme'; // default
-};
+const getHeaders = () => ({
+  'api-key': process.env.VTPASS_API_KEY,
+  'public-key': process.env.VTPASS_PUBLIC_KEY,
+});
 
 // Parse data size from plan name e.g. "500MB", "1GB", "2.5GB"
-const extractDataSize = (planName = '') => {
-  const match = planName.match(/(\d+(\.\d+)?)\s*(MB|GB|TB)/i);
-  return match ? `${match[1]}${match[3].toUpperCase()}` : planName;
+const extractDataSize = (name = '') => {
+  const match = name.match(/(\d+(\.\d+)?)\s*(MB|GB|TB)/i);
+  return match ? `${match[1]}${match[3].toUpperCase()}` : name;
 };
 
 // Parse validity from plan name e.g. "30 Days", "7 Days"
-const extractValidity = (planName = '') => {
-  const match = planName.match(/(\d+)\s*(day|days|month|months)/i);
+const extractValidity = (name = '') => {
+  const match = name.match(/(\d+)\s*(day|days|month|months)/i);
   if (!match) return '30 Days';
-  const num = match[1];
+  const num = parseInt(match[1]);
   const unit = match[2].toLowerCase().includes('month') ? 'Month' : 'Day';
   return `${num} ${unit}${num > 1 ? 's' : ''}`;
 };
 
-/**
- * Apply your commission to ClubKonnect cost price
- * Returns: { sellingPrice, agentPrice, resellerPrice }
- */
+// Data type detection from plan name
+const detectDataType = (name = '') => {
+  const n = name.toLowerCase();
+  if (n.includes('sme')) return 'sme';
+  if (n.includes('corporate') || n.includes('corp')) return 'corporate';
+  if (n.includes('gift') || n.includes('share')) return 'gifting';
+  return 'sme';
+};
+
 const applyCommission = (costPrice, commissionRates) => {
   const { customer = 10, agent = 5, reseller = 3 } = commissionRates;
   const sellingPrice = Math.ceil(costPrice * (1 + customer / 100));
@@ -61,75 +49,53 @@ const applyCommission = (costPrice, commissionRates) => {
   return { sellingPrice, agentPrice, resellerPrice };
 };
 
-/**
- * Fetch data plans for one network from ClubKonnect
- */
-const fetchNetworkPlans = async (networkCode, networkName) => {
+const fetchNetworkPlans = async (networkName, serviceID) => {
   try {
-    const response = await axios.get(`${CK_BASE}/APIGetDataBundleV1.asp`, {
-      params: { ...auth(), MobileNetwork: networkCode },
-      timeout: 15000,
+    const { data } = await axios.get(`${VTPASS_BASE}/service-variations`, {
+      params: { serviceID },
+      headers: getHeaders(),
+      timeout: 20000,
     });
 
-    const data = response.data;
-    logger.info(`ClubKonnect ${networkName} plans: ${JSON.stringify(data)}`);
+    const variations = data?.content?.varations || data?.content?.variations || [];
 
-    // ClubKonnect can return array or object with plans key
-    let plans = [];
-    if (Array.isArray(data)) plans = data;
-    else if (Array.isArray(data?.plans)) plans = data.plans;
-    else if (Array.isArray(data?.Data)) plans = data.Data;
-    else if (typeof data === 'object' && data !== null) {
-      // Sometimes returns key-value pairs
-      plans = Object.entries(data).map(([code, details]) => ({
-        DataCode: code,
-        ...(typeof details === 'object' ? details : { DataPlan: details }),
-      }));
-    }
-
-    return plans.map((plan) => ({
+    return variations.map((v) => ({
       network: networkName,
-      planId: plan.DataCode || plan.dataCode || plan.code || plan.PlanCode,
-      name: plan.DataPlan || plan.dataPlan || plan.name || plan.PlanName || plan.DataCode,
-      dataSize: extractDataSize(plan.DataPlan || plan.name || ''),
-      validity: extractValidity(plan.DataPlan || plan.name || ''),
-      dataType: detectDataType(plan.DataPlan || plan.name || ''),
-      costPrice: parseFloat(plan.Price || plan.price || plan.Amount || plan.amount || 0),
-      providerPlanCode: plan.DataCode || plan.dataCode || plan.code,
+      planId: v.variation_code,
+      providerPlanCode: v.variation_code,
+      name: v.name,
+      dataSize: extractDataSize(v.name),
+      validity: extractValidity(v.name),
+      dataType: detectDataType(v.name),
+      costPrice: parseFloat(v.variation_amount || 0),
     })).filter((p) => p.planId && p.costPrice > 0);
   } catch (err) {
-    logger.error(`Failed to fetch ${networkName} plans from ClubKonnect: ${err.message}`);
+    logger.error(`Failed to fetch ${networkName} plans from VTpass: ${err.message}`);
     return [];
   }
 };
 
-/**
- * Main sync function — pulls all plans from ClubKonnect and saves with your commission
- */
 const syncDataPlans = async (commissionRates = {}) => {
-  // Get commission rates from DB settings if not passed
   if (!commissionRates.customer) {
     const settings = await Settings.getMany([
-      'ck_commission_customer',
-      'ck_commission_agent',
-      'ck_commission_reseller',
+      'vt_commission_customer',
+      'vt_commission_agent',
+      'vt_commission_reseller',
     ]);
     commissionRates = {
-      customer: parseFloat(settings.ck_commission_customer ?? 10),
-      agent: parseFloat(settings.ck_commission_agent ?? 5),
-      reseller: parseFloat(settings.ck_commission_reseller ?? 3),
+      customer: parseFloat(settings.vt_commission_customer ?? 10),
+      agent: parseFloat(settings.vt_commission_agent ?? 5),
+      reseller: parseFloat(settings.vt_commission_reseller ?? 3),
     };
   }
 
   const results = { synced: 0, networks: {}, errors: [] };
 
-  for (const { code, name } of FETCH_NETWORKS) {
-    const plans = await fetchNetworkPlans(code, name);
+  for (const { name, serviceID } of NETWORKS) {
+    const plans = await fetchNetworkPlans(name, serviceID);
     results.networks[name] = plans.length;
 
     for (const plan of plans) {
-      if (!plan.planId || !plan.costPrice) continue;
-
       const { sellingPrice, agentPrice, resellerPrice } = applyCommission(
         plan.costPrice,
         commissionRates
@@ -138,13 +104,7 @@ const syncDataPlans = async (commissionRates = {}) => {
       try {
         await DataPlan.findOneAndUpdate(
           { planId: plan.planId, network: plan.network },
-          {
-            ...plan,
-            sellingPrice,
-            agentPrice,
-            resellerPrice,
-            isActive: true,
-          },
+          { ...plan, sellingPrice, agentPrice, resellerPrice, isActive: true },
           { upsert: true, new: true, setDefaultsOnInsert: true }
         );
         results.synced++;
@@ -155,13 +115,10 @@ const syncDataPlans = async (commissionRates = {}) => {
     }
   }
 
-  logger.info(`Sync complete: ${results.synced} plans synced`);
+  logger.info(`VTpass sync complete: ${results.synced} plans`);
   return results;
 };
 
-/**
- * Update selling prices across all plans when commission changes
- */
 const updateAllCommissions = async (commissionRates) => {
   const plans = await DataPlan.find({});
   let updated = 0;
@@ -175,10 +132,9 @@ const updateAllCommissions = async (commissionRates) => {
     updated++;
   }
 
-  // Save commission rates to settings
-  await Settings.set('ck_commission_customer', commissionRates.customer);
-  await Settings.set('ck_commission_agent', commissionRates.agent);
-  await Settings.set('ck_commission_reseller', commissionRates.reseller);
+  await Settings.set('vt_commission_customer', commissionRates.customer);
+  await Settings.set('vt_commission_agent', commissionRates.agent);
+  await Settings.set('vt_commission_reseller', commissionRates.reseller);
 
   return { updated };
 };

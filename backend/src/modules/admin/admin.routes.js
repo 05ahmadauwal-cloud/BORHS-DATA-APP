@@ -98,7 +98,27 @@ router.patch('/settings', asyncHandler(async (req, res) => {
   return ApiResponse.success(res, { settings }, 'Settings updated');
 }));
 
-// ─── Provider Health Check (admin only, works in production) ─────────────────
+// ─── Provider Health Check (admin only) ──────────────────────────────────────
+router.get('/test/vtpass', asyncHandler(async (req, res) => {
+  try {
+    const vt = require('../../services/providers/vtpass');
+    const data = await vt.checkBalance();
+    return ApiResponse.success(res, { provider: 'vtpass', data }, 'VTpass reachable');
+  } catch (err) {
+    return ApiResponse.error(res, `VTpass error: ${err.message}`, 400);
+  }
+}));
+
+router.get('/test/vtpass-plans/:network', asyncHandler(async (req, res) => {
+  try {
+    const vt = require('../../services/providers/vtpass');
+    const plans = await vt.getDataVariations(req.params.network);
+    return ApiResponse.success(res, { plans, count: plans.length });
+  } catch (err) {
+    return ApiResponse.error(res, `Failed: ${err.message}`, 400);
+  }
+}));
+
 router.get('/test/clubkonnect', asyncHandler(async (req, res) => {
   try {
     const ck = require('../../services/providers/clubkonnect');
