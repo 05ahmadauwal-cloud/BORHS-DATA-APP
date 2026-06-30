@@ -98,4 +98,39 @@ router.patch('/settings', asyncHandler(async (req, res) => {
   return ApiResponse.success(res, { settings }, 'Settings updated');
 }));
 
+// ─── ClubKonnect Sync ─────────────────────────────────────────────────────────
+const { syncDataPlans, updateAllCommissions } = require('./sync.service');
+
+// Sync data plans from ClubKonnect with current commission rates
+router.post('/sync/data-plans', asyncHandler(async (req, res) => {
+  const result = await syncDataPlans(req.body.commissionRates || {});
+  return ApiResponse.success(res, result, `Synced ${result.synced} data plans from ClubKonnect`);
+}));
+
+// Update commission rates across all existing plans
+router.post('/sync/update-commissions', [
+  body('customer').isNumeric().toFloat().withMessage('Customer commission % required'),
+  body('agent').isNumeric().toFloat().withMessage('Agent commission % required'),
+  body('reseller').isNumeric().toFloat().withMessage('Reseller commission % required'),
+], validate, asyncHandler(async (req, res) => {
+  const { customer, agent, reseller } = req.body;
+  const result = await updateAllCommissions({ customer, agent, reseller });
+  return ApiResponse.success(res, result, `Updated prices for ${result.updated} plans`);
+}));
+
+// Get current commission settings
+router.get('/sync/commission-rates', asyncHandler(async (req, res) => {
+  const Settings = require('../../models/Settings');
+  const rates = await Settings.getMany([
+    'ck_commission_customer',
+    'ck_commission_agent',
+    'ck_commission_reseller',
+  ]);
+  return ApiResponse.success(res, {
+    customer: parseFloat(rates.ck_commission_customer ?? 10),
+    agent: parseFloat(rates.ck_commission_agent ?? 5),
+    reseller: parseFloat(rates.ck_commission_reseller ?? 3),
+  });
+}));
+
 module.exports = router;
