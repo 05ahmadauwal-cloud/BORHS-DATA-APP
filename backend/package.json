@@ -1,0 +1,44 @@
+{
+  "name": "borhs-vtu-backend",
+  "version": "1.0.0",
+  "description": "Enterprise VTU & Data Reselling Platform - Backend API",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node src/utils/seeder.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "csurf": "^1.11.0",
+    "dotenv": "^16.4.1",
+    "express": "^4.18.2",
+    "express-async-handler": "^1.2.0",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.1.1",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.9",
+    "otplib": "^12.0.1",
+    "qrcode": "^1.5.3",
+    "twilio": "^5.0.0",
+    "uuid": "^9.0.0",
+    "winston": "^3.11.0",
+    "xss-clean": "^0.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

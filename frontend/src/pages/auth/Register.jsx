@@ -1,0 +1,166 @@
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { Eye, EyeOff, Zap, UserPlus, CheckCircle } from 'lucide-react';
+import useAuthStore from '../../store/authStore';
+import toast from 'react-hot-toast';
+
+const schema = z.object({
+  firstName: z.string().min(2, 'First name must be at least 2 characters').max(50),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters').max(50),
+  email: z.string().email('Enter a valid email address'),
+  phone: z.string().min(10, 'Enter a valid Nigerian phone number'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/(?=.*[A-Z])/, 'Must contain at least one uppercase letter')
+    .regex(/(?=.*[0-9])/, 'Must contain at least one number'),
+  confirmPassword: z.string(),
+  referralCode: z.string().optional(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+});
+
+export default function Register() {
+  const [showPassword, setShowPassword] = useState(false);
+  const { register: storeRegister, isLoading } = useAuthStore();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get('ref') || '';
+
+  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: { referralCode: refCode },
+  });
+
+  const password = watch('password', '');
+
+  const onSubmit = async (data) => {
+    try {
+      const { confirmPassword, ...payload } = data;
+      const result = await storeRegister(payload);
+      toast.success(`Welcome to BORHS Data, ${result.user.firstName}!`);
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
+    }
+  };
+
+  const passwordChecks = [
+    { label: '8+ characters', met: password.length >= 8 },
+    { label: 'Uppercase letter', met: /[A-Z]/.test(password) },
+    { label: 'Number', met: /[0-9]/.test(password) },
+  ];
+
+  return (
+    <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4 py-12">
+      <div className="w-full max-w-lg">
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center gap-2.5 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-success-500 rounded-xl flex items-center justify-center">
+              <Zap size={20} className="text-white" fill="white" />
+            </div>
+            <span className="font-black text-dark-50 text-xl">BORHS <span className="text-primary-400">Data</span></span>
+          </Link>
+          <h1 className="text-2xl font-black text-dark-50">Create your account</h1>
+          <p className="text-dark-400 mt-2 text-sm">Join 50,000+ Nigerians saving money on data & bills</p>
+        </div>
+
+        <div className="card p-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label">First Name</label>
+                <input {...register('firstName')} className={`input ${errors.firstName ? 'input-error' : ''}`} placeholder="John" />
+                {errors.firstName && <p className="text-red-400 text-xs mt-1">{errors.firstName.message}</p>}
+              </div>
+              <div>
+                <label className="label">Last Name</label>
+                <input {...register('lastName')} className={`input ${errors.lastName ? 'input-error' : ''}`} placeholder="Doe" />
+                {errors.lastName && <p className="text-red-400 text-xs mt-1">{errors.lastName.message}</p>}
+              </div>
+            </div>
+
+            <div>
+              <label className="label">Email Address</label>
+              <input {...register('email')} type="email" className={`input ${errors.email ? 'input-error' : ''}`} placeholder="john@example.com" />
+              {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
+            </div>
+
+            <div>
+              <label className="label">Phone Number</label>
+              <input {...register('phone')} type="tel" className={`input ${errors.phone ? 'input-error' : ''}`} placeholder="08012345678" />
+              {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone.message}</p>}
+            </div>
+
+            <div>
+              <label className="label">Password</label>
+              <div className="relative">
+                <input
+                  {...register('password')}
+                  type={showPassword ? 'text' : 'password'}
+                  className={`input pr-12 ${errors.password ? 'input-error' : ''}`}
+                  placeholder="Create a strong password"
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-dark-200 p-1">
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {password && (
+                <div className="flex gap-3 mt-2">
+                  {passwordChecks.map((check) => (
+                    <div key={check.label} className="flex items-center gap-1">
+                      <CheckCircle size={11} className={check.met ? 'text-success-500' : 'text-dark-600'} />
+                      <span className={`text-xs ${check.met ? 'text-success-500' : 'text-dark-500'}`}>{check.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
+            </div>
+
+            <div>
+              <label className="label">Confirm Password</label>
+              <input
+                {...register('confirmPassword')}
+                type="password"
+                className={`input ${errors.confirmPassword ? 'input-error' : ''}`}
+                placeholder="Repeat your password"
+              />
+              {errors.confirmPassword && <p className="text-red-400 text-xs mt-1">{errors.confirmPassword.message}</p>}
+            </div>
+
+            <div>
+              <label className="label">Referral Code <span className="text-dark-500">(optional)</span></label>
+              <input {...register('referralCode')} className="input" placeholder="Enter referral code" />
+            </div>
+
+            <button type="submit" disabled={isLoading} className="btn-primary w-full btn-lg gap-2 mt-2">
+              {isLoading
+                ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                : <UserPlus size={18} />
+              }
+              {isLoading ? 'Creating account...' : 'Create Account'}
+            </button>
+
+            <p className="text-xs text-dark-400 text-center">
+              By creating an account, you agree to our{' '}
+              <a href="#" className="text-primary-400 hover:underline">Terms of Service</a> and{' '}
+              <a href="#" className="text-primary-400 hover:underline">Privacy Policy</a>.
+            </p>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-dark-400 text-sm">
+              Already have an account?{' '}
+              <Link to="/login" className="text-primary-400 hover:text-primary-300 font-semibold">Sign In</Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
