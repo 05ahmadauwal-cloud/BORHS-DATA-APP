@@ -22,9 +22,9 @@ export default function Contact() {
         <div>
           <div className="space-y-6 mb-10">
             {[
-              { icon: Mail, title: 'Email Support', value: 'support@borhsdata.com', sub: 'We reply within 2 hours' },
-              { icon: Phone, title: 'Phone Support', value: '+234 800 000 0000', sub: 'Mon–Fri, 8am–10pm' },
-              { icon: MessageSquare, title: 'WhatsApp', value: '+234 800 000 0000', sub: '24/7 automated support' },
+              { icon: Mail, title: 'Email Support', value: '05ahmadauwal@gmail.com', sub: 'We reply within 2 hours' },
+              { icon: Phone, title: 'Phone Support', value: '+234 706 589 6598', sub: 'Mon–Fri, 8am–10pm' },
+              { icon: MessageSquare, title: 'WhatsApp', value: '+234 706 589 6598', sub: '24/7 automated support' },
             ].map((item) => (
               <div key={item.title} className="flex gap-4 card p-5">
                 <div className="w-10 h-10 bg-primary-500/10 border border-primary-500/20 rounded-xl flex items-center justify-center shrink-0">

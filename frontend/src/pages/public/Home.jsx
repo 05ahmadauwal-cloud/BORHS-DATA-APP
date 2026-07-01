@@ -11,8 +11,8 @@ const services = [
 ];
 
 const stats = [
-  { value: '50,000+', label: 'Happy Customers' },
-  { value: '₦500M+', label: 'Transactions Processed' },
+  { value: '300+', label: 'Happy Customers' },
+  { value: '₦500+', label: 'Transactions Processed' },
   { value: '99.9%', label: 'Uptime' },
   { value: '24/7', label: 'Customer Support' },
 ];
@@ -33,10 +33,10 @@ export default function Home() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-primary-500/10 border border-primary-500/20 rounded-full px-4 py-2 mb-8">
+            {/* <div className="inline-flex items-center gap-2 bg-primary-500/10 border border-primary-500/20 rounded-full px-4 py-2 mb-8">
               <span className="w-2 h-2 bg-success-500 rounded-full animate-pulse" />
               <span className="text-primary-400 text-sm font-medium">Nigeria's #1 VTU Platform</span>
-            </div>
+            </div> */}
 
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-dark-50 leading-tight mb-6">
               Buy <span className="gradient-text">Data, Airtime</span> & Pay Bills
