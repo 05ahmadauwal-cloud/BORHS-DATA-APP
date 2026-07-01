@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { walletAPI, paymentAPI } from '../../api';
 import { useSearchParams } from 'react-router-dom';
 import {
-  Wallet as WalletIcon, Send, CreditCard, ArrowUpRight,
+  Wallet as WalletIcon, Send, CreditCard,
   CheckCircle, XCircle, Clock, Copy, Check, Building2,
   RefreshCw, AlertCircle, Banknote,
 } from 'lucide-react';
@@ -154,7 +154,24 @@ export default function Wallet() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Auto-verify after Paystack / Flutterwave redirect
+  // Load Paystack inline JS
+  useEffect(() => {
+    if (document.getElementById('paystack-inline')) return;
+    const script = document.createElement('script');
+    script.id = 'paystack-inline';
+    script.src = 'https://js.paystack.co/v2/inline.js';
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
+  const creditWallet = (amount) => {
+    setVerifyStatus('success');
+    toast.success(`₦${amount?.toLocaleString()} added to your wallet!`);
+    queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+    queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
+  };
+
+  // Fallback: auto-verify after redirect (Flutterwave always redirects; Paystack redirect if popup blocked)
   useEffect(() => {
     const ref = searchParams.get('reference') || searchParams.get('trxref');
     const txId = searchParams.get('transaction_id');
@@ -162,26 +179,14 @@ export default function Wallet() {
     if (ref) {
       setVerifyStatus('verifying');
       paymentAPI.verifyPaystack(ref)
-        .then((res) => {
-          setVerifyStatus('success');
-          toast.success(`₦${res.data.amount?.toLocaleString()} added to your wallet!`);
-          queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
-          queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
-          setSearchParams({});
-        })
+        .then((res) => { creditWallet(res.data.amount); setSearchParams({}); })
         .catch(() => { setVerifyStatus('failed'); toast.error('Payment verification failed. Contact support.'); });
     }
 
     if (txId) {
       setVerifyStatus('verifying');
       paymentAPI.verifyFlutterwave(txId)
-        .then((res) => {
-          setVerifyStatus('success');
-          toast.success(`₦${res.data.amount?.toLocaleString()} added to your wallet!`);
-          queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
-          queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
-          setSearchParams({});
-        })
+        .then((res) => { creditWallet(res.data.amount); setSearchParams({}); })
         .catch(() => { setVerifyStatus('failed'); toast.error('Payment verification failed. Contact support.'); });
     }
   }, []);
@@ -204,9 +209,31 @@ export default function Wallet() {
       ? paymentAPI.initializePaystack(Number(fundAmount))
       : paymentAPI.initializeFlutterwave(Number(fundAmount)),
     onSuccess: (res) => {
-      const url = res.data.authorizationUrl || res.data.paymentLink;
-      if (url) window.open(url, '_blank');
-      else toast.error('Could not get payment URL');
+      if (gateway === 'paystack') {
+        const { accessCode, reference } = res.data;
+        if (!accessCode || !window.PaystackPop) {
+          // Fallback to redirect if inline JS hasn't loaded
+          const url = res.data.authorizationUrl;
+          if (url) window.open(url, '_blank');
+          else toast.error('Could not open payment. Try again.');
+          return;
+        }
+        const popup = new window.PaystackPop();
+        popup.resumeTransaction(accessCode, {
+          onSuccess: () => {
+            setVerifyStatus('verifying');
+            paymentAPI.verifyPaystack(reference)
+              .then((r) => { creditWallet(r.data.amount); setFundAmount(''); })
+              .catch(() => { setVerifyStatus('failed'); toast.error('Verification failed. Contact support.'); });
+          },
+          onCancel: () => toast('Payment cancelled', { icon: '⚠️' }),
+          onError: (err) => toast.error(err?.message || 'Payment error. Try again.'),
+        });
+      } else {
+        const url = res.data.paymentLink;
+        if (url) window.open(url, '_blank');
+        else toast.error('Could not get payment URL');
+      }
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Failed to initialize payment'),
   });
@@ -344,7 +371,7 @@ export default function Wallet() {
             {fundMutation.isPending
               ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               : <CreditCard size={18} />}
-            {fundMutation.isPending ? 'Opening payment page…' : `Pay ₦${Number(fundAmount || 0).toLocaleString()}`}
+            {fundMutation.isPending ? 'Opening payment…' : `Pay ₦${Number(fundAmount || 0).toLocaleString()}`}
           </button>
         </div>
       )}
