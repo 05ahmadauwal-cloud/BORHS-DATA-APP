@@ -1,9 +1,16 @@
 import { Outlet, Link, NavLink } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Menu, X, Zap, Sun, Moon } from 'lucide-react';
+import { Menu, X, Zap, Sun, Moon, Home, Tag, Info, MessageCircle, ArrowRight, LogIn } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
 import WhatsAppButton from '../ui/WhatsAppButton';
+
+const navLinks = [
+  { to: '/', label: 'Home', icon: Home },
+  { to: '/pricing', label: 'Pricing', icon: Tag },
+  { to: '/about', label: 'About', icon: Info },
+  { to: '/contact', label: 'Contact', icon: MessageCircle },
+];
 
 export default function PublicLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -12,40 +19,52 @@ export default function PublicLayout() {
 
   useEffect(() => { initTheme(); }, []);
 
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [menuOpen]);
+
   return (
-    <div className="min-h-screen bg-dark-950">
-      <nav className="sticky top-0 z-50 bg-dark-900/80 backdrop-blur-md border-b border-dark-700/50">
+    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+
+      {/* ── Topbar ── */}
+      <nav className="sticky top-0 z-40 backdrop-blur-md border-b"
+        style={{ background: 'var(--bg-surface-blur, rgba(9,11,17,0.8))', borderColor: 'var(--border)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2.5">
+
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2.5 shrink-0">
               <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-success-500 rounded-xl flex items-center justify-center">
                 <Zap size={18} className="text-white" fill="white" />
               </div>
-              <span className="font-black text-dark-50 text-lg">BORHS <span className="text-primary-400">Data</span></span>
+              <span className="font-black text-lg" style={{ color: 'var(--text-primary)' }}>
+                BORHS <span className="text-primary-400">Data</span>
+              </span>
             </Link>
 
+            {/* Desktop nav */}
             <div className="hidden md:flex items-center gap-8">
-              {[['/', 'Home'], ['/pricing', 'Pricing'], ['/about', 'About'], ['/contact', 'Contact']].map(([path, label]) => (
+              {navLinks.map(({ to, label }) => (
                 <NavLink
-                  key={path}
-                  to={path}
-                  end={path === '/'}
+                  key={to}
+                  to={to}
+                  end={to === '/'}
                   className={({ isActive }) =>
-                    `text-sm font-medium transition-colors ${isActive ? 'text-primary-400' : 'text-dark-300 hover:text-dark-100'}`
+                    `text-sm font-medium transition-colors ${isActive ? 'text-primary-400' : 'hover:text-dark-100'}`
                   }
+                  style={({ isActive }) => ({ color: isActive ? undefined : 'var(--text-muted)' })}
                 >
                   {label}
                 </NavLink>
               ))}
             </div>
 
+            {/* Desktop actions */}
             <div className="hidden md:flex items-center gap-3">
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-xl transition-colors"
-                style={{ color: 'var(--text-muted)' }}
-                title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-              >
+              <button onClick={toggleTheme} className="p-2 rounded-xl transition-colors"
+                style={{ color: 'var(--text-muted)' }} title={theme === 'dark' ? 'Light mode' : 'Dark mode'}>
                 {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
               </button>
               {isAuthenticated ? (
@@ -58,49 +77,136 @@ export default function PublicLayout() {
               )}
             </div>
 
+            {/* Mobile controls */}
             <div className="md:hidden flex items-center gap-1">
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-xl transition-colors"
-                style={{ color: 'var(--text-muted)' }}
-              >
+              <button onClick={toggleTheme} className="p-2 rounded-xl transition-colors"
+                style={{ color: 'var(--text-muted)' }}>
                 {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
               </button>
               <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="p-2 rounded-xl text-dark-400 hover:bg-dark-700"
+                onClick={() => setMenuOpen(true)}
+                className="p-2 rounded-xl transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+                aria-label="Open menu"
               >
-                {menuOpen ? <X size={20} /> : <Menu size={20} />}
+                <Menu size={22} />
               </button>
             </div>
           </div>
-
-          {menuOpen && (
-            <div className="md:hidden border-t border-dark-700 py-4 space-y-1 animate-slide-up">
-              {[['/', 'Home'], ['/pricing', 'Pricing'], ['/about', 'About'], ['/contact', 'Contact']].map(([path, label]) => (
-                <Link
-                  key={path}
-                  to={path}
-                  className="block px-4 py-2.5 text-dark-300 hover:text-dark-100 hover:bg-dark-700/60 rounded-xl text-sm font-medium"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {label}
-                </Link>
-              ))}
-              <div className="pt-3 flex flex-col gap-2 px-4 border-t border-dark-700/50 mt-2">
-                {isAuthenticated ? (
-                  <Link to="/dashboard" className="btn-primary" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-                ) : (
-                  <>
-                    <Link to="/login" className="btn-secondary" onClick={() => setMenuOpen(false)}>Sign In</Link>
-                    <Link to="/register" className="btn-primary" onClick={() => setMenuOpen(false)}>Get Started</Link>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </nav>
+
+      {/* ── Mobile drawer backdrop ── */}
+      <div
+        className={`fixed inset-0 z-50 md:hidden transition-all duration-300 ${
+          menuOpen ? 'pointer-events-auto' : 'pointer-events-none'
+        }`}
+        aria-hidden={!menuOpen}
+      >
+        {/* Overlay */}
+        <div
+          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+            menuOpen ? 'opacity-100' : 'opacity-0'
+          }`}
+          onClick={() => setMenuOpen(false)}
+        />
+
+        {/* Drawer panel — slides from right */}
+        <div
+          className={`absolute top-0 right-0 h-full w-[78vw] max-w-xs flex flex-col transform transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+            menuOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+          style={{
+            background: 'var(--bg-surface)',
+            borderLeft: '1px solid var(--border)',
+            boxShadow: '-24px 0 80px rgba(0,0,0,0.5)',
+          }}
+        >
+          {/* Drawer header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b shrink-0"
+            style={{ borderColor: 'var(--border)' }}>
+            <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-success-500 rounded-xl flex items-center justify-center">
+                <Zap size={15} className="text-white" fill="white" />
+              </div>
+              <span className="font-black text-sm" style={{ color: 'var(--text-primary)' }}>
+                BORHS <span className="text-primary-400">Data</span>
+              </span>
+            </Link>
+            <button
+              onClick={() => setMenuOpen(false)}
+              className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+              style={{ color: 'var(--text-muted)', background: 'var(--bg-elevated)' }}
+              aria-label="Close menu"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Nav items */}
+          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
+            {navLinks.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === '/'}
+                onClick={() => setMenuOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                    isActive ? 'bg-primary-500/12' : 'hover:bg-white/5 active:bg-white/10'
+                  }`
+                }
+                style={({ isActive }) => ({ color: isActive ? '#60a5fa' : 'var(--text-secondary)' })}
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                      isActive ? 'bg-primary-500/20' : 'bg-white/5'
+                    }`}>
+                      <Icon size={15} strokeWidth={isActive ? 2.4 : 1.8}
+                        className={isActive ? 'text-primary-400' : ''}
+                        style={!isActive ? { color: 'var(--text-muted)' } : undefined} />
+                    </div>
+                    <span className="flex-1">{label}</span>
+                    {isActive && <span className="w-1.5 h-1.5 rounded-full bg-primary-400 shrink-0" />}
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* Bottom auth section */}
+          <div className="shrink-0 p-4 border-t space-y-2.5" style={{ borderColor: 'var(--border)' }}>
+            {/* Live status pill */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-1"
+              style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.18)' }}>
+              <span className="w-1.5 h-1.5 bg-success-400 rounded-full animate-pulse shrink-0" />
+              <span className="text-[11px] font-semibold" style={{ color: '#34d399' }}>
+                All systems operational
+              </span>
+            </div>
+
+            {isAuthenticated ? (
+              <Link to="/dashboard" onClick={() => setMenuOpen(false)}
+                className="btn-primary w-full gap-2 justify-center">
+                Go to Dashboard <ArrowRight size={15} />
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
+                  style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+                  <LogIn size={15} /> Sign In
+                </Link>
+                <Link to="/register" onClick={() => setMenuOpen(false)}
+                  className="btn-primary w-full gap-2 justify-center">
+                  Get Started Free <ArrowRight size={15} />
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
 
       <main>
         <Outlet />
