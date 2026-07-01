@@ -6,6 +6,14 @@ const BASE_URL = 'https://smeapi.com.ng/api';
 const NETWORK_IDS = { mtn: 1, airtel: 2, glo: 3, '9mobile': 4 };
 const NETWORK_NAMES = { mtn: 'MTN', airtel: 'Airtel', glo: 'Glo', '9mobile': '9mobile' };
 
+// smeapi requires 11-digit format starting with 0 (e.g. 09067812523)
+const toLocalPhone = (phone) => {
+  const digits = String(phone).replace(/\D/g, '');
+  if (digits.startsWith('234')) return '0' + digits.slice(3);
+  if (digits.startsWith('0')) return digits;
+  return phone;
+};
+
 const headers = () => ({
   Authorization: `Token ${process.env.SMEAPI_TOKEN}`,
   'Content-Type': 'application/json',
@@ -63,7 +71,7 @@ const purchaseData = async ({ network, planCode, phone, reference }) => {
   const data = await post('/data/', {
     network: networkId,
     data_plan: planCode, // ID from /dataplans/
-    phone,
+    phone: toLocalPhone(phone),
     ref: reference,
     ported_number: 'false',
   });
@@ -85,7 +93,7 @@ const purchaseAirtime = async ({ network, phone, amount, reference }) => {
   const data = await post('/airtime/', {
     network: networkId,
     amount,
-    phone,
+    phone: toLocalPhone(phone),
     ref: reference,
     ported_number: 'false',
   });
@@ -122,7 +130,7 @@ const purchaseCable = async ({ provider, smartCardNumber, packageCode, amount, p
     smart_card: smartCardNumber,
     plan_id: packageCode,
     amount,
-    phone,
+    phone: toLocalPhone(phone),
     ref: reference,
   });
 
@@ -160,7 +168,7 @@ const purchaseElectricity = async ({ provider, meterNumber, meterType, amount, p
     meter_number: meterNumber,
     meter_type: meterType.toUpperCase(),
     amount,
-    phone,
+    phone: toLocalPhone(phone),
     ref: reference,
   });
 
