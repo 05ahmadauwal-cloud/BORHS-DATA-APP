@@ -137,6 +137,38 @@ router.get('/test/email', asyncHandler(async (req, res) => {
   }
 }));
 
+// ─── Monnify Health Check ─────────────────────────────────────────────────────
+router.get('/test/monnify', asyncHandler(async (req, res) => {
+  try {
+    const { createReservedAccount } = require('../../services/monnify');
+    const User = require('../../models/User');
+    const user = await User.findById(req.user._id);
+    const va = await createReservedAccount(user);
+    // Also save to this admin user as a test
+    await User.findByIdAndUpdate(req.user._id, { monnifyVirtualAccount: va });
+    return ApiResponse.success(res, { virtualAccount: va }, 'Monnify connected ✓ Virtual account created');
+  } catch (err) {
+    const detail = err.response?.data || err.message;
+    return ApiResponse.error(res, `Monnify error: ${JSON.stringify(detail)}`, 400, detail);
+  }
+}));
+
+// Force-create virtual account for a specific user (admin tool)
+router.post('/users/:id/create-virtual-account', asyncHandler(async (req, res) => {
+  const User = require('../../models/User');
+  const { createReservedAccount } = require('../../services/monnify');
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return ApiResponse.error(res, 'User not found', 404);
+    const va = await createReservedAccount(user);
+    await User.findByIdAndUpdate(req.params.id, { monnifyVirtualAccount: va });
+    return ApiResponse.success(res, { virtualAccount: va }, 'Virtual account created');
+  } catch (err) {
+    const detail = err.response?.data || err.message;
+    return ApiResponse.error(res, `Monnify error: ${JSON.stringify(detail)}`, 400, detail);
+  }
+}));
+
 // ─── Provider Health Check ────────────────────────────────────────────────────
 router.get('/test/smeapi', asyncHandler(async (req, res) => {
   try {
