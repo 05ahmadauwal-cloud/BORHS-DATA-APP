@@ -8,15 +8,16 @@ const { processCommission } = require('../agent/agent.service');
 const logger = require('../../utils/logger');
 
 const purchaseAirtime = async (userId, body) => {
-  const { network, phone, amount } = body;
+  const { network, phone } = body;
+  const amount = Number(body.amount);
   const targetPhone = sanitizePhone(phone);
 
-  if (amount < 50) throw Object.assign(new Error('Minimum airtime amount is ₦50'), { statusCode: 400 });
+  if (amount < 100) throw Object.assign(new Error('Minimum airtime amount is ₦100'), { statusCode: 400 });
   if (amount > 50000) throw Object.assign(new Error('Maximum airtime amount is ₦50,000'), { statusCode: 400 });
 
   const user = await User.findById(userId);
   const discountRate = user.role === 'agent' ? 0.03 : 0;
-  const price = amount * (1 - discountRate);
+  const price = Math.ceil(amount * (1 - discountRate));
 
   if (user.walletBalance < price) {
     throw Object.assign(new Error('Insufficient wallet balance'), { statusCode: 400 });
@@ -35,14 +36,25 @@ const purchaseAirtime = async (userId, body) => {
     status: TRANSACTION_STATUS.PENDING,
   });
 
+  // Debit wallet
+  let debitResult;
   try {
-    const debitResult = await debitWallet(
+    debitResult = await debitWallet(
       userId, price, TRANSACTION_TYPES.AIRTIME_PURCHASE,
       `₦${amount} ${network.toUpperCase()} airtime for ${targetPhone}`,
       { network, phone: targetPhone }
     );
     purchase.transaction = debitResult.transaction._id;
+    await purchase.save();
+  } catch (error) {
+    purchase.status = TRANSACTION_STATUS.FAILED;
+    purchase.failureReason = error.message;
+    await purchase.save();
+    throw error;
+  }
 
+  // Call provider
+  try {
     const providerResult = await withFallback('purchaseAirtime', {
       network,
       phone: targetPhone,
@@ -57,16 +69,23 @@ const purchaseAirtime = async (userId, body) => {
     purchase.completedAt = new Date();
     await purchase.save();
 
-    await processCommission(userId, price, TRANSACTION_TYPES.AIRTIME_PURCHASE, debitResult.transaction._id)
+    processCommission(userId, price, TRANSACTION_TYPES.AIRTIME_PURCHASE, debitResult.transaction._id)
       .catch((e) => logger.error('Commission error:', e));
 
     return purchase;
   } catch (error) {
+    logger.error(`[AirtimePurchase] Provider failed: ${error.message}`);
     purchase.status = TRANSACTION_STATUS.FAILED;
     purchase.failureReason = error.message;
     await purchase.save();
+
+    // Refund wallet
     await User.findByIdAndUpdate(userId, { $inc: { walletBalance: price } });
-    throw Object.assign(new Error(`Airtime purchase failed: ${error.message}`), { statusCode: 502 });
+
+    throw Object.assign(
+      new Error(`Airtime purchase failed: ${error.message}. Your wallet has been refunded.`),
+      { statusCode: 502 }
+    );
   }
 };
 

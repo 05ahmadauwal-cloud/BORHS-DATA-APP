@@ -11,7 +11,7 @@ const NETWORKS = [
   { id: 'glo', label: 'Glo', emoji: '🟢' },
   { id: '9mobile', label: '9Mobile', emoji: '🟩' },
 ];
-const QUICK_AMOUNTS = [50, 100, 200, 500, 1000, 2000];
+const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
 export default function Airtime() {
   const { user, updateUser } = useAuthStore();
@@ -96,7 +96,7 @@ export default function Airtime() {
           <button
             onClick={() => {
               if (!form.phone) return toast.error('Enter phone number');
-              if (!form.amount || Number(form.amount) < 50) return toast.error('Minimum amount is ₦50');
+              if (!form.amount || Number(form.amount) < 100) return toast.error('Minimum amount is ₦100');
               setStep(2);
             }}
             className="btn-primary w-full btn-lg"
