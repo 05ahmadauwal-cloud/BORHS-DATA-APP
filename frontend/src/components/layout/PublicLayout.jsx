@@ -130,7 +130,7 @@ export default function PublicLayout() {
           </div>
           <div className="mt-12 pt-8 border-t border-dark-700/50 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-dark-500 text-sm">© 2024 BORHS Data. All rights reserved.</p>
-            <p className="text-dark-500 text-sm">Built with ❤️ in Nigeria 🇳🇬</p>
+            <p className="text-dark-500 text-sm">Built by Ahmad Auwal Abubakar</p>
           </div>
         </div>
       </footer>
