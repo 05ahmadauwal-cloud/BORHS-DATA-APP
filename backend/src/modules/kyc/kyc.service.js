@@ -3,17 +3,12 @@ const User = require('../../models/User');
 const { KYC_STATUS, KYC_APPROVAL_STATUS } = require('../../config/constants');
 
 const submitTier1 = async (userId) => {
-  const user = await User.findById(userId);
-  if (!user.isPhoneVerified) {
-    throw Object.assign(new Error('Phone number must be verified for Tier 1 KYC'), { statusCode: 400 });
-  }
-
+  // Auto-approve: user already supplied their name and phone at registration
   await KYC.findOneAndUpdate(
     { user: userId, tier: 1 },
-    { user: userId, tier: 1, status: KYC_APPROVAL_STATUS.APPROVED, phoneVerified: true, phoneVerifiedAt: new Date() },
+    { user: userId, tier: 1, status: KYC_APPROVAL_STATUS.APPROVED, phoneVerified: true, phoneVerifiedAt: new Date(), submittedAt: new Date() },
     { upsert: true, new: true }
   );
-
   await User.findByIdAndUpdate(userId, { kycStatus: KYC_STATUS.TIER1 });
   return { tier: 1, status: 'approved' };
 };
@@ -95,21 +90,36 @@ const reviewKYC = async (adminId, kycId, action, rejectionReason) => {
 };
 
 const getPendingKYC = async (query = {}) => {
-  const { page = 1, limit = 20, tier } = query;
+  return getKYCSubmissions({ ...query, status: 'pending' });
+};
+
+const getKYCSubmissions = async (query = {}) => {
+  const { page = 1, limit = 20, tier, status = 'pending' } = query;
   const skip = (page - 1) * limit;
-  const filter = { status: KYC_APPROVAL_STATUS.PENDING };
+  const filter = {};
+  if (status !== 'all') filter.status = status;
   if (tier) filter.tier = Number(tier);
 
   const [data, total] = await Promise.all([
     KYC.find(filter)
-      .populate('user', 'firstName lastName email phone')
-      .sort({ submittedAt: 1 })
+      .populate('user', 'firstName lastName email phone kycStatus')
+      .sort({ submittedAt: -1 })
       .skip(skip)
       .limit(Number(limit))
+      .select('-idFrontImage -idBackImage -selfieImage') // exclude heavy base64 from list
       .lean(),
     KYC.countDocuments(filter),
   ]);
   return { data, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) } };
 };
 
-module.exports = { submitTier1, submitTier2, submitTier3, getKYCStatus, reviewKYC, getPendingKYC };
+const getKYCById = async (kycId) => {
+  const kyc = await KYC.findById(kycId)
+    .populate('user', 'firstName lastName email phone kycStatus')
+    .populate('reviewedBy', 'firstName lastName')
+    .lean();
+  if (!kyc) throw Object.assign(new Error('KYC record not found'), { statusCode: 404 });
+  return kyc;
+};
+
+module.exports = { submitTier1, submitTier2, submitTier3, getKYCStatus, reviewKYC, getPendingKYC, getKYCSubmissions, getKYCById };

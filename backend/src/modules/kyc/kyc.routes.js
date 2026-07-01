@@ -58,10 +58,20 @@ router.post('/tier3',
   })
 );
 
-// Admin routes
+// Admin routes — specific paths before /:id
 router.get('/pending', authorize('admin', 'super_admin'), asyncHandler(async (req, res) => {
   const data = await kycService.getPendingKYC(req.query);
   return ApiResponse.success(res, data);
+}));
+
+router.get('/submissions', authorize('admin', 'super_admin'), asyncHandler(async (req, res) => {
+  const data = await kycService.getKYCSubmissions(req.query);
+  return ApiResponse.success(res, data);
+}));
+
+router.get('/:id', authorize('admin', 'super_admin'), asyncHandler(async (req, res) => {
+  const kyc = await kycService.getKYCById(req.params.id);
+  return ApiResponse.success(res, { kyc });
 }));
 
 router.patch('/:id/review', authorize('admin', 'super_admin'), asyncHandler(async (req, res) => {

@@ -113,5 +113,7 @@ export const adminAPI = {
   getSettings: () => api.get('/admin/settings'),
   updateSettings: (data) => api.patch('/admin/settings', data),
   getPendingKYC: (params) => api.get('/kyc/pending', { params }),
+  getAllKYC: (params) => api.get('/kyc/submissions', { params }),
+  getKYCById: (id) => api.get(`/kyc/${id}`),
   reviewKYC: (id, action, reason) => api.patch(`/kyc/${id}/review`, { action, rejectionReason: reason }),
 };

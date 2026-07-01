@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { authAPI, kycAPI, walletAPI } from '../../api';
+import { useMutation } from '@tanstack/react-query';
+import { authAPI, walletAPI } from '../../api';
 import {
   User, Shield, Lock, KeyRound, CheckCircle, Copy, Check,
-  Mail, Phone, Calendar, Star, Wallet, Eye, EyeOff,
-  BadgeCheck, Clock, AlertCircle, ChevronRight,
+  Mail, Phone, Calendar, Star, Wallet, Eye, EyeOff, AlertCircle, ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
+import KYCFlow from './KYCFlow';
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -73,23 +73,11 @@ function PasswordInput({ placeholder, value, onChange }) {
   );
 }
 
-const KYC_TIER_CONFIG = [
-  { tier: 1, label: 'Phone Verification', desc: 'Verify your phone number to unlock basic features', icon: Phone },
-  { tier: 2, label: 'ID Verification', desc: 'Upload your national ID, driver\'s license or passport', icon: BadgeCheck },
-  { tier: 3, label: 'Selfie Verification', desc: 'Take a selfie to complete full identity verification', icon: User },
-];
-
 export default function Profile() {
   const { user, updateUser } = useAuthStore();
   const [activeTab, setActiveTab] = useState('profile');
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const [pin, setPin] = useState('');
-
-  const { data: kycStatus } = useQuery({
-    queryKey: ['kyc-status'],
-    queryFn: () => kycAPI.getStatus(),
-    select: (res) => res.data,
-  });
 
   const changePwMutation = useMutation({
     mutationFn: () => authAPI.changePassword({ currentPassword: pwForm.currentPassword, newPassword: pwForm.newPassword }),
@@ -103,21 +91,9 @@ export default function Profile() {
     onError: (err) => toast.error(err.response?.data?.message || 'Failed'),
   });
 
-  const tier1Mutation = useMutation({
-    mutationFn: () => kycAPI.submitTier1(),
-    onSuccess: () => { toast.success('Tier 1 KYC completed!'); updateUser({ kycStatus: 'tier1' }); },
-    onError: (err) => toast.error(err.response?.data?.message || 'Phone must be verified first'),
-  });
-
   const initials = `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase();
   const memberSince = user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' }) : '—';
   const balance = (user?.walletBalance || 0).toLocaleString('en-NG');
-
-  const getTierStatus = (tier) => {
-    if (!kycStatus) return 'pending';
-    if (tier === 1) return kycStatus.overallStatus !== 'none' ? 'approved' : 'pending';
-    return kycStatus?.records?.find(r => r.tier === tier)?.status || 'pending';
-  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 pb-6">
@@ -246,90 +222,7 @@ export default function Profile() {
       )}
 
       {/* ── KYC Tab ──────────────────────────────────────────────────── */}
-      {activeTab === 'kyc' && (
-        <div className="space-y-3">
-          {/* Info banner */}
-          <div className="card p-4 flex gap-3" style={{ background: 'rgba(37,99,235,0.08)', borderColor: 'rgba(37,99,235,0.2)' }}>
-            <Shield size={18} className="text-blue-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-blue-300">Identity Verification</p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                Complete KYC to unlock higher transaction limits and all platform features.
-              </p>
-            </div>
-          </div>
-
-          {/* Tier cards */}
-          {KYC_TIER_CONFIG.map(({ tier, label, desc, icon: Icon }) => {
-            const status = getTierStatus(tier);
-            const isApproved = status === 'approved' || status === 'completed';
-            const isPending = status === 'under_review';
-
-            return (
-              <div key={tier} className="card p-4 flex items-center gap-4"
-                style={isApproved ? { borderColor: 'rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.04)' } : {}}>
-                {/* Step circle */}
-                <div className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center shrink-0 font-black transition-all ${
-                  isApproved
-                    ? 'bg-success-500/15 border border-success-500/30'
-                    : isPending
-                    ? 'bg-yellow-500/15 border border-yellow-500/30'
-                    : 'border'
-                }`}
-                  style={!isApproved && !isPending ? { background: 'var(--bg-elevated)', borderColor: 'var(--border)' } : {}}>
-                  {isApproved
-                    ? <CheckCircle size={22} className="text-success-400" />
-                    : isPending
-                    ? <Clock size={22} className="text-yellow-400" />
-                    : <span className="text-lg" style={{ color: 'var(--text-muted)' }}>{tier}</span>
-                  }
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Tier {tier} — {label}</p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{desc}</p>
-                </div>
-
-                {/* Status badge */}
-                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${
-                  isApproved ? 'bg-success-500/15 text-success-400' :
-                  isPending ? 'bg-yellow-500/15 text-yellow-400' :
-                  'bg-dark-700 text-dark-400'
-                }`}>
-                  {isApproved ? 'Done' : isPending ? 'Review' : 'Pending'}
-                </span>
-              </div>
-            );
-          })}
-
-          {/* Action */}
-          {user?.isPhoneVerified && user?.kycStatus === 'none' && (
-            <button
-              onClick={() => tier1Mutation.mutate()}
-              disabled={tier1Mutation.isPending}
-              className="btn-primary w-full gap-2"
-            >
-              {tier1Mutation.isPending ? (
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <Shield size={16} />
-              )}
-              {tier1Mutation.isPending ? 'Processing...' : 'Complete Tier 1 Verification'}
-            </button>
-          )}
-
-          {!user?.isPhoneVerified && (
-            <div className="card p-4 flex gap-3 text-sm"
-              style={{ background: 'rgba(234,179,8,0.06)', borderColor: 'rgba(234,179,8,0.2)' }}>
-              <AlertCircle size={16} className="text-yellow-400 shrink-0 mt-0.5" />
-              <p style={{ color: 'var(--text-muted)' }}>
-                You need to verify your phone number before completing KYC.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+      {activeTab === 'kyc' && <KYCFlow />}
 
       {/* ── Security Tab ─────────────────────────────────────────────── */}
       {activeTab === 'security' && (
