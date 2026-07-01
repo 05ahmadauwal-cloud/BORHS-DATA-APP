@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { authAPI, walletAPI } from '../../api';
 import {
-  User, Shield, Lock, KeyRound, CheckCircle, Copy, Check,
+  User, Shield, Lock, KeyRound, CheckCircle, Copy, Check, Clock,
   Mail, Phone, Calendar, Star, Wallet, Eye, EyeOff, AlertCircle, ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
