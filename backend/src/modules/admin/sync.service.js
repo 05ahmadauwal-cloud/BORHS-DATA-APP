@@ -58,6 +58,15 @@ const syncDataPlans = async (commissionRates = {}) => {
   const rawPlans = await fetchAllPlans();
   const results = { synced: 0, networks: {}, errors: [] };
 
+  const normalizeType = (t = '') => {
+    const lower = t.toLowerCase();
+    if (lower.includes('sme')) return 'sme';
+    if (lower.includes('corporate') || lower.includes('corp')) return 'corporate';
+    if (lower.includes('gift')) return 'gifting';
+    if (lower.includes('direct')) return 'direct';
+    return 'sme';
+  };
+
   for (const plan of rawPlans) {
     const network = NETWORK_MAP[plan.network] || plan.network?.toLowerCase();
     if (!network) continue;
@@ -75,10 +84,10 @@ const syncDataPlans = async (commissionRates = {}) => {
         {
           planId,
           network,
-          name: `${plan.name} ${plan.type || ''} ${plan.days || ''}`.trim(),
+          name: `${plan.name} ${plan.days || ''}`.trim(),
           dataSize: plan.name,
           validity: plan.days || '30 Days',
-          dataType: (plan.type || 'sme').toLowerCase(),
+          dataType: normalizeType(plan.type),
           costPrice,
           sellingPrice,
           agentPrice,

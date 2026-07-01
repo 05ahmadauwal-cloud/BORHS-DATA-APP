@@ -37,7 +37,7 @@ const isSuccess = (data) => {
 };
 
 const getError = (data) =>
-  data?.message || data?.Message || data?.error || data?.detail || 'Transaction failed';
+  data?.message || data?.Message || data?.msg || data?.error || data?.detail || 'Transaction failed';
 
 // ─── Balance ──────────────────────────────────────────────────────────────────
 const checkBalance = async () => {
