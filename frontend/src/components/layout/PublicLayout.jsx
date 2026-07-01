@@ -109,11 +109,11 @@ export default function PublicLayout() {
       <footer className="border-t mt-16" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-          {/* Main grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-7">
+          {/* Main grid: brand row + 3 link columns always side by side */}
+          <div className="flex flex-col gap-7 sm:flex-row sm:gap-6">
 
             {/* Brand */}
-            <div className="col-span-2 md:col-span-1">
+            <div className="sm:w-52 shrink-0">
               <div className="flex items-center gap-2 mb-2.5">
                 <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-success-500 rounded-lg flex items-center justify-center shrink-0">
                   <Zap size={13} className="text-white" fill="white" />
@@ -123,9 +123,8 @@ export default function PublicLayout() {
               <p className="text-xs leading-relaxed" style={{ color: 'var(--text-faint)' }}>
                 Nigeria's most reliable VTU platform. Fast, cheap, and secure.
               </p>
-              {/* WhatsApp badge */}
               <a
-                href={`https://wa.me/2347065896598`}
+                href="https://wa.me/2347065896598"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors hover:opacity-80"
@@ -136,56 +135,58 @@ export default function PublicLayout() {
               </a>
             </div>
 
-            {/* Links */}
-            {[
-              {
-                title: 'Services',
-                items: [
-                  { label: 'Buy Data', to: '/data' },
-                  { label: 'Buy Airtime', to: '/airtime' },
-                  { label: 'Electricity', to: '/electricity' },
-                  { label: 'Cable TV', to: '/cable' },
-                  { label: 'Exam PINs', to: '/education' },
-                ],
-              },
-              {
-                title: 'Company',
-                items: [
-                  { label: 'About Us', to: '/about' },
-                  { label: 'Pricing', to: '/pricing' },
-                  { label: 'Contact', to: '/contact' },
-                  { label: 'Refer & Earn', to: '/referrals' },
-                ],
-              },
-              {
-                title: 'Support',
-                items: [
-                  { label: 'Help Center', to: '/contact' },
-                  { label: 'Terms of Service', to: '/contact' },
-                  { label: 'Privacy Policy', to: '/contact' },
-                  { label: 'Become an Agent', to: '/become-agent' },
-                ],
-              },
-            ].map((col) => (
-              <div key={col.title}>
-                <p className="text-[11px] font-black uppercase tracking-widest mb-3" style={{ color: 'var(--text-faint)' }}>
-                  {col.title}
-                </p>
-                <ul className="space-y-2">
-                  {col.items.map(({ label, to }) => (
-                    <li key={label}>
-                      <Link
-                        to={to}
-                        className="text-xs font-medium transition-colors hover:text-primary-400"
-                        style={{ color: 'var(--text-muted)' }}
-                      >
-                        {label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            {/* Links — always 3 columns side by side */}
+            <div className="flex-1 grid grid-cols-3 gap-4">
+              {[
+                {
+                  title: 'Services',
+                  items: [
+                    { label: 'Buy Data', to: '/data' },
+                    { label: 'Buy Airtime', to: '/airtime' },
+                    { label: 'Electricity', to: '/electricity' },
+                    { label: 'Cable TV', to: '/cable' },
+                    { label: 'Exam PINs', to: '/education' },
+                  ],
+                },
+                {
+                  title: 'Company',
+                  items: [
+                    { label: 'About Us', to: '/about' },
+                    { label: 'Pricing', to: '/pricing' },
+                    { label: 'Contact', to: '/contact' },
+                    { label: 'Refer & Earn', to: '/referrals' },
+                  ],
+                },
+                {
+                  title: 'Support',
+                  items: [
+                    { label: 'Help Center', to: '/contact' },
+                    { label: 'Terms of Use', to: '/contact' },
+                    { label: 'Privacy Policy', to: '/contact' },
+                    { label: 'Become Agent', to: '/become-agent' },
+                  ],
+                },
+              ].map((col) => (
+                <div key={col.title}>
+                  <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: 'var(--text-faint)' }}>
+                    {col.title}
+                  </p>
+                  <ul className="space-y-2">
+                    {col.items.map(({ label, to }) => (
+                      <li key={label}>
+                        <Link
+                          to={to}
+                          className="text-xs font-medium transition-colors hover:text-primary-400 leading-snug block"
+                          style={{ color: 'var(--text-muted)' }}
+                        >
+                          {label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Bottom bar */}
