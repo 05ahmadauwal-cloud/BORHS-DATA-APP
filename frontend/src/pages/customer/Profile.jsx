@@ -1,15 +1,87 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { authAPI, kycAPI, walletAPI } from '../../api';
-import { User, Shield, Lock, KeyRound, CheckCircle } from 'lucide-react';
+import {
+  User, Shield, Lock, KeyRound, CheckCircle, Copy, Check,
+  Mail, Phone, Calendar, Star, Wallet, Eye, EyeOff,
+  BadgeCheck, Clock, AlertCircle, ChevronRight,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 
-const TABS = ['Profile', 'KYC', 'Security'];
+const TABS = [
+  { id: 'profile', label: 'Profile', icon: User },
+  { id: 'kyc', label: 'KYC', icon: Shield },
+  { id: 'security', label: 'Security', icon: Lock },
+];
+
+function CopyButton({ value }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      className="p-1.5 rounded-lg transition-all hover:bg-dark-600 active:scale-90"
+      style={{ color: 'var(--text-muted)' }}
+      title="Copy"
+    >
+      {copied ? <Check size={13} className="text-success-400" /> : <Copy size={13} />}
+    </button>
+  );
+}
+
+function InfoRow({ icon: Icon, label, value, copyable }) {
+  return (
+    <div className="flex items-center gap-3 py-3.5 border-b last:border-0" style={{ borderColor: 'var(--border)' }}>
+      <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+        style={{ background: 'var(--bg-elevated)' }}>
+        <Icon size={15} style={{ color: 'var(--text-muted)' }} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-medium mb-0.5" style={{ color: 'var(--text-muted)' }}>{label}</p>
+        <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{value || '—'}</p>
+      </div>
+      {copyable && value && <CopyButton value={value} />}
+    </div>
+  );
+}
+
+function PasswordInput({ placeholder, value, onChange }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <input
+        type={show ? 'text' : 'password'}
+        className="input pr-10"
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+      />
+      <button
+        type="button"
+        onClick={() => setShow(!show)}
+        className="absolute right-3 top-1/2 -translate-y-1/2"
+        style={{ color: 'var(--text-muted)' }}
+      >
+        {show ? <EyeOff size={15} /> : <Eye size={15} />}
+      </button>
+    </div>
+  );
+}
+
+const KYC_TIER_CONFIG = [
+  { tier: 1, label: 'Phone Verification', desc: 'Verify your phone number to unlock basic features', icon: Phone },
+  { tier: 2, label: 'ID Verification', desc: 'Upload your national ID, driver\'s license or passport', icon: BadgeCheck },
+  { tier: 3, label: 'Selfie Verification', desc: 'Take a selfie to complete full identity verification', icon: User },
+];
 
 export default function Profile() {
   const { user, updateUser } = useAuthStore();
-  const [activeTab, setActiveTab] = useState('Profile');
+  const [activeTab, setActiveTab] = useState('profile');
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const [pin, setPin] = useState('');
 
@@ -37,155 +109,356 @@ export default function Profile() {
     onError: (err) => toast.error(err.response?.data?.message || 'Phone must be verified first'),
   });
 
+  const initials = `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase();
+  const memberSince = user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' }) : '—';
+  const balance = (user?.walletBalance || 0).toLocaleString('en-NG');
+
+  const getTierStatus = (tier) => {
+    if (!kycStatus) return 'pending';
+    if (tier === 1) return kycStatus.overallStatus !== 'none' ? 'approved' : 'pending';
+    return kycStatus?.records?.find(r => r.tier === tier)?.status || 'pending';
+  };
+
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div className="page-header">
-        <h1 className="page-title flex items-center gap-3"><User className="text-primary-400" />My Profile</h1>
+    <div className="max-w-2xl mx-auto space-y-4 pb-6">
+
+      {/* Hero Card */}
+      <div className="card overflow-hidden">
+        {/* Banner gradient */}
+        <div className="h-24 sm:h-28 relative" style={{
+          background: 'linear-gradient(135deg, #1e3a5f 0%, #0f2942 40%, #1a1f3a 100%)',
+        }}>
+          <div className="absolute inset-0 opacity-20"
+            style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #3b82f6 0%, transparent 60%), radial-gradient(circle at 80% 20%, #8b5cf6 0%, transparent 50%)' }}
+          />
+        </div>
+
+        <div className="px-4 sm:px-6 pb-5">
+          {/* Avatar — overlaps banner */}
+          <div className="flex items-end justify-between -mt-10 mb-4">
+            <div className="relative">
+              <div className="w-20 h-20 rounded-2xl border-4 flex items-center justify-center shadow-xl"
+                style={{
+                  background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+                  borderColor: 'var(--bg-card)',
+                }}>
+                <span className="text-2xl font-black text-white">{initials}</span>
+              </div>
+              {user?.isEmailVerified && (
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-success-500 rounded-full flex items-center justify-center border-2"
+                  style={{ borderColor: 'var(--bg-card)' }}>
+                  <Check size={10} className="text-white" strokeWidth={3} />
+                </div>
+              )}
+            </div>
+            <span className="text-xs font-bold px-3 py-1.5 rounded-full capitalize"
+              style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}>
+              {user?.role?.replace('_', ' ')}
+            </span>
+          </div>
+
+          {/* Name & email */}
+          <div className="mb-4">
+            <h1 className="text-xl sm:text-2xl font-black" style={{ color: 'var(--text-primary)' }}>
+              {user?.firstName} {user?.lastName}
+            </h1>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
+          </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {[
+              { icon: Wallet, label: 'Balance', value: `₦${balance}`, color: 'text-success-400' },
+              { icon: Calendar, label: 'Member Since', value: memberSince, color: 'text-blue-400' },
+              { icon: Star, label: 'Referral Code', value: user?.referralCode, color: 'text-yellow-400', copy: true },
+            ].map(({ icon: Icon, label, value, color, copy }) => (
+              <div key={label} className="rounded-xl p-3 flex flex-col gap-1"
+                style={{ background: 'var(--bg-elevated)' }}>
+                <Icon size={14} className={color} />
+                <p className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>{label}</p>
+                <div className="flex items-center gap-1">
+                  <p className={`text-xs sm:text-sm font-bold truncate ${color}`}>{value || '—'}</p>
+                  {copy && value && <CopyButton value={value} />}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-dark-800 p-1 rounded-xl w-fit">
-        {TABS.map((tab) => (
+      <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl" style={{ background: 'var(--bg-surface)' }}>
+        {TABS.map(({ id, label, icon: Icon }) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
-              activeTab === tab ? 'bg-primary-600 text-white' : 'text-dark-400 hover:text-dark-200'
+            key={id}
+            onClick={() => setActiveTab(id)}
+            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+              activeTab === id
+                ? 'bg-primary-600 text-white shadow-sm'
+                : 'hover:text-dark-100'
             }`}
+            style={{ color: activeTab === id ? undefined : 'var(--text-muted)' }}
           >
-            {tab}
+            <Icon size={15} />
+            <span className="hidden sm:inline">{label}</span>
+            <span className="sm:hidden text-xs">{label}</span>
           </button>
         ))}
       </div>
 
-      {/* Profile */}
-      {activeTab === 'Profile' && (
-        <div className="card p-6 space-y-6">
-          <div className="flex items-center gap-5">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary-500/30 to-success-500/30 border-2 border-primary-500/30 rounded-full flex items-center justify-center">
-              <span className="text-3xl font-black text-primary-400">{user?.firstName?.[0]}{user?.lastName?.[0]}</span>
-            </div>
-            <div>
-              <h2 className="text-2xl font-black text-dark-50">{user?.firstName} {user?.lastName}</h2>
-              <p className="text-dark-400">{user?.email}</p>
-              <div className="flex gap-2 mt-2">
-                <span className="badge-info capitalize">{user?.role?.replace('_', ' ')}</span>
-                <span className={`badge ${user?.isEmailVerified ? 'badge-success' : 'badge-warning'}`}>
-                  {user?.isEmailVerified ? 'Email Verified' : 'Email Unverified'}
-                </span>
-                <span className="badge-gray capitalize">KYC: {user?.kycStatus || 'none'}</span>
-              </div>
-            </div>
+      {/* ── Profile Tab ──────────────────────────────────────────────── */}
+      {activeTab === 'profile' && (
+        <div className="card p-0 overflow-hidden">
+          <div className="px-5 py-4 border-b flex items-center gap-2"
+            style={{ borderColor: 'var(--border)' }}>
+            <User size={16} className="text-primary-400" />
+            <h2 className="font-bold" style={{ color: 'var(--text-primary)' }}>Account Information</h2>
+          </div>
+          <div className="px-5 divide-y" style={{ divideColor: 'var(--border)' }}>
+            <InfoRow icon={User} label="First Name" value={user?.firstName} />
+            <InfoRow icon={User} label="Last Name" value={user?.lastName} />
+            <InfoRow icon={Mail} label="Email Address" value={user?.email} copyable />
+            <InfoRow icon={Phone} label="Phone Number" value={user?.phone} copyable />
+            <InfoRow icon={Star} label="Referral Code" value={user?.referralCode} copyable />
+            <InfoRow icon={Calendar} label="Member Since" value={memberSince} />
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            {[
-              ['First Name', user?.firstName],
-              ['Last Name', user?.lastName],
-              ['Email', user?.email],
-              ['Phone', user?.phone],
-              ['Referral Code', user?.referralCode],
-              ['Wallet Balance', `₦${(user?.walletBalance || 0).toLocaleString()}`],
-              ['Member Since', user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'],
-              ['Role', user?.role?.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <p className="text-xs text-dark-500 mb-1">{label}</p>
-                <p className="text-dark-100 font-medium">{value || '—'}</p>
-              </div>
-            ))}
+          {/* Badges */}
+          <div className="px-5 py-4 flex flex-wrap gap-2 border-t" style={{ borderColor: 'var(--border)' }}>
+            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full ${
+              user?.isEmailVerified ? 'bg-success-500/10 text-success-400 border border-success-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+            }`}>
+              {user?.isEmailVerified ? <CheckCircle size={11} /> : <AlertCircle size={11} />}
+              {user?.isEmailVerified ? 'Email Verified' : 'Email Unverified'}
+            </span>
+            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full ${
+              user?.isPhoneVerified ? 'bg-success-500/10 text-success-400 border border-success-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+            }`}>
+              {user?.isPhoneVerified ? <CheckCircle size={11} /> : <Clock size={11} />}
+              {user?.isPhoneVerified ? 'Phone Verified' : 'Phone Unverified'}
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+              <Shield size={11} />
+              KYC: {user?.kycStatus || 'None'}
+            </span>
           </div>
         </div>
       )}
 
-      {/* KYC */}
-      {activeTab === 'KYC' && (
-        <div className="card p-6 space-y-5">
-          <h2 className="text-lg font-bold text-dark-100 flex items-center gap-2"><Shield size={18} className="text-primary-400" />KYC Verification</h2>
-          <p className="text-dark-400 text-sm">Complete KYC to unlock higher transaction limits and withdrawal features.</p>
-
-          <div className="space-y-3">
-            {[
-              { tier: 1, label: 'Tier 1 – Phone Verification', desc: 'Verify your phone number', status: kycStatus?.overallStatus === 'none' ? 'pending' : 'completed' },
-              { tier: 2, label: 'Tier 2 – ID Verification', desc: 'Upload your national ID, drivers license, or passport', status: kycStatus?.records?.find(r => r.tier === 2)?.status || 'pending' },
-              { tier: 3, label: 'Tier 3 – Selfie Verification', desc: 'Take a selfie for face verification', status: kycStatus?.records?.find(r => r.tier === 3)?.status || 'pending' },
-            ].map((item) => (
-              <div key={item.tier} className="flex items-center justify-between p-4 rounded-xl border border-dark-600">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                    item.status === 'approved' || item.status === 'completed' ? 'bg-success-500/10 text-success-500 border border-success-500/20' : 'bg-dark-700 text-dark-400 border border-dark-600'
-                  }`}>
-                    {item.status === 'approved' || item.status === 'completed' ? <CheckCircle size={14} /> : item.tier}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-dark-100 text-sm">{item.label}</p>
-                    <p className="text-xs text-dark-400">{item.desc}</p>
-                  </div>
-                </div>
-                <span className={`badge text-xs ${
-                  item.status === 'approved' || item.status === 'completed' ? 'badge-success' :
-                  item.status === 'pending' && item.tier === 1 ? 'badge-gray' : 'badge-warning'
-                }`}>{item.status}</span>
-              </div>
-            ))}
+      {/* ── KYC Tab ──────────────────────────────────────────────────── */}
+      {activeTab === 'kyc' && (
+        <div className="space-y-3">
+          {/* Info banner */}
+          <div className="card p-4 flex gap-3" style={{ background: 'rgba(37,99,235,0.08)', borderColor: 'rgba(37,99,235,0.2)' }}>
+            <Shield size={18} className="text-blue-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-blue-300">Identity Verification</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                Complete KYC to unlock higher transaction limits and all platform features.
+              </p>
+            </div>
           </div>
 
+          {/* Tier cards */}
+          {KYC_TIER_CONFIG.map(({ tier, label, desc, icon: Icon }) => {
+            const status = getTierStatus(tier);
+            const isApproved = status === 'approved' || status === 'completed';
+            const isPending = status === 'under_review';
+
+            return (
+              <div key={tier} className="card p-4 flex items-center gap-4"
+                style={isApproved ? { borderColor: 'rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.04)' } : {}}>
+                {/* Step circle */}
+                <div className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center shrink-0 font-black transition-all ${
+                  isApproved
+                    ? 'bg-success-500/15 border border-success-500/30'
+                    : isPending
+                    ? 'bg-yellow-500/15 border border-yellow-500/30'
+                    : 'border'
+                }`}
+                  style={!isApproved && !isPending ? { background: 'var(--bg-elevated)', borderColor: 'var(--border)' } : {}}>
+                  {isApproved
+                    ? <CheckCircle size={22} className="text-success-400" />
+                    : isPending
+                    ? <Clock size={22} className="text-yellow-400" />
+                    : <span className="text-lg" style={{ color: 'var(--text-muted)' }}>{tier}</span>
+                  }
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Tier {tier} — {label}</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{desc}</p>
+                </div>
+
+                {/* Status badge */}
+                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 ${
+                  isApproved ? 'bg-success-500/15 text-success-400' :
+                  isPending ? 'bg-yellow-500/15 text-yellow-400' :
+                  'bg-dark-700 text-dark-400'
+                }`}>
+                  {isApproved ? 'Done' : isPending ? 'Review' : 'Pending'}
+                </span>
+              </div>
+            );
+          })}
+
+          {/* Action */}
           {user?.isPhoneVerified && user?.kycStatus === 'none' && (
-            <button onClick={() => tier1Mutation.mutate()} disabled={tier1Mutation.isPending} className="btn-primary">
-              Complete Tier 1 KYC
+            <button
+              onClick={() => tier1Mutation.mutate()}
+              disabled={tier1Mutation.isPending}
+              className="btn-primary w-full gap-2"
+            >
+              {tier1Mutation.isPending ? (
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Shield size={16} />
+              )}
+              {tier1Mutation.isPending ? 'Processing...' : 'Complete Tier 1 Verification'}
             </button>
+          )}
+
+          {!user?.isPhoneVerified && (
+            <div className="card p-4 flex gap-3 text-sm"
+              style={{ background: 'rgba(234,179,8,0.06)', borderColor: 'rgba(234,179,8,0.2)' }}>
+              <AlertCircle size={16} className="text-yellow-400 shrink-0 mt-0.5" />
+              <p style={{ color: 'var(--text-muted)' }}>
+                You need to verify your phone number before completing KYC.
+              </p>
+            </div>
           )}
         </div>
       )}
 
-      {/* Security */}
-      {activeTab === 'Security' && (
-        <div className="space-y-5">
-          <div className="card p-6 space-y-4">
-            <h3 className="font-bold text-dark-100 flex items-center gap-2"><Lock size={16} className="text-primary-400" />Change Password</h3>
-            <div className="space-y-3">
-              <input type="password" className="input" placeholder="Current password" value={pwForm.currentPassword} onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
-              <input type="password" className="input" placeholder="New password (min 8 chars)" value={pwForm.newPassword} onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
-              <input type="password" className="input" placeholder="Confirm new password" value={pwForm.confirm} onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })} />
+      {/* ── Security Tab ─────────────────────────────────────────────── */}
+      {activeTab === 'security' && (
+        <div className="space-y-4">
+
+          {/* Change Password */}
+          <div className="card overflow-hidden">
+            <div className="px-5 py-4 border-b flex items-center gap-2"
+              style={{ borderColor: 'var(--border)' }}>
+              <Lock size={16} className="text-primary-400" />
+              <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>Change Password</h3>
             </div>
-            <button
-              onClick={() => {
-                if (pwForm.newPassword !== pwForm.confirm) return toast.error('Passwords do not match');
-                changePwMutation.mutate();
-              }}
-              disabled={changePwMutation.isPending}
-              className="btn-primary gap-2"
-            >
-              <Lock size={15} />
-              {changePwMutation.isPending ? 'Updating...' : 'Update Password'}
-            </button>
+            <div className="p-5 space-y-3">
+              <PasswordInput
+                placeholder="Current password"
+                value={pwForm.currentPassword}
+                onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })}
+              />
+              <PasswordInput
+                placeholder="New password (min 8 characters)"
+                value={pwForm.newPassword}
+                onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
+              />
+              <PasswordInput
+                placeholder="Confirm new password"
+                value={pwForm.confirm}
+                onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
+              />
+
+              {/* Strength hint */}
+              {pwForm.newPassword.length > 0 && (
+                <div className="flex gap-1 mt-1">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className={`h-1 flex-1 rounded-full transition-all ${
+                      pwForm.newPassword.length >= i * 3
+                        ? i <= 1 ? 'bg-red-500' : i <= 2 ? 'bg-yellow-500' : i <= 3 ? 'bg-blue-500' : 'bg-success-500'
+                        : 'bg-dark-600'
+                    }`} />
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={() => {
+                  if (pwForm.newPassword !== pwForm.confirm) return toast.error('Passwords do not match');
+                  if (pwForm.newPassword.length < 8) return toast.error('Password must be at least 8 characters');
+                  changePwMutation.mutate();
+                }}
+                disabled={changePwMutation.isPending || !pwForm.currentPassword || !pwForm.newPassword}
+                className="btn-primary w-full gap-2"
+              >
+                {changePwMutation.isPending
+                  ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Updating...</>
+                  : <><Lock size={15} />Update Password</>}
+              </button>
+            </div>
           </div>
 
-          <div className="card p-6 space-y-4">
-            <h3 className="font-bold text-dark-100 flex items-center gap-2">
+          {/* Transaction PIN */}
+          <div className="card overflow-hidden">
+            <div className="px-5 py-4 border-b flex items-center gap-2"
+              style={{ borderColor: 'var(--border)' }}>
               <KeyRound size={16} className="text-primary-400" />
-              {user?.isPinSet ? 'Change Transaction PIN' : 'Set Transaction PIN'}
-            </h3>
-            <p className="text-dark-400 text-sm">This 4-digit PIN is required for wallet transfers.</p>
-            <input
-              type="password"
-              maxLength={4}
-              className="input tracking-widest w-40 text-center text-xl font-bold"
-              placeholder="••••"
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-            />
-            <button
-              onClick={() => {
-                if (pin.length !== 4) return toast.error('PIN must be exactly 4 digits');
-                setPinMutation.mutate();
-              }}
-              disabled={setPinMutation.isPending || pin.length !== 4}
-              className="btn-primary gap-2"
-            >
-              <KeyRound size={15} />
-              {setPinMutation.isPending ? 'Setting...' : 'Set PIN'}
-            </button>
+              <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>
+                {user?.isPinSet ? 'Change Transaction PIN' : 'Set Transaction PIN'}
+              </h3>
+              {user?.isPinSet && (
+                <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-success-500/10 text-success-400 border border-success-500/20">
+                  Active
+                </span>
+              )}
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                This 4-digit PIN is required to authorise wallet transfers and sensitive transactions.
+              </p>
+
+              {/* PIN dots input */}
+              <div className="flex justify-center gap-3">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className={`w-12 h-12 rounded-2xl border-2 flex items-center justify-center transition-all ${
+                    pin.length > i ? 'border-primary-500' : 'border-dark-600'
+                  }`} style={{ background: 'var(--bg-elevated)' }}>
+                    {pin[i] ? <span className="w-3 h-3 bg-primary-400 rounded-full" /> : null}
+                  </div>
+                ))}
+              </div>
+
+              {/* Hidden actual input */}
+              <input
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                className="input text-center text-2xl tracking-[1rem] font-bold"
+                placeholder="Enter PIN"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              />
+
+              <button
+                onClick={() => {
+                  if (pin.length !== 4) return toast.error('PIN must be exactly 4 digits');
+                  setPinMutation.mutate();
+                }}
+                disabled={setPinMutation.isPending || pin.length !== 4}
+                className="btn-primary w-full gap-2"
+              >
+                {setPinMutation.isPending
+                  ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Setting PIN...</>
+                  : <><KeyRound size={15} />{user?.isPinSet ? 'Update PIN' : 'Set PIN'}</>}
+              </button>
+            </div>
+          </div>
+
+          {/* Security tips */}
+          <div className="card p-4" style={{ background: 'rgba(37,99,235,0.05)', borderColor: 'rgba(37,99,235,0.15)' }}>
+            <p className="text-xs font-bold text-blue-400 mb-2">Security Tips</p>
+            <ul className="space-y-1.5">
+              {[
+                'Never share your PIN or password with anyone',
+                'Use a strong password with letters, numbers and symbols',
+                'Log out from devices you no longer use',
+              ].map((tip) => (
+                <li key={tip} className="flex items-start gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <ChevronRight size={12} className="text-blue-400 shrink-0 mt-0.5" />
+                  {tip}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       )}
