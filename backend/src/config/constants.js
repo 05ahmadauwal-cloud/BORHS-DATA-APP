@@ -18,6 +18,7 @@ module.exports = {
     COMMISSION_EARNED: 'commission_earned',
     REFERRAL_BONUS: 'referral_bonus',
     REFUND: 'refund',
+    AGENT_FEE: 'agent_fee',
   },
 
   TRANSACTION_STATUS: {

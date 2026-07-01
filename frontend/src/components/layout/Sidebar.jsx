@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Wallet, Wifi, Phone, Zap, Tv, GraduationCap,
-  Users, BarChart3, History, User, X, LogOut, ChevronRight, TrendingUp
+  Users, BarChart3, History, User, X, LogOut, ChevronRight, TrendingUp, Star,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
@@ -75,6 +75,19 @@ export default function Sidebar({ isOpen, onClose }) {
             <ChevronRight size={14} className="opacity-0 group-hover:opacity-50 transition-opacity" />
           </NavLink>
         ))}
+
+        {/* Become Agent — only for non-agents */}
+        {!isAgentOrAdmin && (
+          <NavLink
+            to="/become-agent"
+            onClick={onClose}
+            className={({ isActive }) => `sidebar-link group ${isActive ? 'active' : ''}`}
+          >
+            <Star size={18} className="shrink-0 text-yellow-400" />
+            <span className="flex-1">Become an Agent</span>
+            <ChevronRight size={14} className="opacity-0 group-hover:opacity-50 transition-opacity" />
+          </NavLink>
+        )}
 
         {isAgentOrAdmin && (
           <>

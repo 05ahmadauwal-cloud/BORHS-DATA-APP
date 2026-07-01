@@ -2,7 +2,7 @@ import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import {
   BarChart3, Users, History, Settings, Shield, Zap,
-  LogOut, LayoutDashboard, Menu, X
+  LogOut, LayoutDashboard, Menu, X, Star,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
@@ -14,6 +14,7 @@ const adminNav = [
   { to: '/admin/transactions', icon: History, label: 'Transactions' },
   { to: '/admin/services', icon: Zap, label: 'Services' },
   { to: '/admin/kyc', icon: Shield, label: 'KYC' },
+  { to: '/admin/agent-applications', icon: Star, label: 'Agents' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 

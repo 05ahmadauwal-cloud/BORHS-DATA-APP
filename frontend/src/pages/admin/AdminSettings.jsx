@@ -56,6 +56,12 @@ export default function AdminSettings() {
         { key: 'airtime_commission_rate', label: 'Airtime Commission (%)', type: 'number' },
       ],
     },
+    {
+      title: 'Agent Program',
+      fields: [
+        { key: 'agent_fee', label: 'Agent Registration Fee (₦)', type: 'number', hint: 'Amount users pay to become an agent. Rejected applications are auto-refunded.' },
+      ],
+    },
   ];
 
   return (
@@ -100,6 +106,7 @@ export default function AdminSettings() {
                   value={form[field.key] || ''}
                   onChange={(e) => setForm({ ...form, [field.key]: field.type === 'number' ? Number(e.target.value) : e.target.value })}
                 />
+                {field.hint && <p className="text-xs mt-1.5" style={{ color: 'var(--text-faint)' }}>{field.hint}</p>}
               </div>
             ))}
           </div>

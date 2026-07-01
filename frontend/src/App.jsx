@@ -32,6 +32,7 @@ import Education from './pages/customer/Education';
 import Referrals from './pages/customer/Referrals';
 import Transactions from './pages/customer/Transactions';
 import Profile from './pages/customer/Profile';
+import BecomeAgent from './pages/customer/BecomeAgent';
 
 // Agent Pages
 import AgentDashboard from './pages/agent/AgentDashboard';
@@ -45,6 +46,7 @@ import AdminTransactions from './pages/admin/AdminTransactions';
 import AdminServices from './pages/admin/AdminServices';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminKYC from './pages/admin/AdminKYC';
+import AdminAgentApplications from './pages/admin/AdminAgentApplications';
 
 // Guards
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -89,6 +91,7 @@ export default function App() {
           <Route path="/referrals" element={<Referrals />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/become-agent" element={<BecomeAgent />} />
 
           {/* Agent Routes */}
           <Route element={<RoleRoute roles={['agent', 'admin', 'super_admin']} />}>
@@ -106,6 +109,7 @@ export default function App() {
           <Route path="/admin/services" element={<AdminServices />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/admin/kyc" element={<AdminKYC />} />
+          <Route path="/admin/agent-applications" element={<AdminAgentApplications />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

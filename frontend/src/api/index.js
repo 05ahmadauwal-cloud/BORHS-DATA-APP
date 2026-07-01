@@ -73,6 +73,9 @@ export const agentAPI = {
   getStats: () => api.get('/agent/stats'),
   getDownlines: (params) => api.get('/agent/downlines', { params }),
   getCommissions: (params) => api.get('/agent/commissions', { params }),
+  getFee: () => api.get('/agent/fee'),
+  getMyApplication: () => api.get('/agent/application'),
+  apply: () => api.post('/agent/apply'),
 };
 
 // Referral
@@ -117,4 +120,7 @@ export const adminAPI = {
   getKYCById: (id) => api.get(`/kyc/${id}`),
   reviewKYC: (id, action, reason) => api.patch(`/kyc/${id}/review`, { action, rejectionReason: reason }),
   getKYCCounts: () => api.get('/kyc/counts'),
+  getAgentApplications: (params) => api.get('/admin/agent-applications', { params }),
+  getAgentApplicationCounts: () => api.get('/admin/agent-applications/counts'),
+  reviewAgentApplication: (id, action, reason) => api.patch(`/admin/agent-applications/${id}/review`, { action, rejectionReason: reason }),
 };

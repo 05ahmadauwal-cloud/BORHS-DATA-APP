@@ -87,6 +87,28 @@ router.delete('/data-plans/:id', asyncHandler(async (req, res) => {
   return ApiResponse.success(res, {}, 'Data plan deleted');
 }));
 
+// ─── Agent Applications ───────────────────────────────────────────────────────
+const agentService = require('../agent/agent.service');
+
+router.get('/agent-applications', asyncHandler(async (req, res) => {
+  const data = await agentService.getAgentApplications(req.query);
+  return ApiResponse.success(res, data);
+}));
+
+router.get('/agent-applications/counts', asyncHandler(async (req, res) => {
+  const counts = await agentService.getAgentApplicationCounts();
+  return ApiResponse.success(res, counts);
+}));
+
+router.patch('/agent-applications/:id/review', asyncHandler(async (req, res) => {
+  const { action, rejectionReason } = req.body;
+  if (!['approve', 'reject'].includes(action)) {
+    return ApiResponse.error(res, 'Action must be approve or reject', 400);
+  }
+  const data = await agentService.reviewAgentApplication(req.user._id, req.params.id, action, rejectionReason);
+  return ApiResponse.success(res, { application: data }, `Application ${action}d successfully`);
+}));
+
 // Settings
 router.get('/settings', asyncHandler(async (req, res) => {
   const settings = await adminService.getSettings();
