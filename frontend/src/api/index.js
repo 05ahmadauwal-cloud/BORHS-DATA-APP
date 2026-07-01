@@ -98,6 +98,11 @@ export const notificationAPI = {
   markRead: (ids) => api.patch('/notifications/read', { ids }),
 };
 
+// Banner
+export const bannerAPI = {
+  get: () => api.get('/banner'),
+};
+
 // Admin
 export const adminAPI = {
   getAnalytics: (period) => api.get('/admin/analytics', { params: { period } }),

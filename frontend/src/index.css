@@ -218,7 +218,9 @@
 @keyframes slideUp  { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
 @keyframes slideIn  { from { transform: translateX(-16px); opacity: 0 } to { transform: translateX(0); opacity: 1 } }
 @keyframes shimmer  { from { background-position: -1000px 0 } to { background-position: 1000px 0 } }
+@keyframes marquee  { 0% { transform: translateX(100%) } 100% { transform: translateX(-100%) } }
 
 .animate-fade-in  { animation: fadeIn  0.3s ease-in-out; }
 .animate-slide-up { animation: slideUp 0.35s ease-out; }
 .animate-slide-in { animation: slideIn 0.3s ease-out; }
+.animate-marquee  { animation: marquee var(--marquee-speed, 25s) linear infinite; }

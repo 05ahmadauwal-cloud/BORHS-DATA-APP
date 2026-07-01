@@ -4,7 +4,7 @@ import {
   Wallet, Wifi, Phone, Zap, Tv, GraduationCap,
   ArrowUpRight, TrendingUp, Clock, CheckCircle, XCircle, Send
 } from 'lucide-react';
-import { walletAPI } from '../../api';
+import { walletAPI, bannerAPI } from '../../api';
 import useAuthStore from '../../store/authStore';
 import { format } from 'date-fns';
 
@@ -39,6 +39,14 @@ export default function Dashboard() {
     queryKey: ['recent-transactions'],
     queryFn: () => walletAPI.getTransactions({ limit: 5 }),
     select: (res) => res.data,
+  });
+
+  const { data: banner } = useQuery({
+    queryKey: ['banner'],
+    queryFn: () => bannerAPI.get(),
+    select: (res) => res.data,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 
   const balance = balanceData?.walletBalance ?? user?.walletBalance ?? 0;
@@ -79,6 +87,29 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Advert Banner */}
+      {banner?.active && banner?.text && (
+        <div className={`relative overflow-hidden rounded-xl py-2.5 flex items-center gap-2 ${
+          banner.color === 'yellow' ? 'bg-yellow-500/15 border border-yellow-500/30' :
+          banner.color === 'green'  ? 'bg-success-500/15 border border-success-500/30' :
+          banner.color === 'red'    ? 'bg-red-500/15 border border-red-500/30' :
+          'bg-primary-500/15 border border-primary-500/30'
+        }`}>
+          <span className="shrink-0 pl-3 text-base select-none">📢</span>
+          <div className="flex-1 overflow-hidden">
+            <p
+              className="animate-marquee whitespace-nowrap text-xs sm:text-sm font-semibold"
+              style={{
+                color: 'var(--text-primary)',
+                '--marquee-speed': `${Math.max(15, banner.text.length * 0.4)}s`,
+              }}
+            >
+              {banner.text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{banner.text}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div>

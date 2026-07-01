@@ -16,6 +16,17 @@ router.use('/notifications', require('../modules/notification/notification.route
 router.use('/admin', require('../modules/admin/admin.routes'));
 router.use('/coupons', require('../modules/coupon/coupon.routes'));
 
+// Public banner — no auth needed
+router.get('/banner', async (req, res) => {
+  const Settings = require('../models/Settings');
+  const [text, active, color] = await Promise.all([
+    Settings.get('banner_text', ''),
+    Settings.get('banner_active', false),
+    Settings.get('banner_color', 'primary'),
+  ]);
+  res.json({ success: true, data: { text, active: !!active, color } });
+});
+
 router.get('/health', (req, res) => {
   res.json({
     success: true,

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../api';
-import { Settings, Save } from 'lucide-react';
+import { Settings, Save, Megaphone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function AdminSettings() {
@@ -75,6 +75,74 @@ export default function AdminSettings() {
           <Save size={16} />
           {mutation.isPending ? 'Saving...' : 'Save Settings'}
         </button>
+      </div>
+
+      {/* Advert Banner */}
+      <div className="card p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Megaphone size={18} className="text-yellow-400" />
+            <div>
+              <p className="font-bold" style={{ color: 'var(--text-primary)' }}>Advert Banner</p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Scrolling ticker shown above Quick Actions on the dashboard</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setForm({ ...form, banner_active: !form.banner_active })}
+            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors shrink-0 ${
+              form.banner_active ? 'bg-yellow-500' : 'bg-dark-600'
+            }`}
+          >
+            <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${form.banner_active ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+        <div>
+          <label className="label">Banner Text</label>
+          <textarea
+            className="input resize-none"
+            rows={2}
+            placeholder="e.g. 🔥 Limited offer! Use code BORHS100 to get ₦100 free on your wallet today only!"
+            value={form.banner_text || ''}
+            onChange={(e) => setForm({ ...form, banner_text: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className="label">Banner Color</label>
+          <div className="flex gap-2">
+            {[
+              { id: 'primary', label: 'Blue', bg: 'bg-primary-600' },
+              { id: 'yellow', label: 'Yellow', bg: 'bg-yellow-500' },
+              { id: 'green', label: 'Green', bg: 'bg-success-500' },
+              { id: 'red', label: 'Red', bg: 'bg-red-500' },
+            ].map(({ id, label, bg }) => (
+              <button
+                key={id}
+                onClick={() => setForm({ ...form, banner_color: id })}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
+                  (form.banner_color || 'primary') === id ? 'border-white/40 opacity-100' : 'border-transparent opacity-50 hover:opacity-75'
+                }`}
+              >
+                <span className={`w-3 h-3 rounded-full ${bg}`} />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {form.banner_text && (
+          <div className="rounded-xl overflow-hidden border border-dark-600">
+            <p className="text-[10px] px-2 py-1 bg-dark-700 text-dark-400 font-medium">Preview</p>
+            <div className={`py-2 overflow-hidden ${
+              (form.banner_color || 'primary') === 'yellow' ? 'bg-yellow-500/15' :
+              (form.banner_color || 'primary') === 'green' ? 'bg-success-500/15' :
+              (form.banner_color || 'primary') === 'red' ? 'bg-red-500/15' :
+              'bg-primary-500/15'
+            }`}>
+              <p className="text-xs font-semibold px-4 truncate" style={{ color: 'var(--text-primary)' }}>
+                📢 {form.banner_text}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Maintenance Mode */}
