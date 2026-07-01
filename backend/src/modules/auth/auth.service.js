@@ -56,7 +56,10 @@ const register = async (data) => {
     );
   }
 
-  const verificationLink = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
+  const clientUrl = process.env.NODE_ENV === 'production'
+    ? (process.env.PRODUCTION_URL || process.env.CLIENT_URL)
+    : process.env.CLIENT_URL;
+  const verificationLink = `${clientUrl}/verify-email/${verificationToken}`;
   await sendEmail(user.email, 'welcome', {
     firstName: user.firstName,
     verificationLink,
@@ -160,7 +163,10 @@ const forgotPassword = async (email) => {
     passwordResetExpires: Date.now() + 60 * 60 * 1000,
   });
 
-  const resetLink = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+  const clientUrl = process.env.NODE_ENV === 'production'
+    ? (process.env.PRODUCTION_URL || process.env.CLIENT_URL)
+    : process.env.CLIENT_URL;
+  const resetLink = `${clientUrl}/reset-password/${resetToken}`;
   await sendEmail(user.email, 'passwordReset', {
     firstName: user.firstName,
     resetLink,

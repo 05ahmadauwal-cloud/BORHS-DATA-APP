@@ -110,7 +110,7 @@ const sendEmail = async (to, templateName, data) => {
     }
 
     await transporter.sendMail({
-      from: `"${process.env.EMAIL_FROM_NAME}" <${process.env.EMAIL_FROM}>`,
+      from: `"${process.env.EMAIL_FROM_NAME || process.env.APP_NAME || 'BORHS Data'}" <${process.env.SMTP_USER}>`,
       to,
       subject: template.subject,
       html: template.html,
