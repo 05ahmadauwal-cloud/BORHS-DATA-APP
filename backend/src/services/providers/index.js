@@ -1,9 +1,7 @@
-const clubkonnect = require('./clubkonnect');
-const vtpass = require('./vtpass');
+const smeapi = require('./smeapi');
 const logger = require('../../utils/logger');
 
-// VTpass only — no IP restrictions, works from any server
-const providers = [vtpass];
+const providers = [smeapi];
 
 const getProvider = (name = null) => {
   if (name) return providers.find((p) => p.name === name) || providers[0];
@@ -28,7 +26,7 @@ const withFallback = async (operation, args, preferredProviderName = null) => {
       lastError = error;
     }
   }
-  throw lastError || new Error('All VTU providers failed. Please try again later.');
+  throw lastError || new Error('Transaction failed. Please try again later.');
 };
 
 module.exports = { getProvider, withFallback };

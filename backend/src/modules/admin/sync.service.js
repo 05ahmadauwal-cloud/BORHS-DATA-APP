@@ -3,122 +3,107 @@ const DataPlan = require('../../models/DataPlan');
 const Settings = require('../../models/Settings');
 const logger = require('../../utils/logger');
 
-const VTPASS_BASE = process.env.VTPASS_BASE_URL || 'https://api-service.vtpass.com/api';
+const DATAPLANS_URL = 'https://smeapi.com.ng/api/dataplans/';
 
-const NETWORKS = [
-  { name: 'mtn',     serviceID: 'mtn-data' },
-  { name: 'airtel',  serviceID: 'airtel-data' },
-  { name: 'glo',     serviceID: 'glo-data' },
-  { name: '9mobile', serviceID: 'etisalat-data' },
-];
-
-const getHeaders = () => ({
-  'api-key': process.env.VTPASS_API_KEY,
-  'public-key': process.env.VTPASS_PUBLIC_KEY,
-});
-
-// Parse data size from plan name e.g. "500MB", "1GB", "2.5GB"
-const extractDataSize = (name = '') => {
-  const match = name.match(/(\d+(\.\d+)?)\s*(MB|GB|TB)/i);
-  return match ? `${match[1]}${match[3].toUpperCase()}` : name;
-};
-
-// Parse validity from plan name e.g. "30 Days", "7 Days"
-const extractValidity = (name = '') => {
-  const match = name.match(/(\d+)\s*(day|days|month|months)/i);
-  if (!match) return '30 Days';
-  const num = parseInt(match[1]);
-  const unit = match[2].toLowerCase().includes('month') ? 'Month' : 'Day';
-  return `${num} ${unit}${num > 1 ? 's' : ''}`;
-};
-
-// Data type detection from plan name
-const detectDataType = (name = '') => {
-  const n = name.toLowerCase();
-  if (n.includes('sme')) return 'sme';
-  if (n.includes('corporate') || n.includes('corp')) return 'corporate';
-  if (n.includes('gift') || n.includes('share')) return 'gifting';
-  return 'sme';
+// smeapi network name → our internal network key
+const NETWORK_MAP = {
+  MTN: 'mtn',
+  Airtel: 'airtel',
+  Glo: 'glo',
+  '9mobile': '9mobile',
+  Etisalat: '9mobile',
 };
 
 const applyCommission = (costPrice, commissionRates) => {
   const { customer = 10, agent = 5, reseller = 3 } = commissionRates;
   const sellingPrice = Math.ceil(costPrice * (1 + customer / 100));
-  const agentPrice = Math.ceil(costPrice * (1 + agent / 100));
+  const agentPrice   = Math.ceil(costPrice * (1 + agent / 100));
   const resellerPrice = Math.ceil(costPrice * (1 + reseller / 100));
   return { sellingPrice, agentPrice, resellerPrice };
 };
 
-const fetchNetworkPlans = async (networkName, serviceID) => {
+/**
+ * Fetch all data plans from smeapi (public endpoint — no auth needed)
+ */
+const fetchAllPlans = async () => {
   try {
-    const { data } = await axios.get(`${VTPASS_BASE}/service-variations`, {
-      params: { serviceID },
-      headers: getHeaders(),
+    const { data } = await axios.get(DATAPLANS_URL, {
+      headers: { 'Content-Type': 'application/json' },
       timeout: 20000,
     });
-
-    const variations = data?.content?.varations || data?.content?.variations || [];
-
-    return variations.map((v) => ({
-      network: networkName,
-      planId: v.variation_code,
-      providerPlanCode: v.variation_code,
-      name: v.name,
-      dataSize: extractDataSize(v.name),
-      validity: extractValidity(v.name),
-      dataType: detectDataType(v.name),
-      costPrice: parseFloat(v.variation_amount || 0),
-    })).filter((p) => p.planId && p.costPrice > 0);
+    return data?.data || data || [];
   } catch (err) {
-    logger.error(`Failed to fetch ${networkName} plans from VTpass: ${err.message}`);
-    return [];
+    logger.error(`[Sync] Failed to fetch plans from smeapi: ${err.message}`);
+    throw new Error(`Cannot reach smeapi.com.ng: ${err.message}`);
   }
 };
 
+/**
+ * Sync all data plans from smeapi into the database with your commission markup
+ */
 const syncDataPlans = async (commissionRates = {}) => {
   if (!commissionRates.customer) {
     const settings = await Settings.getMany([
-      'vt_commission_customer',
-      'vt_commission_agent',
-      'vt_commission_reseller',
+      'commission_customer',
+      'commission_agent',
+      'commission_reseller',
     ]);
     commissionRates = {
-      customer: parseFloat(settings.vt_commission_customer ?? 10),
-      agent: parseFloat(settings.vt_commission_agent ?? 5),
-      reseller: parseFloat(settings.vt_commission_reseller ?? 3),
+      customer: parseFloat(settings.commission_customer ?? 10),
+      agent:    parseFloat(settings.commission_agent ?? 5),
+      reseller: parseFloat(settings.commission_reseller ?? 3),
     };
   }
 
+  const rawPlans = await fetchAllPlans();
   const results = { synced: 0, networks: {}, errors: [] };
 
-  for (const { name, serviceID } of NETWORKS) {
-    const plans = await fetchNetworkPlans(name, serviceID);
-    results.networks[name] = plans.length;
+  for (const plan of rawPlans) {
+    const network = NETWORK_MAP[plan.network] || plan.network?.toLowerCase();
+    if (!network) continue;
 
-    for (const plan of plans) {
-      const { sellingPrice, agentPrice, resellerPrice } = applyCommission(
-        plan.costPrice,
-        commissionRates
+    const costPrice = parseFloat(plan.user_price || plan.price || 0);
+    if (!costPrice || !plan.id) continue;
+
+    const { sellingPrice, agentPrice, resellerPrice } = applyCommission(costPrice, commissionRates);
+
+    const planId = `${network}-${plan.id}`; // e.g. "mtn-1"
+
+    try {
+      await DataPlan.findOneAndUpdate(
+        { planId },
+        {
+          planId,
+          network,
+          name: `${plan.name} ${plan.type || ''} ${plan.days || ''}`.trim(),
+          dataSize: plan.name,
+          validity: plan.days || '30 Days',
+          dataType: (plan.type || 'sme').toLowerCase(),
+          costPrice,
+          sellingPrice,
+          agentPrice,
+          resellerPrice,
+          providerPlanCode: plan.id, // numeric ID used in /api/data/ purchase
+          isActive: true,
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
       );
 
-      try {
-        await DataPlan.findOneAndUpdate(
-          { planId: plan.planId, network: plan.network },
-          { ...plan, sellingPrice, agentPrice, resellerPrice, isActive: true },
-          { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
-        results.synced++;
-      } catch (err) {
-        logger.error(`Failed to save plan ${plan.planId}: ${err.message}`);
-        results.errors.push(plan.planId);
-      }
+      results.networks[network] = (results.networks[network] || 0) + 1;
+      results.synced++;
+    } catch (err) {
+      logger.error(`[Sync] Failed to save plan ${planId}: ${err.message}`);
+      results.errors.push(planId);
     }
   }
 
-  logger.info(`VTpass sync complete: ${results.synced} plans`);
+  logger.info(`[Sync] Complete: ${results.synced} plans synced from smeapi`);
   return results;
 };
 
+/**
+ * Recalculate selling prices for all existing plans when commission % changes
+ */
 const updateAllCommissions = async (commissionRates) => {
   const plans = await DataPlan.find({});
   let updated = 0;
@@ -132,9 +117,9 @@ const updateAllCommissions = async (commissionRates) => {
     updated++;
   }
 
-  await Settings.set('vt_commission_customer', commissionRates.customer);
-  await Settings.set('vt_commission_agent', commissionRates.agent);
-  await Settings.set('vt_commission_reseller', commissionRates.reseller);
+  await Settings.set('commission_customer', commissionRates.customer);
+  await Settings.set('commission_agent',    commissionRates.agent);
+  await Settings.set('commission_reseller', commissionRates.reseller);
 
   return { updated };
 };
