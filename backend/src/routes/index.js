@@ -37,4 +37,35 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+// Public SMTP diagnostic — no auth needed
+router.get('/test/smtp', async (req, res) => {
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+
+  if (!smtpUser || !smtpPass) {
+    return res.status(500).json({
+      ok: false,
+      error: 'SMTP env vars not set on this server',
+      SMTP_USER: smtpUser || 'NOT SET',
+      SMTP_HOST: smtpHost,
+      SMTP_PASS_SET: !!smtpPass,
+    });
+  }
+
+  try {
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransporter({
+      host: smtpHost,
+      port: parseInt(process.env.SMTP_PORT) || 587,
+      secure: false,
+      auth: { user: smtpUser, pass: smtpPass.replace(/\s/g, '') },
+    });
+    await transporter.verify();
+    res.json({ ok: true, message: 'SMTP connected OK', user: smtpUser, host: smtpHost });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message, user: smtpUser, host: smtpHost });
+  }
+});
+
 module.exports = router;
