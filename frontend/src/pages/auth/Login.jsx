@@ -3,8 +3,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
-import { Eye, EyeOff, Zap, LogIn } from 'lucide-react';
+import { Eye, EyeOff, Zap, LogIn, Sun, Moon } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import useThemeStore from '../../store/themeStore';
 import toast from 'react-hot-toast';
 
 const schema = z.object({
@@ -15,6 +16,7 @@ const schema = z.object({
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { login, isLoading } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/dashboard';
@@ -38,6 +40,15 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4">
+      {/* Theme toggle */}
+      <button
+        onClick={toggleTheme}
+        className="fixed top-4 right-4 z-50 p-2.5 rounded-xl transition-colors hover:bg-dark-700/60"
+        style={{ color: 'var(--text-muted)', background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+        title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+      >
+        {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+      </button>
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">

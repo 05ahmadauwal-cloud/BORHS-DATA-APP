@@ -2,9 +2,10 @@ import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import {
   BarChart3, Users, History, Settings, Shield, Zap,
-  LogOut, LayoutDashboard, Menu, X, Star, Tag, Megaphone,
+  LogOut, LayoutDashboard, Menu, X, Star, Tag, Megaphone, Sun, Moon,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import useThemeStore from '../../store/themeStore';
 import toast from 'react-hot-toast';
 import WhatsAppButton from '../ui/WhatsAppButton';
 
@@ -22,6 +23,7 @@ const adminNav = [
 
 export default function AdminLayout() {
   const { user, logout } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -109,6 +111,14 @@ export default function AdminLayout() {
           <Link to="/dashboard" className="text-xs text-dark-400 hover:text-dark-200 transition-colors hidden sm:block">
             ← Customer View
           </Link>
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-xl transition-colors hover:bg-dark-700/60"
+            style={{ color: 'var(--text-muted)' }}
+            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          >
+            {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+          </button>
         </header>
 
         <main className="flex-1 p-3 sm:p-5 lg:p-7 overflow-auto animate-fade-in">
