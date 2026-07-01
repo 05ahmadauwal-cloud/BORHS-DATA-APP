@@ -113,52 +113,63 @@ export default function DashboardLayout() {
         <WhatsAppButton />
 
         {/* Mobile bottom navigation */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-20"
-          style={{ filter: 'drop-shadow(0 -4px 20px rgba(0,0,0,0.35))' }}>
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-20">
+          {/* bar */}
           <div
-            className="bg-dark-900/98 backdrop-blur-xl border-t border-white/[0.06] px-3 pt-2 pb-3"
-            style={{ borderRadius: '18px 18px 0 0' }}
+            className="relative bg-dark-900 backdrop-blur-xl border-t border-white/[0.07] px-1 pb-safe"
+            style={{ borderRadius: '22px 22px 0 0', boxShadow: '0 -8px 32px rgba(0,0,0,0.45)' }}
           >
-            <div className="flex items-end justify-around">
-              {mobileNav.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === '/dashboard'}
-                  className="flex-1"
-                >
-                  {({ isActive }) => (
-                    <div className={`flex flex-col items-center gap-0.5 py-1 transition-all duration-200 ${
-                      isActive ? 'scale-105' : 'scale-100'
-                    }`}>
-                      {/* Icon container */}
-                      <div className={`relative flex items-center justify-center w-11 h-9 rounded-2xl transition-all duration-200 ${
-                        isActive
-                          ? 'bg-primary-500/20'
-                          : 'bg-transparent'
-                      }`}>
-                        {/* Active glow dot above icon */}
-                        {isActive && (
-                          <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary-400" />
-                        )}
-                        <item.icon
-                          size={20}
-                          strokeWidth={isActive ? 2.5 : 1.75}
-                          className={`transition-colors duration-200 ${
-                            isActive ? 'text-primary-400' : 'text-dark-500'
-                          }`}
-                        />
-                      </div>
-                      {/* Label */}
-                      <span className={`text-[10px] font-bold tracking-wide transition-all duration-200 ${
-                        isActive ? 'text-primary-400' : 'text-dark-600'
-                      }`}>
-                        {item.label}
-                      </span>
-                    </div>
-                  )}
-                </NavLink>
-              ))}
+            <div className="flex items-end justify-around h-[62px]">
+              {mobileNav.map((item, idx) => {
+                const isCenter = idx === Math.floor(mobileNav.length / 2);
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === '/dashboard'}
+                    className={`flex-1 flex justify-center ${isCenter ? 'relative' : ''}`}
+                  >
+                    {({ isActive }) =>
+                      isCenter ? (
+                        /* ── Elevated center FAB ── */
+                        <div className="flex flex-col items-center absolute left-1/2 -translate-x-1/2" style={{ bottom: 10 }}>
+                          <div
+                            className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center transition-all duration-200 active:scale-90"
+                            style={{
+                              background: isActive
+                                ? 'linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%)'
+                                : 'linear-gradient(135deg,#2563eb 0%,#1e40af 100%)',
+                              boxShadow: '0 4px 18px rgba(37,99,235,0.55)',
+                            }}
+                          >
+                            <item.icon size={22} className="text-white" strokeWidth={2.2} />
+                          </div>
+                          <span className={`text-[9px] font-black mt-1 tracking-wide ${isActive ? 'text-primary-400' : 'text-dark-500'}`}>
+                            {item.label}
+                          </span>
+                        </div>
+                      ) : (
+                        /* ── Regular tab ── */
+                        <div className="flex flex-col items-center gap-0.5 pb-1 pt-2 w-full transition-all duration-200">
+                          <div className={`relative flex items-center justify-center w-10 h-[30px] rounded-xl transition-all duration-200 ${isActive ? 'bg-primary-500/15' : ''}`}>
+                            {isActive && (
+                              <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-3.5 h-[3px] rounded-full bg-primary-400" />
+                            )}
+                            <item.icon
+                              size={19}
+                              strokeWidth={isActive ? 2.5 : 1.7}
+                              className={`transition-colors duration-200 ${isActive ? 'text-primary-400' : 'text-dark-500'}`}
+                            />
+                          </div>
+                          <span className={`text-[10px] font-bold ${isActive ? 'text-primary-400' : 'text-dark-600'}`}>
+                            {item.label}
+                          </span>
+                        </div>
+                      )
+                    }
+                  </NavLink>
+                );
+              })}
             </div>
           </div>
         </nav>
