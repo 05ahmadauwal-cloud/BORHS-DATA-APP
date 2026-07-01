@@ -126,7 +126,45 @@ const flutterwaveWebhook = async (req, res) => {
   );
 };
 
+// ─── Monnify ─────────────────────────────────────────────────────────────────
+const monnifyWebhook = async (req, res) => {
+  // Acknowledge immediately — process async
+  res.status(200).json({ success: true });
+
+  const signature = req.headers['monnify-signature'];
+  // rawBody is the raw buffer set by express.raw()
+  const rawBody = req.rawBody || JSON.stringify(req.body);
+
+  await paymentService.handleMonnifyWebhook(rawBody, signature).catch((e) =>
+    logger.error('Monnify webhook error:', e.message)
+  );
+};
+
+const getOrCreateVirtualAccount = async (req, res) => {
+  const User = require('../../models/User');
+  let user = await User.findById(req.user._id);
+
+  if (!user.monnifyVirtualAccount?.reference) {
+    // Create on demand if missing
+    if (process.env.MONNIFY_API_KEY && process.env.MONNIFY_CONTRACT_CODE) {
+      try {
+        const { createReservedAccount } = require('../../services/monnify');
+        const va = await createReservedAccount(user);
+        user = await User.findByIdAndUpdate(req.user._id, { monnifyVirtualAccount: va }, { new: true });
+      } catch (e) {
+        logger.error('Monnify on-demand account creation failed:', e.response?.data || e.message);
+        return ApiResponse.error(res, 'Virtual account not available yet. Please try again later.', 503);
+      }
+    } else {
+      return ApiResponse.error(res, 'Bank transfer not configured', 503);
+    }
+  }
+
+  return ApiResponse.success(res, { virtualAccount: user.monnifyVirtualAccount });
+};
+
 module.exports = {
   initializePaystack, verifyPaystack, paystackWebhook,
   initializeFlutterwave, verifyFlutterwave, flutterwaveWebhook,
+  monnifyWebhook, getOrCreateVirtualAccount,
 };

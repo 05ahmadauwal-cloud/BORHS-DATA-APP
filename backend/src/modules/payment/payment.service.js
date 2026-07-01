@@ -3,6 +3,9 @@ const crypto = require('crypto');
 const { fundWallet } = require('../wallet/wallet.service');
 const { generateReference } = require('../../utils/helpers');
 const logger = require('../../utils/logger');
+const User = require('../../models/User');
+const Transaction = require('../../models/Transaction');
+const { TRANSACTION_STATUS } = require('../../config/constants');
 
 // ─── Paystack ────────────────────────────────────────────────────────────────
 const paystackInitialize = async (userId, email, amount, metadata = {}) => {
@@ -103,6 +106,56 @@ const handleFlutterwaveWebhook = async (event, data) => {
   }
 };
 
+// ─── Monnify ─────────────────────────────────────────────────────────────────
+const handleMonnifyWebhook = async (rawBody, signature) => {
+  const { verifyWebhookSignature } = require('../../services/monnify');
+
+  if (!verifyWebhookSignature(rawBody, signature)) {
+    throw Object.assign(new Error('Invalid Monnify webhook signature'), { statusCode: 401 });
+  }
+
+  const body = JSON.parse(rawBody);
+  const { eventType, eventData } = body;
+
+  if (eventType !== 'SUCCESSFUL_TRANSACTION') return;
+  if (eventData?.paymentStatus !== 'PAID') return;
+
+  const { transactionReference, amountPaid, customer, paymentSourceInformation } = eventData;
+
+  // Find user by the accountReference we set during account creation
+  const accountRef = paymentSourceInformation?.[0]?.accountName
+    ? undefined
+    : eventData.accountReference || eventData.reservedAccountDetails?.accountReference;
+
+  // Try finding by customer email first, then by accountReference
+  let user = null;
+  if (accountRef) {
+    user = await User.findOne({ 'monnifyVirtualAccount.reference': accountRef });
+  }
+  if (!user && customer?.email) {
+    user = await User.findOne({ email: customer.email.toLowerCase() });
+  }
+
+  if (!user) {
+    logger.warn(`Monnify webhook: could not resolve user for ref ${transactionReference}`);
+    return;
+  }
+
+  // Idempotency — skip if already processed
+  const existing = await Transaction.findOne({ externalReference: transactionReference });
+  if (existing) {
+    logger.info(`Monnify webhook: duplicate transaction ${transactionReference}, skipping`);
+    return;
+  }
+
+  await fundWallet(user._id, amountPaid, 'monnify', transactionReference, {
+    customerName: customer?.customerName || customer?.name,
+    customerEmail: customer?.email,
+  });
+
+  logger.info(`Monnify wallet funded: userId=${user._id}, amount=${amountPaid}, ref=${transactionReference}`);
+};
+
 module.exports = {
   paystackInitialize,
   paystackVerify,
@@ -112,4 +165,5 @@ module.exports = {
   flutterwaveVerify,
   verifyFlutterwaveWebhook,
   handleFlutterwaveWebhook,
+  handleMonnifyWebhook,
 };

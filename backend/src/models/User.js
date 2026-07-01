@@ -107,6 +107,17 @@ const userSchema = new mongoose.Schema(
     lockUntil: Date,
     lastLogin: Date,
     lastLoginIP: String,
+    monnifyVirtualAccount: {
+      reference: String,
+      accountName: String,
+      accounts: [
+        {
+          accountNumber: String,
+          bankName: String,
+          bankCode: String,
+        },
+      ],
+    },
     agentLevel: {
       type: Number,
       default: 0,
