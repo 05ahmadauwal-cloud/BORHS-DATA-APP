@@ -36,26 +36,32 @@ function KYCGate() {
             Verify Your Identity
           </h2>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-            You need to complete KYC verification before you can buy data, airtime, or use any services on BORHS Data.
+            A quick one-time identity check is required before you can buy data, airtime, or use any services. Takes under 30 seconds.
           </p>
         </div>
 
         {/* Steps preview */}
         <div className="text-left space-y-2 px-2">
           {[
-            { step: 1, text: 'Confirm your account details', time: '10 seconds' },
-            { step: 2, text: 'Upload a government ID', time: '2 minutes' },
-            { step: 3, text: 'Take a quick selfie', time: '1 minute' },
-          ].map(({ step, text, time }) => (
+            { step: 1, text: 'Confirm your account details', time: '~10 seconds', required: true },
+            { step: 2, text: 'Upload a government ID', time: 'optional', required: false },
+            { step: 3, text: 'Take a selfie', time: 'optional', required: false },
+          ].map(({ step, text, time, required }) => (
             <div key={step} className="flex items-center gap-3">
               <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-black"
-                style={{ background: 'rgba(37,99,235,0.15)', color: '#60a5fa' }}>
+                style={{
+                  background: required ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.05)',
+                  color: required ? '#60a5fa' : 'var(--text-faint)',
+                }}>
                 {step}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{text}</p>
+                <p className="text-xs font-medium" style={{ color: required ? 'var(--text-secondary)' : 'var(--text-faint)' }}>{text}</p>
               </div>
-              <span className="text-[10px]" style={{ color: 'var(--text-faint)' }}>{time}</span>
+              <span className={`text-[10px] font-semibold ${required ? 'text-primary-400' : ''}`}
+                style={{ color: required ? undefined : 'var(--text-faint)' }}>
+                {time}
+              </span>
             </div>
           ))}
         </div>

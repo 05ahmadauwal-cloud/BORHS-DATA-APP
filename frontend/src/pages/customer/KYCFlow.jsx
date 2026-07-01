@@ -34,7 +34,7 @@ function StatusBadge({ status }) {
   return null;
 }
 
-function TierCard({ tier, label, desc, icon: Icon, status, locked, lockedMsg, children }) {
+function TierCard({ tier, label, desc, icon: Icon, status, locked, lockedMsg, optional, children }) {
   const isApproved = status === 'approved';
   const isPending = status === 'pending';
   const isRejected = status === 'rejected';
@@ -75,6 +75,11 @@ function TierCard({ tier, label, desc, icon: Icon, status, locked, lockedMsg, ch
             {locked && !status && (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-dark-800 text-dark-500">
                 {lockedMsg}
+              </span>
+            )}
+            {optional && !status && !locked && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-dark-700 text-dark-400">
+                Optional
               </span>
             )}
           </div>
@@ -216,7 +221,7 @@ export default function KYCFlow() {
         <div>
           <p className="text-sm font-bold text-blue-300">Identity Verification</p>
           <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            Complete all 3 tiers to unlock higher limits and full platform access.
+            <strong className="text-blue-300">Tier 1 is required</strong> to use the platform. Tiers 2 &amp; 3 are optional and unlock higher transaction limits.
           </p>
         </div>
       </div>
@@ -252,9 +257,9 @@ export default function KYCFlow() {
       </TierCard>
 
       {/* ── TIER 2 ── */}
-      <TierCard tier={2} label="ID Document" desc="Upload a government-issued ID"
+      <TierCard tier={2} label="ID Document" desc="Upload a government-issued ID — optional, unlocks higher limits"
         icon={BadgeCheck} status={tier2?.status}
-        locked={!t1Done} lockedMsg="Complete Tier 1 first">
+        locked={!t1Done} lockedMsg="Complete Tier 1 first" optional={!tier2}>
 
         {/* Form — shown when no submission yet, OR resubmitting after rejection */}
         {t1Done && (!tier2 || (tier2.status === 'rejected' && resubmitT2)) && (
@@ -339,9 +344,9 @@ export default function KYCFlow() {
       </TierCard>
 
       {/* ── TIER 3 ── */}
-      <TierCard tier={3} label="Selfie Verification" desc="A live selfie to confirm your identity"
+      <TierCard tier={3} label="Selfie Verification" desc="A live selfie to confirm your identity — optional, unlocks maximum limits"
         icon={Camera} status={tier3?.status}
-        locked={!t2Done} lockedMsg="Complete Tier 2 first">
+        locked={!t2Done} lockedMsg="Complete Tier 2 first" optional={!tier3}>
 
         {t2Done && (!tier3 || (tier3.status === 'rejected' && resubmitT3)) && (
           <div className="px-5 pb-5 border-t pt-4 space-y-4" style={{ borderColor: 'var(--border)' }}>
