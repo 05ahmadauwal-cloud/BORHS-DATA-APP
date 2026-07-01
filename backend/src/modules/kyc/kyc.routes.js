@@ -69,6 +69,11 @@ router.get('/submissions', authorize('admin', 'super_admin'), asyncHandler(async
   return ApiResponse.success(res, data);
 }));
 
+router.get('/counts', authorize('admin', 'super_admin'), asyncHandler(async (req, res) => {
+  const counts = await kycService.getKYCCounts();
+  return ApiResponse.success(res, counts);
+}));
+
 router.get('/:id', authorize('admin', 'super_admin'), asyncHandler(async (req, res) => {
   const kyc = await kycService.getKYCById(req.params.id);
   return ApiResponse.success(res, { kyc });

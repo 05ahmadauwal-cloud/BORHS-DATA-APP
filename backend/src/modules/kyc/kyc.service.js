@@ -122,4 +122,13 @@ const getKYCById = async (kycId) => {
   return kyc;
 };
 
-module.exports = { submitTier1, submitTier2, submitTier3, getKYCStatus, reviewKYC, getPendingKYC, getKYCSubmissions, getKYCById };
+const getKYCCounts = async () => {
+  const [pending, approved, rejected] = await Promise.all([
+    KYC.countDocuments({ status: 'pending' }),
+    KYC.countDocuments({ status: 'approved' }),
+    KYC.countDocuments({ status: 'rejected' }),
+  ]);
+  return { pending, approved, rejected, all: pending + approved + rejected };
+};
+
+module.exports = { submitTier1, submitTier2, submitTier3, getKYCStatus, reviewKYC, getPendingKYC, getKYCSubmissions, getKYCById, getKYCCounts };

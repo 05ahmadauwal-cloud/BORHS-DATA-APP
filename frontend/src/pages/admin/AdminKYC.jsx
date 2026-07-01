@@ -4,19 +4,10 @@ import { adminAPI } from '../../api';
 import {
   Shield, CheckCircle, XCircle, Clock, AlertCircle,
   Eye, X, ChevronLeft, ChevronRight, User, FileText,
-  BadgeCheck, Camera,
+  BadgeCheck, Camera, RefreshCw,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
-
-const STATUS_TABS = [
-  { value: 'pending', label: 'Pending', color: 'text-yellow-400' },
-  { value: 'approved', label: 'Approved', color: 'text-success-400' },
-  { value: 'rejected', label: 'Rejected', color: 'text-red-400' },
-  { value: 'all', label: 'All', color: 'text-dark-300' },
-];
-
-const TIER_FILTERS = ['All', 'Tier 1', 'Tier 2', 'Tier 3'];
 
 const ID_TYPE_LABELS = {
   nin: 'NIN',
@@ -57,12 +48,12 @@ function Lightbox({ src, onClose }) {
 }
 
 function ReviewModal({ kycId, onClose, onDone }) {
-  const [action, setAction] = useState(null); // 'approve' | 'reject'
+  const [action, setAction] = useState(null);
   const [reason, setReason] = useState('');
   const [lightbox, setLightbox] = useState(null);
   const queryClient = useQueryClient();
 
-  const { data: kycRes, isLoading } = useQuery({
+  const { data: kyc, isLoading, isError } = useQuery({
     queryKey: ['kyc-detail', kycId],
     queryFn: () => adminAPI.getKYCById(kycId),
     select: (res) => res.data?.kyc,
@@ -74,12 +65,12 @@ function ReviewModal({ kycId, onClose, onDone }) {
     onSuccess: (_, { act }) => {
       toast.success(`KYC ${act}d successfully`);
       queryClient.invalidateQueries({ queryKey: ['kyc-submissions'] });
+      queryClient.invalidateQueries({ queryKey: ['kyc-counts'] });
       onDone();
     },
-    onError: (err) => toast.error(err.response?.data?.message || 'Failed'),
+    onError: (err) => toast.error(err.response?.data?.message || 'Action failed'),
   });
 
-  const kyc = kycRes;
   const isPending = kyc?.status === 'pending';
 
   return (
@@ -109,6 +100,11 @@ function ReviewModal({ kycId, onClose, onDone }) {
             <div className="flex items-center justify-center h-64">
               <span className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             </div>
+          ) : isError ? (
+            <div className="flex flex-col items-center justify-center h-64 gap-3">
+              <AlertCircle size={32} className="text-red-400" />
+              <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Failed to load KYC record</p>
+            </div>
           ) : kyc ? (
             <div className="p-6 space-y-6">
               {/* User info */}
@@ -125,26 +121,24 @@ function ReviewModal({ kycId, onClose, onDone }) {
                 </div>
               </div>
 
-              {/* Tier 1 info */}
               {kyc.tier === 1 && (
                 <div className="space-y-2">
                   <p className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>BASIC VERIFICATION</p>
                   <div className="p-4 rounded-2xl" style={{ background: 'var(--bg-elevated)' }}>
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      User confirmed their account details (name, phone, email) at registration.
+                      User confirmed their account details (name, phone, email) at registration. Auto-approved.
                     </p>
                   </div>
                 </div>
               )}
 
-              {/* Tier 2 info */}
               {kyc.tier === 2 && (
                 <div className="space-y-4">
                   <p className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>ID DOCUMENT</p>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      ['ID Type', ID_TYPE_LABELS[kyc.idType] || kyc.idType],
-                      ['ID Number', kyc.idNumber],
+                      ['ID Type', ID_TYPE_LABELS[kyc.idType] || kyc.idType || '—'],
+                      ['ID Number', kyc.idNumber || '—'],
                       ['BVN', kyc.bvn || '—'],
                       ['Submitted', kyc.submittedAt ? format(new Date(kyc.submittedAt), 'MMM d, yyyy') : '—'],
                     ].map(([l, v]) => (
@@ -155,7 +149,6 @@ function ReviewModal({ kycId, onClose, onDone }) {
                     ))}
                   </div>
 
-                  {/* Document images */}
                   <div className="grid grid-cols-2 gap-3">
                     {kyc.idFrontImage && (
                       <div className="space-y-1.5">
@@ -186,7 +179,6 @@ function ReviewModal({ kycId, onClose, onDone }) {
                 </div>
               )}
 
-              {/* Tier 3 info */}
               {kyc.tier === 3 && (
                 <div className="space-y-3">
                   <p className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>SELFIE</p>
@@ -201,11 +193,10 @@ function ReviewModal({ kycId, onClose, onDone }) {
                       <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No selfie uploaded</p>
                     </div>
                   )}
-                  <p className="text-xs text-center" style={{ color: 'var(--text-faint)' }}>Click image to view full size</p>
+                  <p className="text-xs text-center" style={{ color: 'var(--text-faint)' }}>Tap image to view full size</p>
                 </div>
               )}
 
-              {/* Rejection reason if already rejected */}
               {kyc.rejectionReason && (
                 <div className="p-4 rounded-2xl border" style={{ background: 'rgba(239,68,68,0.07)', borderColor: 'rgba(239,68,68,0.2)' }}>
                   <p className="text-xs font-bold text-red-400 mb-1">Rejection Reason</p>
@@ -213,7 +204,6 @@ function ReviewModal({ kycId, onClose, onDone }) {
                 </div>
               )}
 
-              {/* Reviewed by */}
               {kyc.reviewedBy && (
                 <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
                   Reviewed by {kyc.reviewedBy.firstName} {kyc.reviewedBy.lastName} on{' '}
@@ -221,31 +211,23 @@ function ReviewModal({ kycId, onClose, onDone }) {
                 </p>
               )}
 
-              {/* Action area — only for pending */}
               {isPending && !action && (
                 <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={() => setAction('approve')}
-                    className="btn-success flex-1 gap-2"
-                  >
+                  <button onClick={() => setAction('approve')} className="btn-success flex-1 gap-2">
                     <CheckCircle size={15} /> Approve
                   </button>
-                  <button
-                    onClick={() => setAction('reject')}
-                    className="btn-danger flex-1 gap-2"
-                  >
+                  <button onClick={() => setAction('reject')} className="btn-danger flex-1 gap-2">
                     <XCircle size={15} /> Reject
                   </button>
                 </div>
               )}
 
-              {/* Confirm approve */}
               {isPending && action === 'approve' && (
                 <div className="space-y-3 p-4 rounded-2xl border"
                   style={{ background: 'rgba(16,185,129,0.06)', borderColor: 'rgba(16,185,129,0.2)' }}>
                   <p className="text-sm font-semibold text-success-400">Confirm Approval</p>
                   <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    Approving will mark this Tier {kyc.tier} KYC as verified and unlock the next tier for this user.
+                    This will mark Tier {kyc.tier} as verified and unlock the next tier for this user.
                   </p>
                   <div className="flex gap-2">
                     <button onClick={() => setAction(null)} className="btn-secondary flex-1">Cancel</button>
@@ -263,7 +245,6 @@ function ReviewModal({ kycId, onClose, onDone }) {
                 </div>
               )}
 
-              {/* Confirm reject */}
               {isPending && action === 'reject' && (
                 <div className="space-y-3 p-4 rounded-2xl border"
                   style={{ background: 'rgba(239,68,68,0.06)', borderColor: 'rgba(239,68,68,0.2)' }}>
@@ -302,6 +283,19 @@ function ReviewModal({ kycId, onClose, onDone }) {
   );
 }
 
+const TIER_FILTERS = [
+  { label: 'All Tiers', value: '' },
+  { label: 'Tier 1', value: '1' },
+  { label: 'Tier 2', value: '2' },
+  { label: 'Tier 3', value: '3' },
+];
+
+const tierIcon = (t) => {
+  if (t === 1) return <User size={13} />;
+  if (t === 2) return <FileText size={13} />;
+  return <Camera size={13} />;
+};
+
 export default function AdminKYC() {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState('pending');
@@ -309,20 +303,29 @@ export default function AdminKYC() {
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState(null);
 
-  const { data, isLoading } = useQuery({
+  const { data: counts, refetch: refetchCounts } = useQuery({
+    queryKey: ['kyc-counts'],
+    queryFn: () => adminAPI.getKYCCounts(),
+    select: (res) => res.data,
+    refetchInterval: 30_000,
+  });
+
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['kyc-submissions', { status, tier, page }],
     queryFn: () => adminAPI.getAllKYC({ status, tier: tier || undefined, page, limit: 15 }),
     select: (res) => res.data,
+    refetchInterval: 30_000,
   });
 
   const list = data?.data || [];
   const pagination = data?.pagination;
 
-  const tierIcon = (t) => {
-    if (t === 1) return <User size={13} />;
-    if (t === 2) return <FileText size={13} />;
-    return <Camera size={13} />;
-  };
+  const STATUS_TABS = [
+    { value: 'pending', label: 'Pending', color: 'text-yellow-400', count: counts?.pending },
+    { value: 'approved', label: 'Approved', color: 'text-success-400', count: counts?.approved },
+    { value: 'rejected', label: 'Rejected', color: 'text-red-400', count: counts?.rejected },
+    { value: 'all', label: 'All', color: 'text-dark-300', count: counts?.all },
+  ];
 
   return (
     <div className="space-y-5 max-w-5xl mx-auto">
@@ -333,47 +336,87 @@ export default function AdminKYC() {
             <Shield size={22} className="text-primary-400" /> KYC Management
           </h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            {pagination?.total ?? 0} submission{pagination?.total !== 1 ? 's' : ''} · {status}
+            Review and manage user identity verifications
           </p>
         </div>
+        <button
+          onClick={() => { refetch(); refetchCounts(); }}
+          className="btn-secondary btn-sm gap-2"
+        >
+          <RefreshCw size={14} /> Refresh
+        </button>
       </div>
 
-      {/* Status tabs */}
+      {/* Error banner */}
+      {isError && (
+        <div className="flex items-center gap-3 p-4 rounded-2xl border"
+          style={{ background: 'rgba(239,68,68,0.08)', borderColor: 'rgba(239,68,68,0.25)' }}>
+          <AlertCircle size={18} className="text-red-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-red-400">Failed to load submissions</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              {error?.response?.data?.message || error?.message || 'Network error — check your connection or admin role'}
+            </p>
+          </div>
+          <button onClick={() => refetch()} className="btn-secondary btn-sm shrink-0">Retry</button>
+        </div>
+      )}
+
+      {/* Status tabs with live counts */}
       <div className="flex gap-1 p-1 rounded-2xl w-full sm:w-fit" style={{ background: 'var(--bg-surface)' }}>
         {STATUS_TABS.map((t) => (
           <button
             key={t.value}
             onClick={() => { setStatus(t.value); setPage(1); }}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               status === t.value ? 'bg-primary-600 text-white shadow-sm' : ''
             }`}
             style={{ color: status === t.value ? undefined : 'var(--text-muted)' }}
           >
             {t.label}
+            {t.count != null && (
+              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center ${
+                status === t.value
+                  ? 'bg-white/20 text-white'
+                  : t.value === 'pending' && t.count > 0
+                    ? 'bg-yellow-500/20 text-yellow-400'
+                    : 'bg-dark-700 text-dark-400'
+              }`}>
+                {t.count}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
       {/* Tier chips */}
       <div className="flex gap-2 flex-wrap">
-        {TIER_FILTERS.map((t, i) => {
-          const val = i === 0 ? '' : String(i);
-          return (
-            <button
-              key={t}
-              onClick={() => { setTier(val); setPage(1); }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                tier === val
-                  ? 'bg-primary-600/20 text-primary-300 border border-primary-500/30'
-                  : 'border'
-              }`}
-              style={tier !== val ? { background: 'var(--bg-elevated)', color: 'var(--text-muted)', borderColor: 'var(--border)' } : {}}
-            >
-              {t}
-            </button>
-          );
-        })}
+        {TIER_FILTERS.map(({ label, value }) => (
+          <button
+            key={value}
+            onClick={() => { setTier(value); setPage(1); }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+              tier === value
+                ? 'bg-primary-600/20 text-primary-300 border-primary-500/30'
+                : ''
+            }`}
+            style={tier !== value ? { background: 'var(--bg-elevated)', color: 'var(--text-muted)', borderColor: 'var(--border)' } : {}}
+          >
+            {label}
+          </button>
+        ))}
       </div>
+
+      {/* Info note about Tier 1 */}
+      {status === 'pending' && (
+        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl text-xs"
+          style={{ background: 'rgba(37,99,235,0.08)', color: 'var(--text-muted)' }}>
+          <AlertCircle size={14} className="text-primary-400 mt-0.5 shrink-0" />
+          <span>
+            <strong className="text-primary-400">Note:</strong> Tier 1 is auto-approved instantly — only Tier 2 (ID document) and Tier 3 (selfie) submissions appear here for review.
+          </span>
+        </div>
+      )}
 
       {/* List */}
       {isLoading ? (
@@ -390,13 +433,11 @@ export default function AdminKYC() {
               onClick={() => setSelectedId(kyc._id)}
               className="w-full text-left card p-4 flex items-center gap-4 hover:border-primary-500/30 transition-all active:scale-[0.99]"
             >
-              {/* Avatar */}
               <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 font-black text-sm"
                 style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}>
                 {kyc.user?.firstName?.[0]}{kyc.user?.lastName?.[0]}
               </div>
 
-              {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
@@ -416,7 +457,6 @@ export default function AdminKYC() {
                 </p>
               </div>
 
-              {/* Arrow */}
               <Eye size={16} style={{ color: 'var(--text-muted)' }} className="shrink-0" />
             </button>
           ))}
@@ -425,11 +465,18 @@ export default function AdminKYC() {
         <div className="card p-16 text-center">
           <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
             style={{ background: 'var(--bg-elevated)' }}>
-            <CheckCircle size={28} className="text-success-400 opacity-60" />
+            {status === 'pending'
+              ? <Clock size={28} className="text-yellow-400 opacity-60" />
+              : <CheckCircle size={28} className="text-success-400 opacity-60" />}
           </div>
-          <p className="font-semibold" style={{ color: 'var(--text-muted)' }}>
+          <p className="font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>
             No {status === 'all' ? '' : status} KYC submissions{tier ? ` for Tier ${tier}` : ''}
           </p>
+          {status === 'pending' && (
+            <p className="text-xs mt-1" style={{ color: 'var(--text-faint)' }}>
+              When users submit Tier 2 (ID) or Tier 3 (selfie), they appear here for your review.
+            </p>
+          )}
         </div>
       )}
 
@@ -458,7 +505,6 @@ export default function AdminKYC() {
         </div>
       )}
 
-      {/* Review modal */}
       {selectedId && (
         <ReviewModal
           kycId={selectedId}

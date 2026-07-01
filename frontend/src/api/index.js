@@ -116,4 +116,5 @@ export const adminAPI = {
   getAllKYC: (params) => api.get('/kyc/submissions', { params }),
   getKYCById: (id) => api.get(`/kyc/${id}`),
   reviewKYC: (id, action, reason) => api.patch(`/kyc/${id}/review`, { action, rejectionReason: reason }),
+  getKYCCounts: () => api.get('/kyc/counts'),
 };
