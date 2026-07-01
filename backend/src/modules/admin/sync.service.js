@@ -42,7 +42,7 @@ const fetchAllPlans = async () => {
  * Sync all data plans from smeapi into the database with your commission markup
  */
 const syncDataPlans = async (commissionRates = {}) => {
-  if (!commissionRates.customer) {
+  if (commissionRates.customer === undefined) {
     const settings = await Settings.getMany([
       'commission_customer',
       'commission_agent',
