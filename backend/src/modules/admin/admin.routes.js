@@ -98,6 +98,23 @@ router.patch('/settings', asyncHandler(async (req, res) => {
   return ApiResponse.success(res, { settings }, 'Settings updated');
 }));
 
+// ─── Email Test ───────────────────────────────────────────────────────────────
+router.get('/test/email', asyncHandler(async (req, res) => {
+  try {
+    const { testConnection, sendEmail } = require('../../services/emailService');
+    const info = await testConnection();
+    const to = req.query.to || req.user.email;
+    const sent = await sendEmail(to, 'otp', { firstName: 'Admin', otp: '123456' });
+    return ApiResponse.success(res, { smtp: info, emailSent: sent, sentTo: to }, sent ? 'Test email sent!' : 'SMTP connected but email failed to send');
+  } catch (err) {
+    return ApiResponse.error(res, `SMTP error: ${err.message}`, 400, {
+      smtpUser: process.env.SMTP_USER || 'NOT SET',
+      smtpHost: process.env.SMTP_HOST || 'NOT SET',
+      smtpPassSet: !!process.env.SMTP_PASS,
+    });
+  }
+}));
+
 // ─── Provider Health Check ────────────────────────────────────────────────────
 router.get('/test/smeapi', asyncHandler(async (req, res) => {
   try {

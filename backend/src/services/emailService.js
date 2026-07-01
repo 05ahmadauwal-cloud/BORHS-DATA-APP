@@ -2,15 +2,28 @@ const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
 
 const createTransporter = () => {
+  // Gmail App Passwords are displayed with spaces but work with or without
+  const smtpPass = (process.env.SMTP_PASS || '').replace(/\s/g, '');
   return nodemailer.createTransporter({
-    host: process.env.SMTP_HOST,
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT) || 587,
     secure: process.env.SMTP_SECURE === 'true',
     auth: {
       user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      pass: smtpPass,
     },
   });
+};
+
+const testConnection = async () => {
+  const transporter = createTransporter();
+  await transporter.verify();
+  return {
+    ok: true,
+    user: process.env.SMTP_USER,
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT) || 587,
+  };
 };
 
 const emailTemplates = {
@@ -124,4 +137,4 @@ const sendEmail = async (to, templateName, data) => {
   }
 };
 
-module.exports = { sendEmail };
+module.exports = { sendEmail, testConnection };
