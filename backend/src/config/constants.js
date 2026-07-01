@@ -83,9 +83,7 @@ module.exports = {
   },
 
   VTU_PROVIDERS: {
-    VTPASS: 'vtpass',
-    CLUBKONNECT: 'clubkonnect',
-    RAGP: 'ragp',
+    SMEAPI: 'smeapi',
   },
 
   NOTIFICATION_TYPES: {

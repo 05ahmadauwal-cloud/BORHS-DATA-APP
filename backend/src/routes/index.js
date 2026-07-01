@@ -26,23 +26,13 @@ router.get('/health', (req, res) => {
 
 // Test provider credentials — development only
 if (process.env.NODE_ENV !== 'production') {
-  router.get('/test/clubkonnect-balance', async (req, res) => {
+  router.get('/test/smeapi-balance', async (req, res) => {
     try {
-      const ck = require('../services/providers/clubkonnect');
-      const data = await ck.checkBalance();
-      res.json({ success: true, provider: 'clubkonnect', data });
+      const smeapi = require('../services/providers/smeapi');
+      const data = await smeapi.checkBalance();
+      res.json({ success: true, provider: 'smeapi', data });
     } catch (err) {
-      res.status(400).json({ success: false, provider: 'clubkonnect', message: err.message });
-    }
-  });
-
-  router.get('/test/vtpass-balance', async (req, res) => {
-    try {
-      const vt = require('../services/providers/vtpass');
-      const data = await vt.checkBalance();
-      res.json({ success: true, provider: 'vtpass', data });
-    } catch (err) {
-      res.status(400).json({ success: false, provider: 'vtpass', message: err.message });
+      res.status(400).json({ success: false, provider: 'smeapi', message: err.message });
     }
   });
 }

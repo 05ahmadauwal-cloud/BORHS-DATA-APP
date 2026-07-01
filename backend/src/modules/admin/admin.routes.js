@@ -119,13 +119,13 @@ router.get('/test/smeapi-plans/:network', asyncHandler(async (req, res) => {
   }
 }));
 
-// ─── ClubKonnect Sync ─────────────────────────────────────────────────────────
+// ─── SMEAPI Sync ──────────────────────────────────────────────────────────────
 const { syncDataPlans, updateAllCommissions } = require('./sync.service');
 
-// Sync data plans from ClubKonnect with current commission rates
+// Sync data plans from SMEAPI with current commission rates
 router.post('/sync/data-plans', asyncHandler(async (req, res) => {
   const result = await syncDataPlans(req.body.commissionRates || {});
-  return ApiResponse.success(res, result, `Synced ${result.synced} data plans from ClubKonnect`);
+  return ApiResponse.success(res, result, `Synced ${result.synced} data plans from SMEAPI`);
 }));
 
 // Update commission rates across all existing plans
@@ -143,14 +143,14 @@ router.post('/sync/update-commissions', [
 router.get('/sync/commission-rates', asyncHandler(async (req, res) => {
   const Settings = require('../../models/Settings');
   const rates = await Settings.getMany([
-    'ck_commission_customer',
-    'ck_commission_agent',
-    'ck_commission_reseller',
+    'commission_customer',
+    'commission_agent',
+    'commission_reseller',
   ]);
   return ApiResponse.success(res, {
-    customer: parseFloat(rates.ck_commission_customer ?? 10),
-    agent: parseFloat(rates.ck_commission_agent ?? 5),
-    reseller: parseFloat(rates.ck_commission_reseller ?? 3),
+    customer: parseFloat(rates.commission_customer ?? 10),
+    agent: parseFloat(rates.commission_agent ?? 5),
+    reseller: parseFloat(rates.commission_reseller ?? 3),
   });
 }));
 

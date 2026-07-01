@@ -46,7 +46,7 @@ export default function AdminServices() {
       toast.success(res.data.message);
       queryClient.invalidateQueries({ queryKey: ['admin-data-plans'] });
     },
-    onError: (err) => toast.error(err.response?.data?.message || 'Sync failed. Check ClubKonnect credentials.'),
+    onError: (err) => toast.error(err.response?.data?.message || 'Sync failed. Check SMEAPI token.'),
   });
 
   const updateCommissionMutation = useMutation({
@@ -104,7 +104,7 @@ export default function AdminServices() {
           <h1 className="text-xl md:text-2xl font-black text-dark-50 flex items-center gap-2">
             <Zap size={22} className="text-primary-400" /> Services & Data Plans
           </h1>
-          <p className="text-dark-400 text-xs mt-0.5">{plans?.length || 0} plans · ClubKonnect</p>
+          <p className="text-dark-400 text-xs mt-0.5">{plans?.length || 0} plans · SMEAPI</p>
         </div>
         <div className="flex gap-2">
           <button onClick={openCreate} className="btn-secondary btn-sm gap-1.5"><Plus size={14} /> Add Plan</button>
@@ -134,7 +134,7 @@ export default function AdminServices() {
             <div className="space-y-2 text-sm text-dark-300">
               <div className="flex items-start gap-2">
                 <CheckCircle size={14} className="text-success-500 mt-0.5 shrink-0" />
-                <p><span className="text-dark-100 font-semibold">ClubKonnect price</span> = what you pay (your cost)</p>
+                <p><span className="text-dark-100 font-semibold">SMEAPI price</span> = what you pay (your cost)</p>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle size={14} className="text-success-500 mt-0.5 shrink-0" />
@@ -146,7 +146,7 @@ export default function AdminServices() {
               </div>
               <div className="flex items-start gap-2">
                 <AlertCircle size={14} className="text-yellow-400 mt-0.5 shrink-0" />
-                <p>Click <span className="text-primary-400 font-semibold">Sync from ClubKonnect</span> first to pull live prices, then set your commission.</p>
+                <p>Click <span className="text-primary-400 font-semibold">Sync from SMEAPI</span> first to pull live prices, then set your commission.</p>
               </div>
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function AdminServices() {
 
             <div className="space-y-4">
               {[
-                { key: 'customer', label: 'Customer Commission', desc: 'Regular customers pay this above ClubKonnect price', color: 'text-primary-400' },
+                { key: 'customer', label: 'Customer Commission', desc: 'Regular customers pay this above SMEAPI price', color: 'text-primary-400' },
                 { key: 'agent', label: 'Agent Commission', desc: 'Agents pay less — they sell to their own customers', color: 'text-success-500' },
                 { key: 'reseller', label: 'Reseller Commission', desc: 'Bulk resellers get the lowest price', color: 'text-purple-400' },
               ].map(({ key, label, desc, color }) => (
@@ -182,7 +182,7 @@ export default function AdminServices() {
                   </div>
                   {/* Example calculation */}
                   <div className="bg-dark-800/60 rounded-lg px-3 py-2 text-xs text-dark-400">
-                    e.g. ClubKonnect price ₦270 → {label.split(' ')[0]} pays{' '}
+                    e.g. SMEAPI price ₦270 → {label.split(' ')[0]} pays{' '}
                     <span className={`font-bold ${color}`}>
                       ₦{Math.ceil(270 * (1 + rates[key] / 100)).toLocaleString()}
                     </span>
@@ -202,7 +202,7 @@ export default function AdminServices() {
                   ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   : <RefreshCw size={15} />
                 }
-                {syncMutation.isPending ? 'Syncing from ClubKonnect...' : 'Sync from ClubKonnect + Apply Commission'}
+                {syncMutation.isPending ? 'Syncing from SMEAPI...' : 'Sync from SMEAPI + Apply Commission'}
               </button>
               <button
                 onClick={() => updateCommissionMutation.mutate()}
@@ -214,7 +214,7 @@ export default function AdminServices() {
               </button>
             </div>
             <p className="text-xs text-dark-500">
-              <span className="text-primary-400 font-semibold">Sync</span> pulls fresh prices from ClubKonnect AND applies commission.{' '}
+              <span className="text-primary-400 font-semibold">Sync</span> pulls fresh prices from SMEAPI AND applies commission.{' '}
               <span className="text-dark-400 font-semibold">Update Commission Only</span> recalculates prices on existing plans without re-syncing.
             </p>
           </div>
@@ -247,7 +247,7 @@ export default function AdminServices() {
                   <th>Plan</th>
                   <th>Network</th>
                   <th>Size</th>
-                  <th>ClubKonnect Cost</th>
+                  <th>SMEAPI Cost</th>
                   <th>Customer Price</th>
                   <th>Agent Price</th>
                   <th>Profit</th>
@@ -349,7 +349,7 @@ export default function AdminServices() {
                 ['Plan Name', 'name', 'text'],
                 ['Data Size', 'dataSize', 'text'],
                 ['Validity', 'validity', 'text'],
-                ['ClubKonnect Cost (₦)', 'costPrice', 'number'],
+                ['SMEAPI Cost (₦)', 'costPrice', 'number'],
                 ['Customer Price (₦)', 'sellingPrice', 'number'],
                 ['Agent Price (₦)', 'agentPrice', 'number'],
                 ['Provider Code', 'providerPlanCode', 'text'],
