@@ -16,7 +16,7 @@ const paystackInitialize = async (userId, email, amount, metadata = {}) => {
       email,
       amount: Math.round(amount * 100),
       reference,
-      callback_url: `${process.env.CLIENT_URL}/payment/verify`,
+      callback_url: `${process.env.CLIENT_URL}/wallet`,
       metadata: { userId: userId.toString(), ...metadata },
     },
     {

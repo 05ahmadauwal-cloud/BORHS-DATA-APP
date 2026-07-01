@@ -47,6 +47,7 @@ import AdminServices from './pages/admin/AdminServices';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminKYC from './pages/admin/AdminKYC';
 import AdminAgentApplications from './pages/admin/AdminAgentApplications';
+import AdminCoupons from './pages/admin/AdminCoupons';
 
 // Guards
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -110,6 +111,7 @@ export default function App() {
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/admin/kyc" element={<AdminKYC />} />
           <Route path="/admin/agent-applications" element={<AdminAgentApplications />} />
+          <Route path="/admin/coupons" element={<AdminCoupons />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

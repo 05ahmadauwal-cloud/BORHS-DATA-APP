@@ -14,6 +14,7 @@ router.use('/referral', require('../modules/referral/referral.routes'));
 router.use('/kyc', require('../modules/kyc/kyc.routes'));
 router.use('/notifications', require('../modules/notification/notification.routes'));
 router.use('/admin', require('../modules/admin/admin.routes'));
+router.use('/coupons', require('../modules/coupon/coupon.routes'));
 
 router.get('/health', (req, res) => {
   res.json({

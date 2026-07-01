@@ -126,3 +126,12 @@ export const adminAPI = {
   testMonnify: () => api.get('/admin/test/monnify'),
   createVirtualAccount: (userId) => api.post(`/admin/users/${userId}/create-virtual-account`),
 };
+
+// Coupons
+export const couponAPI = {
+  list: () => api.get('/coupons'),
+  create: (data) => api.post('/coupons', data),
+  update: (id, data) => api.patch(`/coupons/${id}`, data),
+  remove: (id) => api.delete(`/coupons/${id}`),
+  redeem: (code) => api.post('/coupons/redeem', { code }),
+};

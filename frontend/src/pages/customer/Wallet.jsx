@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { walletAPI, paymentAPI } from '../../api';
+import { walletAPI, paymentAPI, couponAPI } from '../../api';
 import { useSearchParams } from 'react-router-dom';
 import {
   Wallet as WalletIcon, Send, CreditCard,
   CheckCircle, XCircle, Clock, Copy, Check, Building2,
-  RefreshCw, AlertCircle, Banknote,
+  RefreshCw, AlertCircle, Banknote, Tag,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
-const TABS = ['Bank Transfer', 'Online Payment', 'Send Money', 'History'];
+const TABS = ['Bank Transfer', 'Online Payment', 'Promo Code', 'Send Money', 'History'];
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 const isCredit = (type) => [
   'wallet_fund', 'commission_earned', 'referral_bonus', 'refund',
@@ -238,6 +238,16 @@ export default function Wallet() {
     onError: (err) => toast.error(err.response?.data?.message || 'Failed to initialize payment'),
   });
 
+  const [couponCode, setCouponCode] = useState('');
+  const couponMutation = useMutation({
+    mutationFn: () => couponAPI.redeem(couponCode),
+    onSuccess: (res) => {
+      creditWallet(res.data.amount);
+      setCouponCode('');
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Invalid coupon code'),
+  });
+
   const transferMutation = useMutation({
     mutationFn: () => walletAPI.transfer(transferForm),
     onSuccess: () => {
@@ -372,6 +382,42 @@ export default function Wallet() {
               ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               : <CreditCard size={18} />}
             {fundMutation.isPending ? 'Opening payment…' : `Pay ₦${Number(fundAmount || 0).toLocaleString()}`}
+          </button>
+        </div>
+      )}
+
+      {/* Promo Code Tab */}
+      {activeTab === 'Promo Code' && (
+        <div className="card p-4 sm:p-6 space-y-5">
+          <div className="flex gap-3 p-4 rounded-2xl border"
+            style={{ background: 'rgba(16,185,129,0.05)', borderColor: 'rgba(16,185,129,0.2)' }}>
+            <Tag size={18} className="text-success-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Redeem a Promo Code</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                Enter a valid coupon code to instantly credit your wallet.
+              </p>
+            </div>
+          </div>
+          <div>
+            <label className="label">Promo Code</label>
+            <input
+              className="input uppercase tracking-widest text-lg font-bold"
+              placeholder="e.g. BORHS100"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+              onKeyDown={(e) => e.key === 'Enter' && couponCode && couponMutation.mutate()}
+            />
+          </div>
+          <button
+            onClick={() => couponMutation.mutate()}
+            disabled={!couponCode || couponMutation.isPending}
+            className="btn-primary w-full btn-lg gap-2 text-base"
+          >
+            {couponMutation.isPending
+              ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              : <Tag size={18} />}
+            {couponMutation.isPending ? 'Redeeming…' : 'Redeem Code'}
           </button>
         </div>
       )}
