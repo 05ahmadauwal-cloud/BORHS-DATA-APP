@@ -225,4 +225,53 @@ router.get('/sync/commission-rates', asyncHandler(async (req, res) => {
   });
 }));
 
+// ─── Broadcast Announcement ───────────────────────────────────────────────────
+router.post('/broadcast', [
+  body('title').trim().notEmpty().withMessage('Title is required'),
+  body('message').trim().notEmpty().withMessage('Message is required'),
+  body('targetRole').optional().isIn(['all', 'customer', 'agent']),
+], validate, asyncHandler(async (req, res) => {
+  const User = require('../../models/User');
+  const Notification = require('../../models/Notification');
+
+  const { title, message, targetRole = 'all' } = req.body;
+
+  const filter = { isActive: true };
+  if (targetRole !== 'all') filter.role = targetRole;
+
+  const users = await User.find(filter).select('_id').lean();
+  if (!users.length) return ApiResponse.error(res, 'No users found for target', 400);
+
+  const docs = users.map((u) => ({
+    user: u._id,
+    title,
+    message,
+    type: 'in_app',
+    event: 'announcement',
+    metadata: { sentBy: req.user._id, targetRole },
+  }));
+
+  await Notification.insertMany(docs, { ordered: false });
+
+  return ApiResponse.success(res, { sent: docs.length }, `Announcement sent to ${docs.length} user(s)`);
+}));
+
+// List past announcements (distinct — one sample per broadcast batch)
+router.get('/broadcast/history', asyncHandler(async (req, res) => {
+  const Notification = require('../../models/Notification');
+  const history = await Notification.aggregate([
+    { $match: { event: 'announcement' } },
+    { $sort: { createdAt: -1 } },
+    { $group: {
+      _id: { title: '$title', message: '$message', sentBy: '$metadata.sentBy' },
+      sentAt: { $first: '$createdAt' },
+      count: { $sum: 1 },
+      targetRole: { $first: '$metadata.targetRole' },
+    }},
+    { $sort: { sentAt: -1 } },
+    { $limit: 20 },
+  ]);
+  return ApiResponse.success(res, { history });
+}));
+
 module.exports = router;

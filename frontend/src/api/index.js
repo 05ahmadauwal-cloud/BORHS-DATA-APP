@@ -125,6 +125,8 @@ export const adminAPI = {
   reviewAgentApplication: (id, action, reason) => api.patch(`/admin/agent-applications/${id}/review`, { action, rejectionReason: reason }),
   testMonnify: () => api.get('/admin/test/monnify'),
   createVirtualAccount: (userId) => api.post(`/admin/users/${userId}/create-virtual-account`),
+  broadcast: (data) => api.post('/admin/broadcast', data),
+  broadcastHistory: () => api.get('/admin/broadcast/history'),
 };
 
 // Coupons

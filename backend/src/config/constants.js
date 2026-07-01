@@ -108,6 +108,7 @@ module.exports = {
     KYC_APPROVED: 'kyc_approved',
     KYC_REJECTED: 'kyc_rejected',
     PASSWORD_RESET: 'password_reset',
+    ANNOUNCEMENT: 'announcement',
   },
 
   REFERRAL_LEVELS: {
