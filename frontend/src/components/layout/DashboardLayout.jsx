@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { LayoutDashboard, Wallet, Wifi, MoreHorizontal, User } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import WhatsAppButton from '../ui/WhatsAppButton';
 
 const mobileNav = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
@@ -34,6 +35,8 @@ export default function DashboardLayout() {
         <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 pb-24 lg:pb-8 overflow-auto animate-fade-in">
           <Outlet />
         </main>
+
+        <WhatsAppButton />
 
         {/* Mobile bottom navigation */}
         <nav className="lg:hidden fixed bottom-0 inset-x-0 z-20 bg-dark-900/95 border-t border-dark-700/50 backdrop-blur-md">

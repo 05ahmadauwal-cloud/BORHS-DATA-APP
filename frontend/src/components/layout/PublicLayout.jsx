@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Menu, X, Zap, Sun, Moon } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
+import WhatsAppButton from '../ui/WhatsAppButton';
 
 export default function PublicLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -133,6 +134,8 @@ export default function PublicLayout() {
           </div>
         </div>
       </footer>
+
+      <WhatsAppButton />
     </div>
   );
 }

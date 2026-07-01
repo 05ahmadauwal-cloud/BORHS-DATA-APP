@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
+import WhatsAppButton from '../ui/WhatsAppButton';
 
 const adminNav = [
   { to: '/admin', icon: LayoutDashboard, label: 'Overview' },
@@ -111,6 +112,8 @@ export default function AdminLayout() {
           <Outlet />
         </main>
       </div>
+
+      <WhatsAppButton />
     </div>
   );
 }
