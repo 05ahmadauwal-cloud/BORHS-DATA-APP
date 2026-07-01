@@ -44,7 +44,7 @@ export default function Dashboard() {
   const { data: banner } = useQuery({
     queryKey: ['banner'],
     queryFn: () => bannerAPI.get(),
-    select: (res) => res.data,
+    select: (res) => res.data.data,
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
