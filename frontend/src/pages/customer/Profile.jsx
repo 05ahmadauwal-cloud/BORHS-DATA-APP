@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { authAPI, walletAPI } from '../../api';
 import {
@@ -75,7 +76,8 @@ function PasswordInput({ placeholder, value, onChange }) {
 
 export default function Profile() {
   const { user, updateUser } = useAuthStore();
-  const [activeTab, setActiveTab] = useState('profile');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const [pin, setPin] = useState('');
 

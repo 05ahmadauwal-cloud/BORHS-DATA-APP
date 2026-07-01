@@ -3,6 +3,7 @@ const { body } = require('express-validator');
 const router = express.Router();
 const ctrl = require('./cable.controller');
 const { authenticate } = require('../../middleware/auth');
+const requireKYC = require('../../middleware/requireKYC');
 const validate = require('../../middleware/validate');
 const asyncHandler = require('express-async-handler');
 
@@ -12,12 +13,12 @@ router.use(authenticate);
 router.get('/packages', asyncHandler(ctrl.getPackages));
 router.get('/history', asyncHandler(ctrl.getHistory));
 
-router.post('/verify', [
+router.post('/verify', requireKYC, [
   body('provider').isIn(PROVIDERS).withMessage('Invalid provider'),
   body('smartCardNumber').notEmpty().withMessage('Smart card number is required'),
 ], validate, asyncHandler(ctrl.verifySmartCard));
 
-router.post('/purchase', [
+router.post('/purchase', requireKYC, [
   body('provider').isIn(PROVIDERS).withMessage('Invalid provider'),
   body('smartCardNumber').notEmpty().withMessage('Smart card number is required'),
   body('packageId').notEmpty().withMessage('Package is required'),
