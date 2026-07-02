@@ -36,7 +36,7 @@ export default function Register() {
   const [searchParams] = useSearchParams();
   const refCode = searchParams.get('ref') || '';
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { referralCode: refCode },
   });
@@ -105,9 +105,12 @@ export default function Register() {
                   className={`input pl-7 ${errors.username ? 'input-error' : ''}`}
                   placeholder="yourname"
                   autoComplete="username"
-                  onChange={(e) => {
-                    e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
-                    register('username').onChange(e);
+                  onInput={(e) => {
+                    const clean = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+                    if (clean !== e.target.value) {
+                      e.target.value = clean;
+                      setValue('username', clean, { shouldValidate: true });
+                    }
                   }}
                 />
               </div>
