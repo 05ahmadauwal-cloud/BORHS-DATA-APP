@@ -113,7 +113,7 @@ export default function Sidebar({ isOpen, onClose }) {
           <Link to="/dashboard" onClick={onClose} className="flex items-center gap-3 min-w-0">
             <div className="relative shrink-0">
               <div style={{ width: 38, height: 38, borderRadius: 10, overflow: 'hidden', background: 'white', flexShrink: 0 }}>
-                <img src="/logo.png" alt="BORHS" style={{ display: 'block', width: 76, height: 'auto', marginLeft: -19, marginTop: -1 }} />
+                <img src="/logo.svg" alt="BORHS" style={{ display: 'block', width: 76, height: 'auto', marginLeft: -19, marginTop: -1 }} />
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success-400 rounded-full border-2 border-dark-900" />
             </div>

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="200" height="200" rx="44" fill="url(#bg)"/>
+
+  <!-- Subtle top shine -->
+  <rect width="200" height="100" rx="44" fill="url(#shine)"/>
+
+  <!-- Letter B — drawn as paths for crisp cross-browser rendering -->
+  <!-- Left vertical stroke -->
+  <rect x="52" y="44" width="22" height="112" rx="4" fill="white"/>
+
+  <!-- Top bump -->
+  <path d="M74 44 H118 Q148 44 148 74 Q148 104 118 104 H74 Z" fill="white"/>
+  <!-- Top bump hole -->
+  <path d="M82 56 H114 Q132 56 132 74 Q132 92 114 92 H82 Z" fill="url(#bg)"/>
+
+  <!-- Bottom bump (wider) -->
+  <path d="M74 104 H124 Q158 104 158 136 Q158 156 124 156 H74 Z" fill="white"/>
+  <!-- Bottom bump hole -->
+  <path d="M82 116 H120 Q142 116 142 136 Q142 144 120 144 H82 Z" fill="url(#bg)"/>
+</svg>

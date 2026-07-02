@@ -54,7 +54,7 @@ export default function Login() {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex flex-col items-center gap-3 mb-6">
             <div style={{ width: 100, height: 100, borderRadius: 20, background: 'white', padding: 6 }}>
-              <img src="/logo.png" alt="BORHS Data App" style={{ width: '100%', height: 'auto' }} />
+              <img src="/logo.svg" alt="BORHS Data App" style={{ width: '100%', height: 'auto' }} />
             </div>
           </Link>
           <h1 className="text-2xl font-black text-dark-50">Welcome back</h1>
