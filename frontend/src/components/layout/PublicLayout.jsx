@@ -1,6 +1,6 @@
 import { Outlet, Link, NavLink } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Menu, X, Zap, Sun, Moon, Home, Tag, Info, MessageCircle, ArrowRight, LogIn } from 'lucide-react';
+import { Menu, X, Sun, Moon, Home, Tag, Info, MessageCircle, ArrowRight, LogIn } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
 import WhatsAppButton from '../ui/WhatsAppButton';
@@ -36,8 +36,8 @@ export default function PublicLayout() {
 
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 shrink-0">
-              <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-success-500 rounded-xl flex items-center justify-center">
-                <Zap size={18} className="text-white" fill="white" />
+              <div style={{ width: 38, height: 38, borderRadius: 10, overflow: 'hidden', background: 'white', flexShrink: 0 }}>
+                <img src="/logo.png" alt="BORHS Data App" style={{ display: 'block', width: 76, height: 'auto', marginLeft: -19, marginTop: -1 }} />
               </div>
               <span className="font-black text-lg" style={{ color: 'var(--text-primary)' }}>
                 BORHS <span className="text-primary-400">Data</span>
@@ -126,8 +126,8 @@ export default function PublicLayout() {
           <div className="flex items-center justify-between px-5 py-4 border-b shrink-0"
             style={{ borderColor: 'var(--border)' }}>
             <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-success-500 rounded-xl flex items-center justify-center">
-                <Zap size={15} className="text-white" fill="white" />
+              <div style={{ width: 34, height: 34, borderRadius: 9, overflow: 'hidden', background: 'white', flexShrink: 0 }}>
+                <img src="/logo.png" alt="BORHS" style={{ display: 'block', width: 68, height: 'auto', marginLeft: -17, marginTop: -1 }} />
               </div>
               <span className="font-black text-sm" style={{ color: 'var(--text-primary)' }}>
                 BORHS <span className="text-primary-400">Data</span>
@@ -221,8 +221,8 @@ export default function PublicLayout() {
             {/* Brand */}
             <div className="sm:w-52 shrink-0">
               <div className="flex items-center gap-2 mb-2.5">
-                <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-success-500 rounded-lg flex items-center justify-center shrink-0">
-                  <Zap size={13} className="text-white" fill="white" />
+                <div style={{ width: 28, height: 28, borderRadius: 8, overflow: 'hidden', background: 'white', flexShrink: 0 }}>
+                  <img src="/logo.png" alt="" style={{ display: 'block', width: 56, height: 'auto', marginLeft: -14, marginTop: -1 }} />
                 </div>
                 <span className="font-black text-sm" style={{ color: 'var(--text-primary)' }}>BORHS Data</span>
               </div>

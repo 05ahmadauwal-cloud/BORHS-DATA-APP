@@ -44,8 +44,8 @@ export default function AdminLayout() {
       `}>
         <div className="flex items-center justify-between p-4 border-b border-dark-700/50">
           <Link to="/admin" className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-success-500 rounded-lg flex items-center justify-center shrink-0">
-              <Zap size={15} className="text-white" fill="white" />
+            <div style={{ width: 34, height: 34, borderRadius: 9, overflow: 'hidden', background: 'white', flexShrink: 0 }}>
+              <img src="/logo.png" alt="BORHS" style={{ display: 'block', width: 68, height: 'auto', marginLeft: -17, marginTop: -1 }} />
             </div>
             <div className="min-w-0">
               <p className="font-bold text-dark-50 text-sm leading-none">Admin</p>

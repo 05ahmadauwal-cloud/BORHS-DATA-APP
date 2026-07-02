@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
-import { Eye, EyeOff, Zap, LogIn, Sun, Moon } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Sun, Moon } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
 import toast from 'react-hot-toast';
@@ -52,11 +52,10 @@ export default function Login() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2.5 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-success-500 rounded-xl flex items-center justify-center">
-              <Zap size={20} className="text-white" fill="white" />
+          <Link to="/" className="inline-flex flex-col items-center gap-3 mb-6">
+            <div style={{ width: 100, height: 100, borderRadius: 20, background: 'white', padding: 6 }}>
+              <img src="/logo.png" alt="BORHS Data App" style={{ width: '100%', height: 'auto' }} />
             </div>
-            <span className="font-black text-dark-50 text-xl">BORHS <span className="text-primary-400">Data</span></span>
           </Link>
           <h1 className="text-2xl font-black text-dark-50">Welcome back</h1>
           <p className="text-dark-400 mt-2 text-sm">Sign in to your account to continue</p>

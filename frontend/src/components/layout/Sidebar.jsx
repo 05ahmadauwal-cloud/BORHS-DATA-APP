@@ -112,10 +112,9 @@ export default function Sidebar({ isOpen, onClose }) {
         <div className="flex items-center justify-between">
           <Link to="/dashboard" onClick={onClose} className="flex items-center gap-3 min-w-0">
             <div className="relative shrink-0">
-              <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-success-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25">
-                <Zap size={17} className="text-white" fill="white" />
+              <div style={{ width: 38, height: 38, borderRadius: 10, overflow: 'hidden', background: 'white', flexShrink: 0 }}>
+                <img src="/logo.png" alt="BORHS" style={{ display: 'block', width: 76, height: 'auto', marginLeft: -19, marginTop: -1 }} />
               </div>
-              {/* Online dot */}
               <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success-400 rounded-full border-2 border-dark-900" />
             </div>
             <div className="min-w-0">
