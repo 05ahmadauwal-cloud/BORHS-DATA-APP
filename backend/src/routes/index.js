@@ -27,6 +27,16 @@ router.get('/banner', async (req, res) => {
   res.json({ success: true, data: { text, active: !!active, color } });
 });
 
+// Public deposit charge info — no auth needed (so frontend can show fee preview before login)
+router.get('/deposit-charge', async (req, res) => {
+  const Settings = require('../models/Settings');
+  const [type, value] = await Promise.all([
+    Settings.get('deposit_charge_type', 'none'),
+    Settings.get('deposit_charge_value', 0),
+  ]);
+  res.json({ success: true, data: { type: type || 'none', value: parseFloat(value) || 0 } });
+});
+
 router.get('/health', (req, res) => {
   res.json({
     success: true,

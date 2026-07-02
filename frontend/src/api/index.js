@@ -104,6 +104,11 @@ export const bannerAPI = {
   get: () => api.get('/banner'),
 };
 
+// Public settings
+export const publicAPI = {
+  getDepositCharge: () => api.get('/deposit-charge'),
+};
+
 // Admin
 export const adminAPI = {
   getAnalytics: (period) => api.get('/admin/analytics', { params: { period } }),

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { walletAPI, paymentAPI, couponAPI } from '../../api';
+import { walletAPI, paymentAPI, couponAPI, publicAPI } from '../../api';
 import { useSearchParams } from 'react-router-dom';
 import {
   Wallet as WalletIcon, Send, CreditCard,
   CheckCircle, XCircle, Clock, Copy, Check, Building2,
-  RefreshCw, AlertCircle, Banknote, Tag,
+  RefreshCw, AlertCircle, Banknote, Tag, Info,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -15,6 +15,52 @@ const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 const isCredit = (type) => [
   'wallet_fund', 'commission_earned', 'referral_bonus', 'refund',
 ].includes(type);
+
+function computeFee(amount, type, value) {
+  const amt = Number(amount) || 0;
+  if (!amt || !type || type === 'none' || !value) return { fee: 0, credit: amt };
+  const fee = type === 'percentage'
+    ? Math.round((amt * value) / 100 * 100) / 100
+    : Number(value);
+  return { fee: Math.min(fee, amt), credit: Math.max(0, amt - fee) };
+}
+
+function FeeBreakdown({ amount, chargeType, chargeValue }) {
+  const amt = Number(amount) || 0;
+  if (!amt || !chargeType || chargeType === 'none' || !chargeValue) return null;
+  const { fee, credit } = computeFee(amt, chargeType, chargeValue);
+  if (!fee) return null;
+  return (
+    <div className="rounded-xl overflow-hidden border" style={{ borderColor: 'rgba(251,146,60,0.25)', background: 'rgba(251,146,60,0.05)' }}>
+      <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: 'rgba(251,146,60,0.15)' }}>
+        <Info size={12} className="text-orange-400 shrink-0" />
+        <p className="text-[11px] font-bold text-orange-400">Deposit Fee Applies</p>
+      </div>
+      <div className="px-3 py-2.5 space-y-1.5">
+        <div className="flex justify-between text-xs">
+          <span style={{ color: 'var(--text-muted)' }}>You pay</span>
+          <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+            ₦{amt.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+        <div className="flex justify-between text-xs">
+          <span style={{ color: 'var(--text-muted)' }}>
+            Processing fee ({chargeType === 'percentage' ? `${chargeValue}%` : `₦${chargeValue} flat`})
+          </span>
+          <span className="font-semibold text-orange-400">
+            – ₦{fee.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+        <div className="flex justify-between text-xs font-bold pt-1 border-t" style={{ borderColor: 'rgba(251,146,60,0.15)' }}>
+          <span style={{ color: 'var(--text-primary)' }}>Credited to wallet</span>
+          <span className="text-success-400">
+            ₦{credit.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);
@@ -39,8 +85,9 @@ function CopyButton({ text }) {
   );
 }
 
-function BankTransferTab() {
+function BankTransferTab({ chargeType, chargeValue }) {
   const queryClient = useQueryClient();
+  const [previewAmt, setPreviewAmt] = useState('');
 
   const { data: vaRes, isLoading, isError, refetch } = useQuery({
     queryKey: ['virtual-account'],
@@ -67,6 +114,26 @@ function BankTransferTab() {
           </p>
         </div>
       </div>
+
+      {/* Fee calculator for bank transfer */}
+      {chargeType && chargeType !== 'none' && chargeValue > 0 && (
+        <div className="card p-4 space-y-2">
+          <p className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>Fee Calculator</p>
+          <input
+            type="number"
+            className="input"
+            placeholder="Enter transfer amount to see fee"
+            value={previewAmt}
+            onChange={(e) => setPreviewAmt(e.target.value)}
+          />
+          <FeeBreakdown amount={previewAmt} chargeType={chargeType} chargeValue={chargeValue} />
+          {!previewAmt && (
+            <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
+              A {chargeType === 'percentage' ? `${chargeValue}%` : `₦${chargeValue} flat`} processing fee applies on bank transfers.
+            </p>
+          )}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-3">
@@ -190,6 +257,13 @@ export default function Wallet() {
         .catch(() => { setVerifyStatus('failed'); toast.error('Payment verification failed. Contact support.'); });
     }
   }, []);
+
+  const { data: chargeInfo } = useQuery({
+    queryKey: ['deposit-charge'],
+    queryFn: () => publicAPI.getDepositCharge(),
+    select: (res) => res.data.data,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { data: balance } = useQuery({
     queryKey: ['wallet-balance'],
@@ -320,7 +394,9 @@ export default function Wallet() {
       </div>
 
       {/* Bank Transfer Tab */}
-      {activeTab === 'Bank Transfer' && <BankTransferTab />}
+      {activeTab === 'Bank Transfer' && (
+        <BankTransferTab chargeType={chargeInfo?.type} chargeValue={chargeInfo?.value} />
+      )}
 
       {/* Online Payment Tab */}
       {activeTab === 'Online Payment' && (
@@ -328,19 +404,28 @@ export default function Wallet() {
           <div>
             <label className="label">Quick Amount</label>
             <div className="grid grid-cols-3 gap-2">
-              {QUICK_AMOUNTS.map((amt) => (
-                <button
-                  key={amt}
-                  onClick={() => setFundAmount(String(amt))}
-                  className={`py-2.5 rounded-xl text-sm font-bold border transition-all active:scale-95 ${
-                    fundAmount === String(amt)
-                      ? 'bg-primary-600/20 border-primary-500 text-primary-300'
-                      : 'border-dark-600 text-dark-400 hover:border-primary-500/40'
-                  }`}
-                >
-                  ₦{amt >= 1000 ? `${amt / 1000}k` : amt}
-                </button>
-              ))}
+              {QUICK_AMOUNTS.map((amt) => {
+                const { fee, credit } = computeFee(amt, chargeInfo?.type, chargeInfo?.value);
+                const hasCharge = fee > 0;
+                return (
+                  <button
+                    key={amt}
+                    onClick={() => setFundAmount(String(amt))}
+                    className={`py-2.5 px-2 rounded-xl border transition-all active:scale-95 text-center ${
+                      fundAmount === String(amt)
+                        ? 'bg-primary-600/20 border-primary-500 text-primary-300'
+                        : 'border-dark-600 text-dark-400 hover:border-primary-500/40'
+                    }`}
+                  >
+                    <p className="text-sm font-bold">₦{amt >= 1000 ? `${amt / 1000}k` : amt}</p>
+                    {hasCharge && (
+                      <p className="text-[9px] mt-0.5 text-orange-400 font-medium">
+                        get ₦{credit >= 1000 ? `${(credit / 1000).toFixed(credit % 1000 === 0 ? 0 : 1)}k` : credit}
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -354,6 +439,13 @@ export default function Wallet() {
               onChange={(e) => setFundAmount(e.target.value)}
             />
           </div>
+
+          {/* Fee breakdown — shows as soon as amount is entered */}
+          <FeeBreakdown
+            amount={fundAmount}
+            chargeType={chargeInfo?.type}
+            chargeValue={chargeInfo?.value}
+          />
 
           <div>
             <label className="label">Payment Gateway</label>
@@ -373,16 +465,27 @@ export default function Wallet() {
             </div>
           </div>
 
-          <button
-            onClick={() => fundMutation.mutate()}
-            disabled={!fundAmount || Number(fundAmount) < 100 || fundMutation.isPending}
-            className="btn-primary w-full btn-lg gap-2 text-base"
-          >
-            {fundMutation.isPending
-              ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              : <CreditCard size={18} />}
-            {fundMutation.isPending ? 'Opening payment…' : `Pay ₦${Number(fundAmount || 0).toLocaleString()}`}
-          </button>
+          {(() => {
+            const { fee, credit } = computeFee(fundAmount, chargeInfo?.type, chargeInfo?.value);
+            const hasCharge = fee > 0;
+            const displayAmt = Number(fundAmount || 0);
+            return (
+              <button
+                onClick={() => fundMutation.mutate()}
+                disabled={!fundAmount || displayAmt < 100 || fundMutation.isPending}
+                className="btn-primary w-full btn-lg gap-2 text-base"
+              >
+                {fundMutation.isPending
+                  ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  : <CreditCard size={18} />}
+                {fundMutation.isPending
+                  ? 'Opening payment…'
+                  : hasCharge
+                  ? `Pay ₦${displayAmt.toLocaleString()} → Get ₦${credit.toLocaleString()}`
+                  : `Pay ₦${displayAmt.toLocaleString()}`}
+              </button>
+            );
+          })()}
         </div>
       )}
 
