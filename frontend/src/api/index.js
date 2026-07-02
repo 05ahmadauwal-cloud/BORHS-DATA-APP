@@ -21,6 +21,7 @@ export const walletAPI = {
   getTransactions: (params) => api.get('/wallet/transactions', { params }),
   transfer: (data) => api.post('/wallet/transfer', data),
   setPin: (pin) => api.post('/wallet/set-pin', { pin }),
+  resetPin: (password, newPin) => api.post('/wallet/reset-pin', { password, newPin }),
 };
 
 // Payment

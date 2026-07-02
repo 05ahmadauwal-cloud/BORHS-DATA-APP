@@ -8,18 +8,23 @@ const asyncHandler = require('express-async-handler');
 
 // ─── Admin routes ─────────────────────────────────────────────────────────────
 router.post('/', authenticate, authorize('admin', 'super_admin'), asyncHandler(async (req, res) => {
-  const { code, description, amount, maxUses, expiresAt } = req.body;
-  if (!code || !amount) return ApiResponse.error(res, 'code and amount are required', 400);
+  const { code, description, amount, maxUses, expiresAt, type, dataNetwork, dataSize } = req.body;
+  if (!code) return ApiResponse.error(res, 'code is required', 400);
+  if (amount === undefined || amount === null || Number(amount) < 0) return ApiResponse.error(res, 'amount is required', 400);
 
   const existing = await Coupon.findOne({ code: code.toUpperCase().trim() });
   if (existing) return ApiResponse.error(res, 'Coupon code already exists', 400);
 
+  const couponType = type === 'data' ? 'data' : 'money';
   const coupon = await Coupon.create({
     code: code.toUpperCase().trim(),
+    type: couponType,
     description,
     amount: Number(amount),
     maxUses: Number(maxUses) || 0,
     expiresAt: expiresAt || null,
+    dataNetwork: couponType === 'data' ? dataNetwork : null,
+    dataSize: couponType === 'data' ? dataSize : null,
     createdBy: req.user._id,
   });
   return ApiResponse.success(res, { coupon }, 'Coupon created', 201);
@@ -31,13 +36,15 @@ router.get('/', authenticate, authorize('admin', 'super_admin'), asyncHandler(as
 }));
 
 router.patch('/:id', authenticate, authorize('admin', 'super_admin'), asyncHandler(async (req, res) => {
-  const { description, amount, maxUses, expiresAt, isActive } = req.body;
+  const { description, amount, maxUses, expiresAt, isActive, dataNetwork, dataSize } = req.body;
   const update = {};
   if (description !== undefined) update.description = description;
   if (amount !== undefined) update.amount = Number(amount);
   if (maxUses !== undefined) update.maxUses = Number(maxUses);
   if (expiresAt !== undefined) update.expiresAt = expiresAt || null;
   if (isActive !== undefined) update.isActive = isActive;
+  if (dataNetwork !== undefined) update.dataNetwork = dataNetwork;
+  if (dataSize !== undefined) update.dataSize = dataSize;
 
   const coupon = await Coupon.findByIdAndUpdate(req.params.id, update, { new: true });
   if (!coupon) return ApiResponse.error(res, 'Coupon not found', 404);
@@ -73,6 +80,8 @@ router.post('/redeem', authenticate, asyncHandler(async (req, res) => {
   await fundWallet(req.user._id, coupon.amount, 'coupon', `COUPON-${coupon.code}-${req.user._id}`, {
     couponCode: coupon.code,
     couponId: coupon._id,
+    couponType: coupon.type,
+    ...(coupon.type === 'data' ? { dataNetwork: coupon.dataNetwork, dataSize: coupon.dataSize } : {}),
   });
 
   // Record usage
@@ -80,7 +89,11 @@ router.post('/redeem', authenticate, asyncHandler(async (req, res) => {
   coupon.usedBy.push({ user: req.user._id });
   await coupon.save();
 
-  return ApiResponse.success(res, { amount: coupon.amount }, `₦${coupon.amount.toLocaleString()} credited to your wallet!`);
+  const successMsg = coupon.type === 'data'
+    ? `₦${coupon.amount.toLocaleString()} data credit added to your wallet! Use it to buy ${coupon.dataNetwork ? coupon.dataNetwork.toUpperCase() + ' ' : ''}data.`
+    : `₦${coupon.amount.toLocaleString()} credited to your wallet!`;
+
+  return ApiResponse.success(res, { amount: coupon.amount, type: coupon.type }, successMsg);
 }));
 
 module.exports = router;

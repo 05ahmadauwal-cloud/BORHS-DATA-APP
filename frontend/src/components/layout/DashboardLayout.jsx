@@ -1,6 +1,6 @@
 import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
-import { LayoutDashboard, Wallet, Wifi, MoreHorizontal, User, Shield, Lock } from 'lucide-react';
+import { LayoutDashboard, Wallet, Wifi, MoreHorizontal, User, Shield, Lock, KeyRound } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import WhatsAppButton from '../ui/WhatsAppButton';
@@ -18,6 +18,38 @@ const mobileNav = [
 
 // Pages the KYC gate should NOT block (profile/kyc page, wallet funding, auth)
 const KYC_EXEMPT_PATHS = ['/profile', '/wallet', '/transactions'];
+// Pages the PIN gate should NOT block
+const PIN_EXEMPT_PATHS = ['/profile', '/wallet', '/dashboard', '/transactions'];
+
+function PinGate() {
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4"
+      style={{ background: 'rgba(2,6,23,0.92)', backdropFilter: 'blur(12px)' }}>
+      <div className="w-full max-w-sm text-center space-y-6 animate-fade-in">
+        <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto"
+          style={{ background: 'rgba(234,179,8,0.15)', border: '1px solid rgba(234,179,8,0.3)' }}>
+          <KeyRound size={36} className="text-yellow-400" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-xl font-black" style={{ color: 'var(--text-primary)' }}>
+            Set Your Transaction PIN
+          </h2>
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+            A 4-digit PIN is required to make purchases. This protects your wallet from unauthorized transactions.
+          </p>
+        </div>
+        <Link to="/profile?tab=security" className="btn-primary w-full gap-2 justify-center"
+          style={{ background: 'linear-gradient(135deg,#ca8a04,#a16207)' }}>
+          <KeyRound size={16} /> Set Transaction PIN
+        </Link>
+        <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+          You can still browse your dashboard and fund your wallet.{' '}
+          <Link to="/wallet" className="text-primary-400 hover:underline">Fund wallet</Link>
+        </p>
+      </div>
+    </div>
+  );
+}
 
 function KYCGate() {
   return (
@@ -87,8 +119,12 @@ export default function DashboardLayout() {
 
   const isAdmin = ADMIN_ROLES.includes(user?.role);
   const needsKYC = !isAdmin && user?.kycStatus === 'none';
-  const isExemptPath = KYC_EXEMPT_PATHS.some(p => location.pathname.startsWith(p));
-  const showGate = needsKYC && !isExemptPath;
+  const isKycExemptPath = KYC_EXEMPT_PATHS.some(p => location.pathname.startsWith(p));
+  const showKycGate = needsKYC && !isKycExemptPath;
+
+  const needsPin = !isAdmin && !user?.isPinSet;
+  const isPinExemptPath = PIN_EXEMPT_PATHS.some(p => location.pathname.startsWith(p));
+  const showPinGate = needsPin && !isPinExemptPath && !showKycGate;
 
   return (
     <div className="min-h-screen bg-dark-950 flex">
@@ -176,7 +212,10 @@ export default function DashboardLayout() {
       </div>
 
       {/* KYC gate — shown over all non-exempt pages for unverified users */}
-      {showGate && <KYCGate />}
+      {showKycGate && <KYCGate />}
+
+      {/* PIN gate — shown over purchase pages if PIN not set */}
+      {showPinGate && <PinGate />}
     </div>
   );
 }

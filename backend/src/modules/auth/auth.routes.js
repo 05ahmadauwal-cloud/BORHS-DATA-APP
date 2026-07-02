@@ -14,10 +14,15 @@ const registerRules = [
   body('password')
     .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Password must contain uppercase, lowercase and number'),
+  body('username')
+    .optional()
+    .trim()
+    .matches(/^[a-z0-9_]{3,20}$/i)
+    .withMessage('Username must be 3–20 characters (letters, numbers, underscore only)'),
 ];
 
 const loginRules = [
-  body('email').isEmail().withMessage('Valid email required').normalizeEmail(),
+  body('identifier').notEmpty().withMessage('Email or username is required'),
   body('password').notEmpty().withMessage('Password is required'),
 ];
 

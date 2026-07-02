@@ -1,11 +1,28 @@
 const mongoose = require('mongoose');
 const User = require('../../models/User');
 const Transaction = require('../../models/Transaction');
+const Settings = require('../../models/Settings');
 const { generateReference, paginate, paginateResponse } = require('../../utils/helpers');
 const { TRANSACTION_TYPES, TRANSACTION_STATUS, WALLET_LIMITS } = require('../../config/constants');
 const { notifyTransaction } = require('../notification/notification.service');
 
+const CHARGEABLE_GATEWAYS = ['paystack', 'monnify', 'flutterwave'];
+
+const computeDepositCharge = async (amount, gateway) => {
+  if (!CHARGEABLE_GATEWAYS.includes(gateway)) return { fee: 0, creditAmount: amount };
+  const [chargeType, chargeValue] = await Promise.all([
+    Settings.get('deposit_charge_type', 'none'),
+    Settings.get('deposit_charge_value', 0),
+  ]);
+  const val = parseFloat(chargeValue) || 0;
+  if (!val || chargeType === 'none') return { fee: 0, creditAmount: amount };
+  const fee = chargeType === 'percentage' ? Math.round((amount * val) / 100 * 100) / 100 : val;
+  return { fee, creditAmount: Math.max(0, amount - fee) };
+};
+
 const fundWallet = async (userId, amount, gateway, externalReference, metadata = {}) => {
+  const { fee, creditAmount } = await computeDepositCharge(amount, gateway);
+
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -13,7 +30,7 @@ const fundWallet = async (userId, amount, gateway, externalReference, metadata =
     if (!user) throw new Error('User not found');
 
     const balanceBefore = user.walletBalance;
-    const balanceAfter = balanceBefore + amount;
+    const balanceAfter = balanceBefore + creditAmount;
 
     user.walletBalance = balanceAfter;
     await user.save({ session });
@@ -21,22 +38,24 @@ const fundWallet = async (userId, amount, gateway, externalReference, metadata =
     const transaction = await Transaction.create([{
       user: userId,
       type: TRANSACTION_TYPES.WALLET_FUND,
-      amount,
+      amount: creditAmount,
       balanceBefore,
       balanceAfter,
       status: TRANSACTION_STATUS.SUCCESS,
       reference: generateReference('WF'),
       externalReference,
       gateway,
-      description: `Wallet funded via ${gateway}`,
-      metadata,
+      description: fee > 0
+        ? `Wallet funded via ${gateway} (₦${fee} fee deducted)`
+        : `Wallet funded via ${gateway}`,
+      metadata: { ...metadata, amountPaid: amount, fee, creditAmount },
       completedAt: new Date(),
     }], { session });
 
     await session.commitTransaction();
 
     notifyTransaction(userId, transaction[0]).catch(() => {});
-    return { transaction: transaction[0], newBalance: balanceAfter };
+    return { transaction: transaction[0], newBalance: balanceAfter, fee, creditAmount };
   } catch (error) {
     await session.abortTransaction();
     throw error;
@@ -203,4 +222,20 @@ const setTransactionPin = async (userId, pin) => {
   return true;
 };
 
-module.exports = { fundWallet, debitWallet, transferWallet, getWalletBalance, getTransactionHistory, setTransactionPin };
+const resetTransactionPin = async (userId, loginPassword, newPin) => {
+  if (!newPin || newPin.length !== 4 || !/^\d+$/.test(newPin)) {
+    throw Object.assign(new Error('PIN must be exactly 4 digits'), { statusCode: 400 });
+  }
+  const user = await User.findById(userId).select('+password');
+  if (!user) throw Object.assign(new Error('User not found'), { statusCode: 404 });
+  const passwordMatch = await user.comparePassword(loginPassword);
+  if (!passwordMatch) {
+    throw Object.assign(new Error('Incorrect password'), { statusCode: 400 });
+  }
+  user.transactionPin = newPin;
+  user.isPinSet = true;
+  await user.save();
+  return true;
+};
+
+module.exports = { fundWallet, debitWallet, transferWallet, getWalletBalance, getTransactionHistory, setTransactionPin, resetTransactionPin };

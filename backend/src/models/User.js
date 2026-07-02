@@ -54,6 +54,14 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    username: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: true,
+      trim: true,
+      match: [/^[a-z0-9_]{3,20}$/, 'Username must be 3–20 characters (letters, numbers, underscore only)'],
+    },
     referralCode: {
       type: String,
       unique: true,

@@ -9,7 +9,7 @@ import useThemeStore from '../../store/themeStore';
 import toast from 'react-hot-toast';
 
 const schema = z.object({
-  email: z.string().email('Enter a valid email'),
+  identifier: z.string().min(3, 'Email or username is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -25,7 +25,7 @@ export default function Login() {
 
   const onSubmit = async (data) => {
     try {
-      const result = await login(data.email, data.password);
+      const result = await login(data.identifier, data.password);
       toast.success(`Welcome back, ${result.user.firstName}!`);
       if (['admin', 'super_admin'].includes(result.user.role)) {
         navigate('/admin', { replace: true });
@@ -64,15 +64,15 @@ export default function Login() {
         <div className="card p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
-              <label className="label">Email Address</label>
+              <label className="label">Email or Username</label>
               <input
-                {...register('email')}
-                type="email"
-                className={`input ${errors.email ? 'input-error' : ''}`}
-                placeholder="you@example.com"
-                autoComplete="email"
+                {...register('identifier')}
+                type="text"
+                className={`input ${errors.identifier ? 'input-error' : ''}`}
+                placeholder="you@example.com or @username"
+                autoComplete="username"
               />
-              {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
+              {errors.identifier && <p className="text-red-400 text-xs mt-1">{errors.identifier.message}</p>}
             </div>
 
             <div>

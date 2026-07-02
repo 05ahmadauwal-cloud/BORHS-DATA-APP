@@ -11,6 +11,10 @@ import toast from 'react-hot-toast';
 const schema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters').max(50),
   lastName: z.string().min(2, 'Last name must be at least 2 characters').max(50),
+  username: z.string()
+    .min(3, 'Username must be at least 3 characters')
+    .max(20, 'Username cannot exceed 20 characters')
+    .regex(/^[a-z0-9_]+$/i, 'Only letters, numbers and underscore allowed'),
   email: z.string().email('Enter a valid email address'),
   phone: z.string().min(10, 'Enter a valid Nigerian phone number'),
   password: z.string()
@@ -90,6 +94,24 @@ export default function Register() {
                 <input {...register('lastName')} className={`input ${errors.lastName ? 'input-error' : ''}`} placeholder="Doe" />
                 {errors.lastName && <p className="text-red-400 text-xs mt-1">{errors.lastName.message}</p>}
               </div>
+            </div>
+
+            <div>
+              <label className="label">Username</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400 font-bold text-sm">@</span>
+                <input
+                  {...register('username')}
+                  className={`input pl-7 ${errors.username ? 'input-error' : ''}`}
+                  placeholder="yourname"
+                  autoComplete="username"
+                  onChange={(e) => {
+                    e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+                    register('username').onChange(e);
+                  }}
+                />
+              </div>
+              {errors.username && <p className="text-red-400 text-xs mt-1">{errors.username.message}</p>}
             </div>
 
             <div>

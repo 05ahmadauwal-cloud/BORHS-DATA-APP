@@ -18,7 +18,7 @@ const generateTokens = (userId) => {
 };
 
 const register = async (data) => {
-  const { firstName, lastName, email, phone, password, referralCode } = data;
+  const { firstName, lastName, email, phone, password, referralCode, username } = data;
 
   const normalizedPhone = sanitizePhone(phone);
 
@@ -26,6 +26,11 @@ const register = async (data) => {
   if (existingUser) {
     const field = existingUser.email === email.toLowerCase() ? 'email' : 'phone number';
     throw Object.assign(new Error(`An account with this ${field} already exists`), { statusCode: 409 });
+  }
+
+  if (username) {
+    const taken = await User.findOne({ username: username.toLowerCase() });
+    if (taken) throw Object.assign(new Error('Username is already taken'), { statusCode: 409 });
   }
 
   let referrer = null;
@@ -43,8 +48,10 @@ const register = async (data) => {
     email: email.toLowerCase(),
     phone: normalizedPhone,
     password,
+    username: username ? username.toLowerCase() : undefined,
     referralCode: newReferralCode,
     referredBy: referrer?._id || null,
+    kycStatus: 'tier1',
     emailVerificationToken: hashedToken,
     emailVerificationExpires: Date.now() + 24 * 60 * 60 * 1000,
   });
@@ -77,11 +84,16 @@ const register = async (data) => {
   return { user: user.toPublicJSON(), accessToken, refreshToken };
 };
 
-const login = async (email, password, ipAddress) => {
-  const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+const login = async (identifier, password, ipAddress) => {
+  const isEmail = identifier.includes('@');
+  const user = await User.findOne(
+    isEmail
+      ? { email: identifier.toLowerCase() }
+      : { username: identifier.toLowerCase() }
+  ).select('+password');
 
   if (!user) {
-    throw Object.assign(new Error('Invalid email or password'), { statusCode: 401 });
+    throw Object.assign(new Error('Invalid credentials'), { statusCode: 401 });
   }
 
   if (user.isLocked) {
@@ -95,7 +107,7 @@ const login = async (email, password, ipAddress) => {
   const isMatch = await user.comparePassword(password);
   if (!isMatch) {
     await user.incrementLoginAttempts();
-    throw Object.assign(new Error('Invalid email or password'), { statusCode: 401 });
+    throw Object.assign(new Error('Invalid credentials'), { statusCode: 401 });
   }
 
   await User.findByIdAndUpdate(user._id, {

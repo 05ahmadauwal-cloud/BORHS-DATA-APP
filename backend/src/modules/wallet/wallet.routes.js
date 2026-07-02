@@ -22,4 +22,9 @@ router.post('/set-pin', [
   body('pin').isLength({ min: 4, max: 4 }).withMessage('PIN must be 4 digits').isNumeric(),
 ], validate, asyncHandler(ctrl.setPin));
 
+router.post('/reset-pin', [
+  body('password').notEmpty().withMessage('Current password is required'),
+  body('newPin').isLength({ min: 4, max: 4 }).withMessage('New PIN must be 4 digits').isNumeric(),
+], validate, asyncHandler(ctrl.resetPin));
+
 module.exports = router;

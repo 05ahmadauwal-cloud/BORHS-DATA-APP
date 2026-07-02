@@ -8,6 +8,11 @@ const couponSchema = new mongoose.Schema({
     uppercase: true,
     trim: true,
   },
+  type: {
+    type: String,
+    enum: ['money', 'data'],
+    default: 'money',
+  },
   description: {
     type: String,
     trim: true,
@@ -15,7 +20,16 @@ const couponSchema = new mongoose.Schema({
   amount: {
     type: Number,
     required: true,
-    min: 1,
+    min: 0,
+  },
+  dataNetwork: {
+    type: String,
+    enum: ['mtn', 'airtel', 'glo', '9mobile'],
+    default: null,
+  },
+  dataSize: {
+    type: String,
+    default: null,
   },
   maxUses: {
     type: Number,

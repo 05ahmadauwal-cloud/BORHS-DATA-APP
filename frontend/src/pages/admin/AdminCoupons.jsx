@@ -18,7 +18,7 @@ function CopyButton({ text }) {
   );
 }
 
-const EMPTY = { code: '', description: '', amount: '', maxUses: '', expiresAt: '' };
+const EMPTY = { code: '', description: '', amount: '', maxUses: '', expiresAt: '', type: 'money', dataNetwork: '', dataSize: '' };
 
 export default function AdminCoupons() {
   const queryClient = useQueryClient();
@@ -90,6 +90,27 @@ export default function AdminCoupons() {
       {showForm && (
         <div className="card p-5 space-y-4">
           <h3 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Create Coupon</h3>
+
+          {/* Coupon type */}
+          <div>
+            <label className="label">Coupon Type</label>
+            <div className="flex gap-2">
+              {[{ id: 'money', label: '💰 Money (wallet credit)' }, { id: 'data', label: '📶 Data coupon' }].map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => setForm({ ...form, type: id })}
+                  className={`flex-1 py-2 px-3 rounded-xl border text-xs font-semibold transition-all ${
+                    form.type === id
+                      ? 'border-primary-500/40 bg-primary-500/10 text-primary-300'
+                      : 'border-transparent bg-dark-800 text-dark-400 hover:border-dark-600'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label">Code *</label>
@@ -101,15 +122,43 @@ export default function AdminCoupons() {
               />
             </div>
             <div>
-              <label className="label">Amount (₦) *</label>
+              <label className="label">{form.type === 'data' ? 'Wallet Credit Value (₦) *' : 'Amount (₦) *'}</label>
               <input
                 type="number"
                 className="input"
-                placeholder="e.g. 500"
+                placeholder={form.type === 'data' ? 'e.g. 200 (for 200MB data value)' : 'e.g. 500'}
                 value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: e.target.value })}
               />
             </div>
+
+            {form.type === 'data' && (
+              <>
+                <div>
+                  <label className="label">Network</label>
+                  <select
+                    className="input"
+                    value={form.dataNetwork}
+                    onChange={(e) => setForm({ ...form, dataNetwork: e.target.value })}
+                  >
+                    <option value="">Any network</option>
+                    {['mtn', 'airtel', 'glo', '9mobile'].map(n => (
+                      <option key={n} value={n}>{n.toUpperCase()}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Data Size</label>
+                  <input
+                    className="input"
+                    placeholder="e.g. 1GB"
+                    value={form.dataSize}
+                    onChange={(e) => setForm({ ...form, dataSize: e.target.value })}
+                  />
+                </div>
+              </>
+            )}
+
             <div>
               <label className="label">Max Uses (0 = unlimited)</label>
               <input
@@ -142,7 +191,7 @@ export default function AdminCoupons() {
           <div className="flex gap-2">
             <button
               onClick={() => createMutation.mutate()}
-              disabled={!form.code || !form.amount || createMutation.isPending}
+              disabled={!form.code || form.amount === '' || createMutation.isPending}
               className="btn-primary gap-2"
             >
               {createMutation.isPending
@@ -190,7 +239,12 @@ export default function AdminCoupons() {
                     {c.description && (
                       <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>{c.description}</p>
                     )}
-                    <div className="flex gap-3 mt-1 text-[11px]" style={{ color: 'var(--text-faint)' }}>
+                    <div className="flex gap-3 mt-1 text-[11px] flex-wrap" style={{ color: 'var(--text-faint)' }}>
+                      {c.type === 'data' ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-bold">
+                          📶 {c.dataSize || 'Data'}{c.dataNetwork ? ` · ${c.dataNetwork.toUpperCase()}` : ''}
+                        </span>
+                      ) : null}
                       <span>₦{c.amount.toLocaleString()} credit</span>
                       <span>·</span>
                       <span>{c.usedCount}{c.maxUses > 0 ? `/${c.maxUses}` : ''} uses</span>

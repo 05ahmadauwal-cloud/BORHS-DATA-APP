@@ -80,6 +80,8 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'profile');
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
   const [pin, setPin] = useState('');
+  const [resetPinForm, setResetPinForm] = useState({ password: '', newPin: '' });
+  const [showResetPin, setShowResetPin] = useState(false);
 
   const changePwMutation = useMutation({
     mutationFn: () => authAPI.changePassword({ currentPassword: pwForm.currentPassword, newPassword: pwForm.newPassword }),
@@ -91,6 +93,17 @@ export default function Profile() {
     mutationFn: () => walletAPI.setPin(pin),
     onSuccess: () => { toast.success('Transaction PIN set!'); setPin(''); updateUser({ isPinSet: true }); },
     onError: (err) => toast.error(err.response?.data?.message || 'Failed'),
+  });
+
+  const resetPinMutation = useMutation({
+    mutationFn: () => walletAPI.resetPin(resetPinForm.password, resetPinForm.newPin),
+    onSuccess: () => {
+      toast.success('Transaction PIN reset successfully!');
+      setResetPinForm({ password: '', newPin: '' });
+      setShowResetPin(false);
+      updateUser({ isPinSet: true });
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Failed to reset PIN'),
   });
 
   const initials = `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase();
@@ -195,6 +208,7 @@ export default function Profile() {
           <div className="px-5 divide-y" style={{ divideColor: 'var(--border)' }}>
             <InfoRow icon={User} label="First Name" value={user?.firstName} />
             <InfoRow icon={User} label="Last Name" value={user?.lastName} />
+            <InfoRow icon={User} label="Username" value={user?.username ? `@${user.username}` : '—'} copyable={!!user?.username} />
             <InfoRow icon={Mail} label="Email Address" value={user?.email} copyable />
             <InfoRow icon={Phone} label="Phone Number" value={user?.phone} copyable />
             <InfoRow icon={Star} label="Referral Code" value={user?.referralCode} copyable />
@@ -336,6 +350,53 @@ export default function Profile() {
                   ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Setting PIN...</>
                   : <><KeyRound size={15} />{user?.isPinSet ? 'Update PIN' : 'Set PIN'}</>}
               </button>
+
+              {/* Reset PIN via password */}
+              {user?.isPinSet && (
+                <div>
+                  <button
+                    onClick={() => setShowResetPin(!showResetPin)}
+                    className="text-xs font-semibold text-primary-400 hover:text-primary-300 underline underline-offset-2"
+                  >
+                    Forgot PIN? Reset using password
+                  </button>
+
+                  {showResetPin && (
+                    <div className="mt-3 space-y-3 p-4 rounded-xl border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)' }}>
+                      <p className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                        Enter your login password to set a new PIN
+                      </p>
+                      <PasswordInput
+                        placeholder="Your login password"
+                        value={resetPinForm.password}
+                        onChange={(e) => setResetPinForm({ ...resetPinForm, password: e.target.value })}
+                      />
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={4}
+                        className="input text-center text-2xl tracking-[1rem] font-bold"
+                        placeholder="New 4-digit PIN"
+                        value={resetPinForm.newPin}
+                        onChange={(e) => setResetPinForm({ ...resetPinForm, newPin: e.target.value.replace(/\D/g, '').slice(0, 4) })}
+                      />
+                      <button
+                        onClick={() => {
+                          if (!resetPinForm.password) return toast.error('Enter your login password');
+                          if (resetPinForm.newPin.length !== 4) return toast.error('New PIN must be exactly 4 digits');
+                          resetPinMutation.mutate();
+                        }}
+                        disabled={resetPinMutation.isPending}
+                        className="btn-primary w-full gap-2"
+                      >
+                        {resetPinMutation.isPending
+                          ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Resetting...</>
+                          : <><KeyRound size={15} />Reset PIN</>}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../api';
-import { History, RotateCcw, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { History, RotateCcw, Search, X, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
@@ -14,7 +14,20 @@ const STATUS_COLORS = {
 
 export default function AdminTransactions() {
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState({ page: 1, limit: 20, status: '' });
+  const [filters, setFilters] = useState({ page: 1, limit: 20, status: '', search: '', reference: '', amountMin: '', amountMax: '' });
+  const [searchInput, setSearchInput] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+
+  const applySearch = useCallback(() => {
+    setFilters(f => ({ ...f, search: searchInput, page: 1 }));
+  }, [searchInput]);
+
+  const clearFilters = () => {
+    setFilters({ page: 1, limit: 20, status: '', search: '', reference: '', amountMin: '', amountMax: '' });
+    setSearchInput('');
+  };
+
+  const activeFilterCount = [filters.search, filters.reference, filters.amountMin, filters.amountMax, filters.status].filter(Boolean).length;
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-transactions', filters],
@@ -30,12 +43,105 @@ export default function AdminTransactions() {
 
   return (
     <div className="space-y-4 md:space-y-5">
-      <div>
-        <h1 className="text-xl md:text-2xl font-black text-dark-50 flex items-center gap-2">
-          <History size={22} className="text-primary-400" /> Transactions
-        </h1>
-        <p className="text-dark-400 text-xs mt-0.5">{data?.pagination?.total || 0} total</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl md:text-2xl font-black text-dark-50 flex items-center gap-2">
+            <History size={22} className="text-primary-400" /> Transactions
+          </h1>
+          <p className="text-dark-400 text-xs mt-0.5">{data?.pagination?.total || 0} total</p>
+        </div>
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all border ${
+            showFilters || activeFilterCount > 0
+              ? 'bg-primary-600/20 text-primary-300 border-primary-500/30'
+              : 'bg-dark-800 text-dark-400 border-dark-700'
+          }`}
+        >
+          <Filter size={13} />
+          Filters
+          {activeFilterCount > 0 && (
+            <span className="w-4 h-4 rounded-full bg-primary-500 text-white text-[9px] font-black flex items-center justify-center">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
       </div>
+
+      {/* Search bar */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-400" />
+          <input
+            className="input pl-8 pr-8 text-sm"
+            placeholder="Search by name, email, username, phone…"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && applySearch()}
+          />
+          {searchInput && (
+            <button onClick={() => { setSearchInput(''); setFilters(f => ({ ...f, search: '', page: 1 })); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-500 hover:text-dark-300">
+              <X size={13} />
+            </button>
+          )}
+        </div>
+        <button onClick={applySearch} className="btn-primary btn-sm px-4">Search</button>
+        {activeFilterCount > 0 && (
+          <button onClick={clearFilters} className="btn-secondary btn-sm px-3 text-xs">Clear all</button>
+        )}
+      </div>
+
+      {/* Advanced filters panel */}
+      {showFilters && (
+        <div className="card p-4 space-y-3">
+          <p className="text-xs font-bold text-dark-300">Advanced Filters</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label className="label text-xs">Reference ID</label>
+              <input
+                className="input text-xs"
+                placeholder="REF-…"
+                value={filters.reference}
+                onChange={(e) => setFilters(f => ({ ...f, reference: e.target.value, page: 1 }))}
+              />
+            </div>
+            <div>
+              <label className="label text-xs">Min Amount (₦)</label>
+              <input
+                type="number"
+                className="input text-xs"
+                placeholder="0"
+                value={filters.amountMin}
+                onChange={(e) => setFilters(f => ({ ...f, amountMin: e.target.value, page: 1 }))}
+              />
+            </div>
+            <div>
+              <label className="label text-xs">Max Amount (₦)</label>
+              <input
+                type="number"
+                className="input text-xs"
+                placeholder="Any"
+                value={filters.amountMax}
+                onChange={(e) => setFilters(f => ({ ...f, amountMax: e.target.value, page: 1 }))}
+              />
+            </div>
+            <div>
+              <label className="label text-xs">Type</label>
+              <select
+                className="input text-xs"
+                value={filters.type || ''}
+                onChange={(e) => setFilters(f => ({ ...f, type: e.target.value, page: 1 }))}
+              >
+                <option value="">All Types</option>
+                {['wallet_fund', 'wallet_transfer', 'data_purchase', 'airtime_purchase', 'electricity_purchase', 'cable_purchase', 'withdrawal', 'coupon'].map(t => (
+                  <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Status filter chips */}
       <div className="flex gap-2 flex-wrap">
@@ -77,7 +183,7 @@ export default function AdminTransactions() {
                     <td><span className="font-mono text-xs text-dark-300">{txn.reference}</span></td>
                     <td>
                       <p className="font-medium text-dark-100 text-sm">{txn.user?.firstName} {txn.user?.lastName}</p>
-                      <p className="text-xs text-dark-400">{txn.user?.email}</p>
+                      <p className="text-xs text-dark-400">{txn.user?.username ? `@${txn.user.username} · ` : ''}{txn.user?.email}</p>
                     </td>
                     <td><span className="text-xs text-dark-300 capitalize">{txn.type?.replace(/_/g, ' ')}</span></td>
                     <td><span className="font-bold text-dark-100">₦{txn.amount?.toLocaleString()}</span></td>

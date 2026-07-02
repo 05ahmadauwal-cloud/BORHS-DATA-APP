@@ -97,19 +97,32 @@ const adjustWallet = async (adminId, userId, amount, type, reason) => {
 
 // ─── Transaction Management ───────────────────────────────────────────────────
 const getTransactions = async (query = {}) => {
-  const { page = 1, limit = 20, type, status, startDate, endDate, userId } = query;
+  const { page = 1, limit = 20, type, status, startDate, endDate, userId, search, reference, amountMin, amountMax } = query;
   const skip = (page - 1) * limit;
   const filter = {};
   if (type) filter.type = type;
   if (status) filter.status = status;
   if (userId) filter.user = userId;
+  if (reference) filter.reference = { $regex: reference, $options: 'i' };
+  if (amountMin || amountMax) {
+    filter.amount = {};
+    if (amountMin) filter.amount.$gte = Number(amountMin);
+    if (amountMax) filter.amount.$lte = Number(amountMax);
+  }
   if (startDate || endDate) {
     filter.createdAt = {};
     if (startDate) filter.createdAt.$gte = new Date(startDate);
     if (endDate) filter.createdAt.$lte = new Date(endDate);
   }
+  if (search) {
+    const regex = { $regex: search, $options: 'i' };
+    const matchedUsers = await User.find({
+      $or: [{ firstName: regex }, { lastName: regex }, { email: regex }, { username: regex }, { phone: regex }],
+    }).select('_id').lean();
+    filter.user = { $in: matchedUsers.map((u) => u._id) };
+  }
   const [data, total] = await Promise.all([
-    Transaction.find(filter).populate('user', 'firstName lastName email').sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
+    Transaction.find(filter).populate('user', 'firstName lastName email username').sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
     Transaction.countDocuments(filter),
   ]);
   return { data, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) } };

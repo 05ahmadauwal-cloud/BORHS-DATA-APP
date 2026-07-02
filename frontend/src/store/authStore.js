@@ -17,10 +17,10 @@ const useAuthStore = create(
         set({ accessToken: token });
       },
 
-      login: async (email, password) => {
+      login: async (identifier, password) => {
         set({ isLoading: true });
         try {
-          const { data } = await authAPI.login({ email, password });
+          const { data } = await authAPI.login({ identifier, password });
           const { user, accessToken } = data;
           get().setToken(accessToken);
           set({ user, isAuthenticated: true });

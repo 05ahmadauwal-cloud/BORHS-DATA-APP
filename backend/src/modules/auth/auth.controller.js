@@ -9,8 +9,8 @@ const COOKIE_OPTIONS = {
 };
 
 const register = async (req, res) => {
-  const { firstName, lastName, email, phone, password, referralCode } = req.body;
-  const result = await authService.register({ firstName, lastName, email, phone, password, referralCode });
+  const { firstName, lastName, email, phone, password, referralCode, username } = req.body;
+  const result = await authService.register({ firstName, lastName, email, phone, password, referralCode, username });
 
   res.cookie('accessToken', result.accessToken, COOKIE_OPTIONS);
   res.cookie('refreshToken', result.refreshToken, { ...COOKIE_OPTIONS, maxAge: 30 * 24 * 60 * 60 * 1000 });
@@ -22,9 +22,9 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { identifier, password } = req.body;
   const ipAddress = req.ip || req.connection.remoteAddress;
-  const result = await authService.login(email, password, ipAddress);
+  const result = await authService.login(identifier, password, ipAddress);
 
   res.cookie('accessToken', result.accessToken, COOKIE_OPTIONS);
   res.cookie('refreshToken', result.refreshToken, { ...COOKIE_OPTIONS, maxAge: 30 * 24 * 60 * 60 * 1000 });
