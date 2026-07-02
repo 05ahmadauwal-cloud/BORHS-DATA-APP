@@ -27,6 +27,24 @@ router.get('/banner', async (req, res) => {
   res.json({ success: true, data: { text, active: !!active, color } });
 });
 
+// Public funding methods — which payment channels are enabled
+router.get('/funding-methods', async (req, res) => {
+  const Settings = require('../models/Settings');
+  const [bankTransfer, paystack, flutterwave] = await Promise.all([
+    Settings.get('funding_bank_transfer', true),
+    Settings.get('funding_paystack', true),
+    Settings.get('funding_flutterwave', true),
+  ]);
+  res.json({
+    success: true,
+    data: {
+      bankTransfer: bankTransfer !== false,
+      paystack: paystack !== false,
+      flutterwave: flutterwave !== false,
+    },
+  });
+});
+
 // Public deposit charge info — no auth needed (so frontend can show fee preview before login)
 router.get('/deposit-charge', async (req, res) => {
   const Settings = require('../models/Settings');

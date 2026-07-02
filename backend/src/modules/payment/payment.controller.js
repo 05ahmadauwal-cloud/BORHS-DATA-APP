@@ -4,6 +4,9 @@ const ApiResponse = require('../../utils/apiResponse');
 const logger = require('../../utils/logger');
 
 const initializePaystack = async (req, res) => {
+  const Settings = require('../../models/Settings');
+  const enabled = await Settings.get('funding_paystack', true);
+  if (enabled === false) return ApiResponse.error(res, 'Paystack payments are currently disabled', 403);
   const { amount } = req.body;
   if (amount < 100) return ApiResponse.error(res, 'Minimum funding amount is ₦100');
   const data = await paymentService.paystackInitialize(
@@ -75,6 +78,9 @@ const paystackWebhook = async (req, res) => {
 };
 
 const initializeFlutterwave = async (req, res) => {
+  const Settings = require('../../models/Settings');
+  const enabled = await Settings.get('funding_flutterwave', true);
+  if (enabled === false) return ApiResponse.error(res, 'Flutterwave payments are currently disabled', 403);
   const { amount } = req.body;
   if (amount < 100) return ApiResponse.error(res, 'Minimum funding amount is ₦100');
   const data = await paymentService.flutterwaveInitialize(
@@ -141,6 +147,9 @@ const monnifyWebhook = async (req, res) => {
 };
 
 const getOrCreateVirtualAccount = async (req, res) => {
+  const Settings = require('../../models/Settings');
+  const enabled = await Settings.get('funding_bank_transfer', true);
+  if (enabled === false) return ApiResponse.error(res, 'Bank transfer is currently disabled', 403);
   const User = require('../../models/User');
   let user = await User.findById(req.user._id);
 

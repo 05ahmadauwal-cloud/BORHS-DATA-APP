@@ -4,12 +4,13 @@ import { dataAPI } from '../../api';
 import { Wifi, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
+import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
 
 const NETWORKS = [
-  { id: 'mtn', label: 'MTN', color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/30' },
-  { id: 'airtel', label: 'Airtel', color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/30' },
-  { id: 'glo', label: 'Glo', color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/30' },
-  { id: '9mobile', label: '9Mobile', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30' },
+  { id: 'mtn', label: 'MTN' },
+  { id: 'airtel', label: 'Airtel' },
+  { id: 'glo', label: 'Glo' },
+  { id: '9mobile', label: '9Mobile' },
 ];
 const DATA_TYPES = ['sme', 'corporate', 'gifting', 'direct'];
 
@@ -61,15 +62,12 @@ export default function DataPurchase() {
             <label className="label">Select Network</label>
             <div className="grid grid-cols-4 gap-2">
               {NETWORKS.map((n) => (
-                <button
+                <NetworkButton
                   key={n.id}
+                  network={n.id}
+                  selected={network === n.id}
                   onClick={() => { setNetwork(n.id); setSelectedPlan(null); }}
-                  className={`py-3 rounded-xl border text-sm font-bold transition-all ${
-                    network === n.id ? `${n.bg} ${n.color}` : 'border-dark-600 text-dark-400 hover:border-dark-500'
-                  }`}
-                >
-                  {n.label}
-                </button>
+                />
               ))}
             </div>
           </div>
@@ -152,7 +150,7 @@ export default function DataPurchase() {
           <h2 className="text-lg font-bold text-dark-100">Confirm Purchase</h2>
           <div className="bg-dark-700/50 rounded-xl p-5 space-y-3">
             {[
-              ['Network', network.toUpperCase()],
+              ['Network', <NetworkLogo key="net" network={network} size="sm" />],
               ['Plan', `${selectedPlan.dataSize} - ${selectedPlan.name}`],
               ['Validity', selectedPlan.validity || 'N/A'],
               ['Phone', phone],

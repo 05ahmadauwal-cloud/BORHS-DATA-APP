@@ -4,12 +4,13 @@ import { airtimeAPI } from '../../api';
 import { Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
+import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
 
 const NETWORKS = [
-  { id: 'mtn', label: 'MTN', emoji: '🟡' },
-  { id: 'airtel', label: 'Airtel', emoji: '🔴' },
-  { id: 'glo', label: 'Glo', emoji: '🟢' },
-  { id: '9mobile', label: '9Mobile', emoji: '🟩' },
+  { id: 'mtn', label: 'MTN' },
+  { id: 'airtel', label: 'Airtel' },
+  { id: 'glo', label: 'Glo' },
+  { id: '9mobile', label: '9Mobile' },
 ];
 const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
@@ -44,16 +45,12 @@ export default function Airtime() {
             <label className="label">Select Network</label>
             <div className="grid grid-cols-4 gap-2">
               {NETWORKS.map((n) => (
-                <button
+                <NetworkButton
                   key={n.id}
+                  network={n.id}
+                  selected={form.network === n.id}
                   onClick={() => setForm({ ...form, network: n.id })}
-                  className={`py-3 rounded-xl border text-sm font-bold transition-all flex flex-col items-center gap-1 ${
-                    form.network === n.id ? 'border-primary-500 bg-primary-500/10 text-primary-300' : 'border-dark-600 text-dark-400 hover:border-dark-500'
-                  }`}
-                >
-                  <span className="text-xl">{n.emoji}</span>
-                  <span>{n.label}</span>
-                </button>
+                />
               ))}
             </div>
           </div>
@@ -109,7 +106,7 @@ export default function Airtime() {
           <h2 className="text-lg font-bold text-dark-100">Confirm Purchase</h2>
           <div className="bg-dark-700/50 rounded-xl p-5 space-y-3">
             {[
-              ['Network', form.network.toUpperCase()],
+              ['Network', <NetworkLogo key="net" network={form.network} size="sm" />],
               ['Phone', form.phone],
               ['Amount', `₦${Number(form.amount).toLocaleString()}`],
               ['New Balance', `₦${((user?.walletBalance || 0) - Number(form.amount)).toLocaleString()}`],

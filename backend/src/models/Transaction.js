@@ -47,7 +47,7 @@ const transactionSchema = new mongoose.Schema(
     externalReference: String,
     gateway: {
       type: String,
-      enum: [...Object.values(PAYMENT_GATEWAYS), 'wallet', 'system'],
+      enum: [...Object.values(PAYMENT_GATEWAYS), 'monnify', 'coupon', 'wallet', 'system'],
     },
     description: String,
     metadata: {

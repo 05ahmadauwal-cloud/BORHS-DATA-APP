@@ -7,6 +7,7 @@ import {
   RefreshCw, Percent, CheckCircle, AlertCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { NetworkLogo } from '../../components/NetworkLogo';
 
 const EMPTY_PLAN = {
   network: 'mtn', dataType: 'sme', planId: '', name: '',
@@ -17,6 +18,7 @@ const EMPTY_PLAN = {
 export default function AdminServices() {
   const queryClient = useQueryClient();
   const [filterNetwork, setFilterNetwork] = useState('');
+  const [filterDataType, setFilterDataType] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editPlan, setEditPlan] = useState(null);
   const [form, setForm] = useState(EMPTY_PLAN);
@@ -27,8 +29,8 @@ export default function AdminServices() {
 
   // ─── Queries ───────────────────────────────────────────────────────────────
   const { data: plans, isLoading: plansLoading } = useQuery({
-    queryKey: ['admin-data-plans', filterNetwork],
-    queryFn: () => adminAPI.getDataPlans({ network: filterNetwork }),
+    queryKey: ['admin-data-plans', filterNetwork, filterDataType],
+    queryFn: () => adminAPI.getDataPlans({ network: filterNetwork, dataType: filterDataType }),
     select: (res) => res.data.plans,
   });
 
@@ -224,19 +226,36 @@ export default function AdminServices() {
       {/* ── Plans tab ─────────────────────────────────────────────────────── */}
       {tab === 'plans' && (
         <>
-          {/* Network filter */}
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {['', 'mtn', 'airtel', 'glo', '9mobile'].map((n) => (
-              <button key={n} onClick={() => setFilterNetwork(n)}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase whitespace-nowrap transition-all ${
-                  filterNetwork === n
-                    ? 'bg-primary-600/20 text-primary-300 border border-primary-500/30'
-                    : 'bg-dark-800 text-dark-400 border border-dark-700 hover:border-dark-600'
-                }`}
-              >
-                {n || 'All'}
-              </button>
-            ))}
+          {/* Filters */}
+          <div className="space-y-2">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              <span className="text-[10px] text-dark-500 font-bold uppercase self-center shrink-0">Network</span>
+              {['', 'mtn', 'airtel', 'glo', '9mobile'].map((n) => (
+                <button key={n} onClick={() => setFilterNetwork(n)}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase whitespace-nowrap transition-all ${
+                    filterNetwork === n
+                      ? 'bg-primary-600/20 text-primary-300 border border-primary-500/30'
+                      : 'bg-dark-800 text-dark-400 border border-dark-700 hover:border-dark-600'
+                  }`}
+                >
+                  {n || 'All'}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              <span className="text-[10px] text-dark-500 font-bold uppercase self-center shrink-0">Type</span>
+              {['', 'sme', 'corporate', 'gifting', 'direct'].map((t) => (
+                <button key={t} onClick={() => setFilterDataType(t)}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase whitespace-nowrap transition-all ${
+                    filterDataType === t
+                      ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30'
+                      : 'bg-dark-800 text-dark-400 border border-dark-700 hover:border-dark-600'
+                  }`}
+                >
+                  {t || 'All'}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Desktop Table */}
@@ -266,7 +285,10 @@ export default function AdminServices() {
                           <p className="font-semibold text-dark-100 text-sm">{plan.name}</p>
                           <p className="text-xs text-dark-500 font-mono">{plan.planId}</p>
                         </td>
-                        <td><span className={`network-badge network-${plan.network}`}>{plan.network}</span></td>
+                        <td>
+                          <NetworkLogo network={plan.network} size="sm" />
+                          {plan.dataType && <span className="ml-1 text-[10px] text-dark-500 capitalize">{plan.dataType}</span>}
+                        </td>
                         <td className="font-bold text-dark-100">{plan.dataSize}</td>
                         <td className="text-dark-400">₦{plan.costPrice?.toLocaleString()}</td>
                         <td className="font-bold text-primary-400">₦{plan.sellingPrice?.toLocaleString()}</td>
@@ -303,8 +325,8 @@ export default function AdminServices() {
                   <div key={plan._id} className="card p-4">
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div>
-                        <span className={`network-badge network-${plan.network} mb-1 inline-flex`}>{plan.network}</span>
-                        <p className="font-bold text-dark-100 text-sm">{plan.name}</p>
+                        <NetworkLogo network={plan.network} size="sm" />
+                        <p className="font-bold text-dark-100 text-sm mt-1">{plan.name}</p>
                         <p className="text-xs text-dark-500 font-mono">{plan.planId}</p>
                       </div>
                       <button onClick={() => toggleMutation.mutate({ id: plan._id, isActive: !plan.isActive })}>

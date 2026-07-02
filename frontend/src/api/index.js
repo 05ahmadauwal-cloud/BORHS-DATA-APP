@@ -107,6 +107,7 @@ export const bannerAPI = {
 // Public settings
 export const publicAPI = {
   getDepositCharge: () => api.get('/deposit-charge'),
+  getFundingMethods: () => api.get('/funding-methods'),
 };
 
 // Admin

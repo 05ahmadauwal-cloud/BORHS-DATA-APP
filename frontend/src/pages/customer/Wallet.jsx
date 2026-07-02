@@ -10,7 +10,7 @@ import {
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
-const TABS = ['Bank Transfer', 'Online Payment', 'Promo Code', 'Send Money', 'History'];
+const ALL_TABS = ['Bank Transfer', 'Online Payment', 'Promo Code', 'Send Money', 'History'];
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 const isCredit = (type) => [
   'wallet_fund', 'commission_earned', 'referral_bonus', 'refund',
@@ -265,6 +265,21 @@ export default function Wallet() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: fundingMethods } = useQuery({
+    queryKey: ['funding-methods'],
+    queryFn: () => publicAPI.getFundingMethods(),
+    select: (res) => res.data.data,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const fm = fundingMethods || { bankTransfer: true, paystack: true, flutterwave: true };
+  const hasAnyOnline = fm.paystack || fm.flutterwave;
+  const TABS = ALL_TABS.filter((t) => {
+    if (t === 'Bank Transfer' && !fm.bankTransfer) return false;
+    if (t === 'Online Payment' && !hasAnyOnline) return false;
+    return true;
+  });
+
   const { data: balance } = useQuery({
     queryKey: ['wallet-balance'],
     queryFn: () => walletAPI.getBalance(),
@@ -316,8 +331,10 @@ export default function Wallet() {
   const couponMutation = useMutation({
     mutationFn: () => couponAPI.redeem(couponCode),
     onSuccess: (res) => {
-      creditWallet(res.data.amount);
+      toast.success(res.data?.message || 'Coupon redeemed successfully!');
       setCouponCode('');
+      queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Invalid coupon code'),
   });
@@ -367,9 +384,11 @@ export default function Wallet() {
             ₦{walletBalance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
           </h2>
           <div className="flex gap-2 sm:gap-3">
-            <button onClick={() => setActiveTab('Bank Transfer')} className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors">
-              <Building2 size={14} /> Bank Transfer
-            </button>
+            {fm.bankTransfer && (
+              <button onClick={() => setActiveTab('Bank Transfer')} className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors">
+                <Building2 size={14} /> Bank Transfer
+              </button>
+            )}
             <button onClick={() => setActiveTab('Send Money')} className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors">
               <Send size={14} /> Send
             </button>
@@ -450,7 +469,7 @@ export default function Wallet() {
           <div>
             <label className="label">Payment Gateway</label>
             <div className="grid grid-cols-2 gap-3">
-              {[['paystack', 'Paystack', 'Card · Transfer · USSD'], ['flutterwave', 'Flutterwave', 'Card · Bank · USSD']].map(([id, name, desc]) => (
+              {[['paystack', 'Paystack', 'Card · Transfer · USSD'], ['flutterwave', 'Flutterwave', 'Card · Bank · USSD']].filter(([id]) => fm[id]).map(([id, name, desc]) => (
                 <button
                   key={id}
                   onClick={() => setGateway(id)}

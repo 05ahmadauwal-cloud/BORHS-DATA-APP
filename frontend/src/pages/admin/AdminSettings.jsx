@@ -4,7 +4,7 @@ import { adminAPI } from '../../api';
 import {
   Settings, Save, Megaphone, Shield, Wallet, Users, Percent,
   Star, Zap, Phone, Tv, GraduationCap, CreditCard, AlertTriangle,
-  ChevronDown, ChevronUp, CheckCircle,
+  ChevronDown, ChevronUp, CheckCircle, ToggleLeft,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -201,6 +201,35 @@ export default function AdminSettings() {
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>All customer actions will be blocked</p>
           </div>
           <ToggleSwitch checked={!!form.maintenance_mode} onChange={(v) => set('maintenance_mode', v)} colorOn="bg-red-500" />
+        </div>
+      </SectionCard>
+
+      {/* ── Funding Methods ── */}
+      <SectionCard
+        icon={ToggleLeft}
+        title="Funding Methods"
+        subtitle="Enable or disable specific wallet top-up channels"
+        iconColor="text-blue-400"
+        iconBg="bg-blue-500/10"
+      >
+        <div className="space-y-4">
+          {[
+            { key: 'funding_bank_transfer', label: 'Bank Transfer (Monnify)', desc: 'Customers pay via dedicated bank account' },
+            { key: 'funding_paystack', label: 'Paystack (Card / Transfer)', desc: 'Online payment via Paystack checkout' },
+            { key: 'funding_flutterwave', label: 'Flutterwave (Card / Transfer)', desc: 'Online payment via Flutterwave checkout' },
+          ].map(({ key, label, desc }) => (
+            <div key={key} className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{label}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{desc}</p>
+              </div>
+              <ToggleSwitch
+                checked={form[key] !== false}
+                onChange={(v) => set(key, v)}
+                colorOn="bg-blue-600"
+              />
+            </div>
+          ))}
         </div>
       </SectionCard>
 
