@@ -215,7 +215,7 @@ export default function Home() {
     <div style={{ overflowX: 'hidden' }}>
       <style>{`
         @keyframes scrollLeft { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
-        .ticker-track { display:flex; width:max-content; animation:scrollLeft 40s linear infinite; }
+        .ticker-track { display:flex; width:max-content; animation:scrollLeft var(--ticker-speed,120s) linear infinite; }
         .ticker-track:hover { animation-play-state:paused; }
         @keyframes floatCard { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
         .float-hero { animation:floatCard 6s ease-in-out infinite; }
@@ -293,7 +293,7 @@ export default function Home() {
       {/* ══ PRICE TICKER ══════════════════════════════════════════════ */}
       {tickerItems.length > 0 && (
         <div style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface)', padding: '9px 0', overflow: 'hidden' }}>
-          <div className="ticker-track">
+          <div className="ticker-track" style={{ '--ticker-speed': `${Math.max(60, tickerBase.length * 1.8)}s` }}>
             {tickerItems.map((item, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 14px', flexShrink: 0 }}>
                 <div style={{ width: 20, height: 20, borderRadius: 5, background: item.bg, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 6, fontWeight: 900, color: item.fg }}>
