@@ -3,7 +3,7 @@ const logger = require('../../utils/logger');
 
 const BASE_URL = 'https://smeapi.com.ng/api';
 
-const NETWORK_IDS = { mtn: 1, glo: 2, airtel: 3, '9mobile': 4 };
+const NETWORK_IDS = { mtn: 1, glo: 2, '9mobile': 3, airtel: 4 };
 const NETWORK_NAMES = { mtn: 'MTN', airtel: 'Airtel', glo: 'Glo', '9mobile': '9mobile' };
 
 // smeapi requires 11-digit format starting with 0 (e.g. 09067812523)
