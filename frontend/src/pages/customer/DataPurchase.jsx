@@ -23,6 +23,9 @@ export default function DataPurchase() {
   const [step, setStep] = useState(1);
   const queryClient = useQueryClient();
 
+  const effectivePrice = (plan) =>
+    user?.role === 'agent' && plan.agentPrice ? plan.agentPrice : plan.sellingPrice;
+
   const { data: plans, isLoading } = useQuery({
     queryKey: ['data-plans', network, dataType],
     queryFn: () => dataAPI.getPlans({ network, dataType }),
@@ -33,7 +36,7 @@ export default function DataPurchase() {
     mutationFn: () => dataAPI.purchase({ network, planId: selectedPlan.planId, phone, dataType }),
     onSuccess: (res) => {
       toast.success(`${selectedPlan.dataSize} data sent to ${phone}!`);
-      updateUser({ walletBalance: user.walletBalance - selectedPlan.sellingPrice });
+      updateUser({ walletBalance: user.walletBalance - effectivePrice(selectedPlan) });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       setStep(1);
       setSelectedPlan(null);
@@ -116,7 +119,7 @@ export default function DataPurchase() {
                       {selectedPlan?._id === plan._id && <CheckCircle size={14} className="text-primary-400" />}
                     </div>
                     <p className="font-bold text-dark-100 text-sm">{plan.name}</p>
-                    <p className="text-xl font-black text-primary-400">₦{plan.sellingPrice.toLocaleString()}</p>
+                    <p className="text-xl font-black text-primary-400">₦{effectivePrice(plan).toLocaleString()}</p>
                     {plan.validity && <p className="text-xs text-dark-500">{plan.validity}</p>}
                   </button>
                 ))}
@@ -137,7 +140,7 @@ export default function DataPurchase() {
             />
             <p className="text-xs text-dark-500 mt-1">
               Your balance: ₦{(user?.walletBalance || 0).toLocaleString()}
-              {selectedPlan && <span className="text-primary-400 ml-2">· Cost: ₦{selectedPlan.sellingPrice.toLocaleString()}</span>}
+              {selectedPlan && <span className="text-primary-400 ml-2">· Cost: ₦{effectivePrice(selectedPlan).toLocaleString()}</span>}
             </p>
           </div>
 
@@ -154,8 +157,8 @@ export default function DataPurchase() {
               ['Plan', `${selectedPlan.dataSize} - ${selectedPlan.name}`],
               ['Validity', selectedPlan.validity || 'N/A'],
               ['Phone', phone],
-              ['Amount', `₦${selectedPlan.sellingPrice.toLocaleString()}`],
-              ['New Balance', `₦${((user?.walletBalance || 0) - selectedPlan.sellingPrice).toLocaleString()}`],
+              ['Amount', `₦${effectivePrice(selectedPlan).toLocaleString()}`],
+              ['New Balance', `₦${((user?.walletBalance || 0) - effectivePrice(selectedPlan)).toLocaleString()}`],
             ].map(([key, val]) => (
               <div key={key} className="flex justify-between text-sm">
                 <span className="text-dark-400">{key}</span>
