@@ -280,6 +280,19 @@ export default function Wallet() {
     return true;
   });
 
+  // Auto-redirect to first available tab when funding methods load
+  useEffect(() => {
+    if (!fundingMethods) return;
+    if (!TABS.includes(activeTab)) setActiveTab(TABS[0] || 'History');
+  }, [fundingMethods]);
+
+  // Auto-switch gateway if currently selected one is disabled
+  useEffect(() => {
+    if (!fundingMethods) return;
+    if (gateway === 'paystack' && !fundingMethods.paystack && fundingMethods.flutterwave) setGateway('flutterwave');
+    if (gateway === 'flutterwave' && !fundingMethods.flutterwave && fundingMethods.paystack) setGateway('paystack');
+  }, [fundingMethods]);
+
   const { data: balance } = useQuery({
     queryKey: ['wallet-balance'],
     queryFn: () => walletAPI.getBalance(),
@@ -413,12 +426,12 @@ export default function Wallet() {
       </div>
 
       {/* Bank Transfer Tab */}
-      {activeTab === 'Bank Transfer' && (
+      {activeTab === 'Bank Transfer' && fm.bankTransfer && (
         <BankTransferTab chargeType={chargeInfo?.type} chargeValue={chargeInfo?.value} />
       )}
 
       {/* Online Payment Tab */}
-      {activeTab === 'Online Payment' && (
+      {activeTab === 'Online Payment' && hasAnyOnline && (
         <div className="card p-4 sm:p-6 space-y-5">
           <div>
             <label className="label">Quick Amount</label>
