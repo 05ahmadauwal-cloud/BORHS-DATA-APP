@@ -4,7 +4,7 @@ import { educationAPI } from '../../api';
 import { GraduationCap, Copy, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
-import Receipt from '../../components/ui/Receipt';
+import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
 
 const EXAMS = [
   { id: 'waec', label: 'WAEC', desc: 'West African Examinations Council' },
@@ -55,6 +55,7 @@ export default function Education() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <PurchaseLoader visible={mutation.isPending} type="education" />
       <Receipt data={receipt} onClose={() => setReceipt(null)} />
       <div className="page-header">
         <h1 className="page-title flex items-center gap-3"><GraduationCap className="text-red-400" />Exam PINs</h1>

@@ -5,7 +5,7 @@ import { Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
-import Receipt from '../../components/ui/Receipt';
+import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
 
 const NETWORKS = [
   { id: 'mtn', label: 'MTN' },
@@ -45,6 +45,7 @@ export default function Airtime() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <PurchaseLoader visible={mutation.isPending} type="airtime" />
       <Receipt data={receipt} onClose={() => setReceipt(null)} />
       <div className="page-header">
         <h1 className="page-title flex items-center gap-3"><Phone className="text-green-400" />Buy Airtime</h1>

@@ -4,7 +4,7 @@ import { electricityAPI } from '../../api';
 import { Zap, CheckCircle, Copy, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
-import Receipt from '../../components/ui/Receipt';
+import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
 
 const PROVIDERS = [
   { id: 'ikedc', label: 'IKEDC', full: 'Ikeja Electric' },
@@ -60,6 +60,7 @@ export default function Electricity() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <PurchaseLoader visible={purchaseMutation.isPending} type="electricity" />
       <Receipt data={receipt} onClose={() => setReceipt(null)} />
       <div className="page-header">
         <h1 className="page-title flex items-center gap-3"><Zap className="text-yellow-400" />Electricity</h1>

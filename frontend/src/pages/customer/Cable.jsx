@@ -4,7 +4,7 @@ import { cableAPI } from '../../api';
 import { Tv, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
-import Receipt from '../../components/ui/Receipt';
+import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
 
 const PROVIDERS = [
   { id: 'dstv', label: 'DStv', emoji: '📡' },
@@ -60,6 +60,7 @@ export default function Cable() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <PurchaseLoader visible={purchaseMutation.isPending} type="cable" />
       <Receipt data={receipt} onClose={() => setReceipt(null)} />
       <div className="page-header">
         <h1 className="page-title flex items-center gap-3"><Tv className="text-purple-400" />Cable TV</h1>

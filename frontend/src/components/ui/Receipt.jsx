@@ -289,3 +289,77 @@ export default function Receipt({ data, onClose }) {
     document.body
   );
 }
+
+export function PurchaseLoader({ visible, type = 'data' }) {
+  if (!visible) return null;
+  const svc = SERVICE[type] || SERVICE.data;
+  const { Icon } = svc;
+
+  return createPortal(
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9990,
+      background: 'rgba(2,6,23,0.88)',
+      backdropFilter: 'blur(8px)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24,
+    }}>
+      {/* Spinning rings */}
+      <div style={{ position: 'relative', width: 100, height: 100 }}>
+        {/* Outer ring — slow */}
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: '50%',
+          border: '3px solid rgba(37,99,235,0.15)',
+          borderTopColor: '#2563eb',
+          animation: 'spin 1.1s linear infinite',
+        }} />
+        {/* Middle ring — medium, reverse */}
+        <div style={{
+          position: 'absolute', inset: 10, borderRadius: '50%',
+          border: '2.5px solid rgba(37,99,235,0.1)',
+          borderTopColor: svc.color,
+          animation: 'spin 0.75s linear infinite reverse',
+        }} />
+        {/* Inner ring — fast */}
+        <div style={{
+          position: 'absolute', inset: 20, borderRadius: '50%',
+          border: '2px solid rgba(37,99,235,0.08)',
+          borderTopColor: 'rgba(37,99,235,0.45)',
+          animation: 'spin 0.5s linear infinite',
+        }} />
+        {/* Icon center */}
+        <div style={{
+          position: 'absolute', inset: 30, borderRadius: '50%',
+          background: svc.bg,
+          border: `1px solid ${svc.color}30`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon size={18} style={{ color: svc.color }} />
+        </div>
+      </div>
+
+      {/* Text */}
+      <div style={{ textAlign: 'center' }}>
+        <p style={{ fontSize: 17, fontWeight: 800, color: '#f1f5f9', marginBottom: 6 }}>Processing…</p>
+        <p style={{ fontSize: 12, color: '#64748b' }}>Please wait, do not close this page</p>
+      </div>
+
+      {/* Animated dots */}
+      <div style={{ display: 'flex', gap: 6 }}>
+        {[0, 1, 2].map((i) => (
+          <div key={i} style={{
+            width: 7, height: 7, borderRadius: '50%',
+            background: '#2563eb',
+            animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+          }} />
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes pulse {
+          0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+          40% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+    </div>,
+    document.body
+  );
+}

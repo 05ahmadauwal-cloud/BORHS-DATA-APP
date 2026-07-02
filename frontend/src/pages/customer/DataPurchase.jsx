@@ -5,7 +5,7 @@ import { Wifi, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
-import Receipt from '../../components/ui/Receipt';
+import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
 
 const NETWORKS = [
   { id: 'mtn', label: 'MTN' },
@@ -68,6 +68,7 @@ export default function DataPurchase() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <PurchaseLoader visible={purchaseMutation.isPending} type="data" />
       <Receipt data={receipt} onClose={() => setReceipt(null)} />
       <div className="page-header">
         <h1 className="page-title flex items-center gap-3"><Wifi className="text-primary-400" />Buy Data</h1>
