@@ -37,7 +37,7 @@ export default function PublicLayout() {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 shrink-0">
               <div style={{ width: 38, height: 38, borderRadius: 10, overflow: 'hidden', background: 'white', flexShrink: 0 }}>
-                <img src="/logo.svg" alt="BORHS Data App" style={{ display: 'block', width: 76, height: 'auto', marginLeft: -19, marginTop: -1 }} />
+                <img src="/logo.png" alt="BORHS Data App" style={{ display: 'block', width: 76, height: 'auto', marginLeft: -18, marginTop: -5 }} />
               </div>
               <span className="font-black text-lg" style={{ color: 'var(--text-primary)' }}>
                 BORHS <span className="text-primary-400">Data</span>
@@ -127,7 +127,7 @@ export default function PublicLayout() {
             style={{ borderColor: 'var(--border)' }}>
             <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2">
               <div style={{ width: 34, height: 34, borderRadius: 9, overflow: 'hidden', background: 'white', flexShrink: 0 }}>
-                <img src="/logo.svg" alt="BORHS" style={{ display: 'block', width: 68, height: 'auto', marginLeft: -17, marginTop: -1 }} />
+                <img src="/logo.png" alt="BORHS" style={{ display: 'block', width: 68, height: 'auto', marginLeft: -16, marginTop: -3 }} />
               </div>
               <span className="font-black text-sm" style={{ color: 'var(--text-primary)' }}>
                 BORHS <span className="text-primary-400">Data</span>
@@ -222,7 +222,7 @@ export default function PublicLayout() {
             <div className="sm:w-52 shrink-0">
               <div className="flex items-center gap-2 mb-2.5">
                 <div style={{ width: 28, height: 28, borderRadius: 8, overflow: 'hidden', background: 'white', flexShrink: 0 }}>
-                  <img src="/logo.svg" alt="" style={{ display: 'block', width: 56, height: 'auto', marginLeft: -14, marginTop: -1 }} />
+                  <img src="/logo.png" alt="" style={{ display: 'block', width: 56, height: 'auto', marginLeft: -14, marginTop: -3 }} />
                 </div>
                 <span className="font-black text-sm" style={{ color: 'var(--text-primary)' }}>BORHS Data</span>
               </div>
