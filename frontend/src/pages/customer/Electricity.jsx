@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { electricityAPI } from '../../api';
-import { Zap, CheckCircle, Copy } from 'lucide-react';
+import { Zap, CheckCircle, Copy, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
+import Receipt from '../../components/ui/Receipt';
 
 const PROVIDERS = [
   { id: 'ikedc', label: 'IKEDC', full: 'Ikeja Electric' },
@@ -21,6 +22,7 @@ export default function Electricity() {
   const [customerInfo, setCustomerInfo] = useState(null);
   const [step, setStep] = useState(1);
   const [result, setResult] = useState(null);
+  const [receipt, setReceipt] = useState(null);
 
   const verifyMutation = useMutation({
     mutationFn: () => electricityAPI.verifyMeter({ provider: form.provider, meterNumber: form.meterNumber, meterType: form.meterType }),
@@ -38,6 +40,19 @@ export default function Electricity() {
       setResult(p);
       updateUser({ walletBalance: user.walletBalance - Number(form.amount) });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      setReceipt({
+        type: 'electricity',
+        reference: p.reference,
+        date: p.createdAt || new Date(),
+        status: 'success',
+        amount: Number(form.amount),
+        provider: form.provider.toUpperCase(),
+        meterNumber: form.meterNumber,
+        meterType: form.meterType,
+        customerName: customerInfo?.customerName,
+        token: p.token,
+        units: p.units,
+      });
       setStep(4);
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Purchase failed'),
@@ -45,6 +60,7 @@ export default function Electricity() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <Receipt data={receipt} onClose={() => setReceipt(null)} />
       <div className="page-header">
         <h1 className="page-title flex items-center gap-3"><Zap className="text-yellow-400" />Electricity</h1>
         <p className="page-subtitle">Pay electricity bills for all distribution companies</p>
@@ -173,9 +189,14 @@ export default function Electricity() {
             </div>
           )}
           {result.units && <p className="text-dark-300 text-sm">{result.units} units</p>}
-          <button onClick={() => { setStep(1); setResult(null); setForm({ provider: 'ikedc', meterNumber: '', meterType: 'prepaid', amount: '', phone: '' }); }} className="btn-secondary mt-6">
-            New Purchase
-          </button>
+          <div className="flex gap-3 mt-6 justify-center">
+            <button onClick={() => setReceipt({ type: 'electricity', reference: result.reference, date: result.createdAt || new Date(), status: 'success', amount: Number(form.amount), provider: form.provider.toUpperCase(), meterNumber: form.meterNumber, meterType: form.meterType, customerName: customerInfo?.customerName, token: result.token, units: result.units })} className="btn-secondary gap-2">
+              <Printer size={14} /> Receipt
+            </button>
+            <button onClick={() => { setStep(1); setResult(null); setForm({ provider: 'ikedc', meterNumber: '', meterType: 'prepaid', amount: '', phone: '' }); }} className="btn-secondary">
+              New Purchase
+            </button>
+          </div>
         </div>
       )}
     </div>

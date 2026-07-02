@@ -5,6 +5,7 @@ import { Wifi, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
+import Receipt from '../../components/ui/Receipt';
 
 const NETWORKS = [
   { id: 'mtn', label: 'MTN' },
@@ -21,6 +22,7 @@ export default function DataPurchase() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [phone, setPhone] = useState('');
   const [step, setStep] = useState(1);
+  const [receipt, setReceipt] = useState(null);
   const queryClient = useQueryClient();
 
   const effectivePrice = (plan) =>
@@ -35,9 +37,22 @@ export default function DataPurchase() {
   const purchaseMutation = useMutation({
     mutationFn: () => dataAPI.purchase({ network, planId: selectedPlan.planId, phone, dataType }),
     onSuccess: (res) => {
-      toast.success(`${selectedPlan.dataSize} data sent to ${phone}!`);
+      const purchase = res.data?.purchase || {};
       updateUser({ walletBalance: user.walletBalance - effectivePrice(selectedPlan) });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      setReceipt({
+        type: 'data',
+        reference: purchase.reference,
+        date: purchase.createdAt || new Date(),
+        status: 'success',
+        amount: effectivePrice(selectedPlan),
+        network: network.toUpperCase(),
+        phone,
+        dataSize: selectedPlan.dataSize,
+        planName: selectedPlan.name,
+        validity: selectedPlan.validity,
+        dataType: dataType.toUpperCase(),
+      });
       setStep(1);
       setSelectedPlan(null);
       setPhone('');
@@ -53,6 +68,7 @@ export default function DataPurchase() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <Receipt data={receipt} onClose={() => setReceipt(null)} />
       <div className="page-header">
         <h1 className="page-title flex items-center gap-3"><Wifi className="text-primary-400" />Buy Data</h1>
         <p className="page-subtitle">SME, Corporate, Gifting & Direct data bundles at the cheapest rates</p>

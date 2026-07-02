@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { walletAPI } from '../../api';
-import { History, CheckCircle, XCircle, Clock, SlidersHorizontal } from 'lucide-react';
+import { History, CheckCircle, XCircle, Clock, SlidersHorizontal, Printer } from 'lucide-react';
 import { format } from 'date-fns';
+import Receipt from '../../components/ui/Receipt';
 
 const isCredit = (type) => ['wallet_fund', 'commission_earned', 'referral_bonus'].includes(type);
 
@@ -19,9 +20,29 @@ const TYPE_LABELS = {
   withdrawal: 'Withdrawal',
 };
 
+const RECEIPT_TYPES = {
+  data_purchase: 'data',
+  airtime_purchase: 'airtime',
+  electricity_purchase: 'electricity',
+  cable_purchase: 'cable',
+  education_purchase: 'education',
+};
+
+function txnToReceipt(txn) {
+  return {
+    type: RECEIPT_TYPES[txn.type] || txn.type,
+    reference: txn.reference,
+    date: txn.createdAt,
+    status: txn.status,
+    amount: txn.amount,
+    description: txn.description,
+  };
+}
+
 export default function Transactions() {
   const [filters, setFilters] = useState({ page: 1, limit: 20, status: '', type: '' });
   const [showFilters, setShowFilters] = useState(false);
+  const [receipt, setReceipt] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['all-transactions', filters],
@@ -31,6 +52,7 @@ export default function Transactions() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-4 md:space-y-5">
+      <Receipt data={receipt} onClose={() => setReceipt(null)} />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl md:text-2xl font-black text-dark-50 flex items-center gap-2">
@@ -133,14 +155,23 @@ export default function Transactions() {
                     {format(new Date(txn.createdAt), 'MMM dd, yyyy · h:mm a')}
                   </p>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className={`font-black text-sm ${isCredit(txn.type) ? 'text-success-500' : 'text-red-400'}`}>
-                    {isCredit(txn.type) ? '+' : '-'}₦{txn.amount.toLocaleString()}
-                  </p>
-                  <span className={`badge text-[10px] mt-0.5 ${
-                    txn.status === 'success' ? 'badge-success' :
-                    txn.status === 'failed' ? 'badge-danger' : 'badge-warning'
-                  }`}>{txn.status}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="text-right">
+                    <p className={`font-black text-sm ${isCredit(txn.type) ? 'text-success-500' : 'text-red-400'}`}>
+                      {isCredit(txn.type) ? '+' : '-'}₦{txn.amount.toLocaleString()}
+                    </p>
+                    <span className={`badge text-[10px] mt-0.5 ${
+                      txn.status === 'success' ? 'badge-success' :
+                      txn.status === 'failed' ? 'badge-danger' : 'badge-warning'
+                    }`}>{txn.status}</span>
+                  </div>
+                  <button
+                    onClick={() => setReceipt(txnToReceipt(txn))}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-dark-500 hover:text-primary-400 hover:bg-primary-500/10 transition-colors shrink-0"
+                    title="View Receipt"
+                  >
+                    <Printer size={13} />
+                  </button>
                 </div>
               </div>
             ))}

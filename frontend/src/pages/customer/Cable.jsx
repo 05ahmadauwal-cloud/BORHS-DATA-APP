@@ -4,6 +4,7 @@ import { cableAPI } from '../../api';
 import { Tv, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
+import Receipt from '../../components/ui/Receipt';
 
 const PROVIDERS = [
   { id: 'dstv', label: 'DStv', emoji: '📡' },
@@ -19,6 +20,7 @@ export default function Cable() {
   const [selectedPkg, setSelectedPkg] = useState(null);
   const [customerInfo, setCustomerInfo] = useState(null);
   const [step, setStep] = useState(1);
+  const [receipt, setReceipt] = useState(null);
 
   const { data: packages } = useQuery({
     queryKey: ['cable-packages', provider],
@@ -34,10 +36,21 @@ export default function Cable() {
 
   const purchaseMutation = useMutation({
     mutationFn: () => cableAPI.purchase({ provider, smartCardNumber: smartCard, packageId: selectedPkg.id }),
-    onSuccess: () => {
-      toast.success(`${selectedPkg.name} subscription activated!`);
+    onSuccess: (res) => {
+      const purchase = res.data?.purchase || {};
       updateUser({ walletBalance: user.walletBalance - selectedPkg.amount });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      setReceipt({
+        type: 'cable',
+        reference: purchase.reference,
+        date: purchase.createdAt || new Date(),
+        status: 'success',
+        amount: selectedPkg.amount,
+        provider: provider.toUpperCase(),
+        smartCardNumber: smartCard,
+        customerName: customerInfo?.customerName,
+        packageName: selectedPkg.name,
+      });
       setStep(1); setSmartCard(''); setSelectedPkg(null); setCustomerInfo(null);
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Subscription failed'),
@@ -47,6 +60,7 @@ export default function Cable() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <Receipt data={receipt} onClose={() => setReceipt(null)} />
       <div className="page-header">
         <h1 className="page-title flex items-center gap-3"><Tv className="text-purple-400" />Cable TV</h1>
         <p className="page-subtitle">Subscribe to DStv, GOtv & StarTimes instantly</p>

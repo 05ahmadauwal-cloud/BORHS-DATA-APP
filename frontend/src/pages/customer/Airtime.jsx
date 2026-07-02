@@ -5,6 +5,7 @@ import { Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
+import Receipt from '../../components/ui/Receipt';
 
 const NETWORKS = [
   { id: 'mtn', label: 'MTN' },
@@ -19,13 +20,23 @@ export default function Airtime() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ network: 'mtn', phone: '', amount: '' });
   const [step, setStep] = useState(1);
+  const [receipt, setReceipt] = useState(null);
 
   const mutation = useMutation({
     mutationFn: () => airtimeAPI.purchase(form),
-    onSuccess: () => {
-      toast.success(`₦${form.amount} ${form.network.toUpperCase()} airtime sent to ${form.phone}!`);
+    onSuccess: (res) => {
+      const purchase = res.data?.purchase || {};
       updateUser({ walletBalance: user.walletBalance - Number(form.amount) });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      setReceipt({
+        type: 'airtime',
+        reference: purchase.reference,
+        date: purchase.createdAt || new Date(),
+        status: 'success',
+        amount: Number(form.amount),
+        network: form.network.toUpperCase(),
+        phone: form.phone,
+      });
       setForm({ network: 'mtn', phone: '', amount: '' });
       setStep(1);
     },
@@ -34,6 +45,7 @@ export default function Airtime() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <Receipt data={receipt} onClose={() => setReceipt(null)} />
       <div className="page-header">
         <h1 className="page-title flex items-center gap-3"><Phone className="text-green-400" />Buy Airtime</h1>
         <p className="page-subtitle">Top up any Nigerian network instantly</p>

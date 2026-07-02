@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { educationAPI } from '../../api';
-import { GraduationCap, Copy, Download } from 'lucide-react';
+import { GraduationCap, Copy, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
+import Receipt from '../../components/ui/Receipt';
 
 const EXAMS = [
   { id: 'waec', label: 'WAEC', desc: 'West African Examinations Council' },
@@ -18,6 +19,7 @@ export default function Education() {
   const [examType, setExamType] = useState('waec');
   const [quantity, setQuantity] = useState(1);
   const [result, setResult] = useState(null);
+  const [receipt, setReceipt] = useState(null);
 
   const { data: prices } = useQuery({
     queryKey: ['exam-prices'],
@@ -28,8 +30,19 @@ export default function Education() {
   const mutation = useMutation({
     mutationFn: () => educationAPI.purchase({ examType, quantity }),
     onSuccess: (res) => {
-      setResult(res.data.purchase);
+      const purchase = res.data.purchase;
       const cost = (prices?.[examType] || 0) * quantity;
+      setResult(purchase);
+      setReceipt({
+        type: 'education',
+        reference: purchase.reference,
+        date: purchase.createdAt || new Date(),
+        status: 'success',
+        amount: cost,
+        examType: examType.toUpperCase(),
+        quantity: purchase.pins?.length || quantity,
+        pins: purchase.pins,
+      });
       updateUser({ walletBalance: user.walletBalance - cost });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
     },
@@ -42,6 +55,7 @@ export default function Education() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      <Receipt data={receipt} onClose={() => setReceipt(null)} />
       <div className="page-header">
         <h1 className="page-title flex items-center gap-3"><GraduationCap className="text-red-400" />Exam PINs</h1>
         <p className="page-subtitle">Purchase WAEC, NECO, NABTEB, and JAMB e-PINs</p>
@@ -133,7 +147,12 @@ export default function Education() {
             ))}
           </div>
 
-          <button onClick={() => setResult(null)} className="btn-secondary w-full mt-6">Buy More PINs</button>
+          <div className="flex gap-3 mt-6">
+            <button onClick={() => setReceipt({ type: 'education', reference: result.reference, date: result.createdAt || new Date(), status: 'success', amount: total, examType: examType.toUpperCase(), quantity: result.pins?.length || quantity, pins: result.pins })} className="btn-secondary flex-1 gap-2">
+              <Printer size={14} /> Print
+            </button>
+            <button onClick={() => setResult(null)} className="btn-secondary flex-1">Buy More PINs</button>
+          </div>
         </div>
       )}
     </div>
