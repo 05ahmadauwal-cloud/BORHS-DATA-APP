@@ -108,6 +108,8 @@ export const bannerAPI = {
 export const publicAPI = {
   getDepositCharge: () => api.get('/deposit-charge'),
   getFundingMethods: () => api.get('/funding-methods'),
+  getFeaturedPlans: () => api.get('/featured-plans'),
+  getPublicStats: () => api.get('/public-stats'),
 };
 
 // Admin

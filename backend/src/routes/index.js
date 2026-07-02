@@ -16,6 +16,31 @@ router.use('/notifications', require('../modules/notification/notification.route
 router.use('/admin', require('../modules/admin/admin.routes'));
 router.use('/coupons', require('../modules/coupon/coupon.routes'));
 
+// Public featured data plans — for homepage price display (no auth)
+router.get('/featured-plans', async (req, res) => {
+  const DataPlan = require('../models/DataPlan');
+  const plans = await DataPlan.find({ isActive: true })
+    .sort({ network: 1, sellingPrice: 1 })
+    .select('network dataType name dataSize sellingPrice validity')
+    .lean();
+  res.json({ success: true, data: plans });
+});
+
+// Public platform stats — user count, transaction volume (no auth)
+router.get('/public-stats', async (req, res) => {
+  const User = require('../models/User');
+  const Transaction = require('../models/Transaction');
+  const [userCount, txResult] = await Promise.all([
+    User.countDocuments({ role: { $in: ['customer', 'agent'] } }),
+    Transaction.aggregate([
+      { $match: { status: 'success' } },
+      { $group: { _id: null, count: { $sum: 1 }, volume: { $sum: '$amount' } } },
+    ]),
+  ]);
+  const tx = txResult[0] || { count: 0, volume: 0 };
+  res.json({ success: true, data: { userCount, txCount: tx.count, volumeProcessed: tx.volume } });
+});
+
 // Public banner — no auth needed
 router.get('/banner', async (req, res) => {
   const Settings = require('../models/Settings');
