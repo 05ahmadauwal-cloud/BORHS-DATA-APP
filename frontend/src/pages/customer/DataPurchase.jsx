@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dataAPI } from '../../api';
-import { Wifi, CheckCircle } from 'lucide-react';
+import { Wifi, CheckCircle, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
+import { detectNetwork, isPhoneComplete, NETWORK_LABELS } from '../../utils/phoneNetwork';
 
 const NETWORKS = [
   { id: 'mtn', label: 'MTN' },
@@ -60,9 +61,19 @@ export default function DataPurchase() {
     onError: (err) => toast.error(err.response?.data?.message || 'Purchase failed'),
   });
 
+  const detectedNetwork = detectNetwork(phone);
+  const phoneComplete = isPhoneComplete(phone);
+  const networkMismatch = phoneComplete && detectedNetwork && detectedNetwork !== network;
+
   const handleProceed = () => {
     if (!selectedPlan) return toast.error('Please select a data plan');
     if (!phone) return toast.error('Please enter a phone number');
+    if (networkMismatch) {
+      return toast.error(
+        `This number belongs to ${NETWORK_LABELS[detectedNetwork]}, but you selected ${NETWORK_LABELS[network]}. Please correct the network or phone number.`,
+        { duration: 5000 }
+      );
+    }
     setStep(2);
   };
 
@@ -150,18 +161,36 @@ export default function DataPurchase() {
           <div>
             <label className="label">Phone Number</label>
             <input
-              className="input"
+              className={`input ${networkMismatch ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500' : ''}`}
               placeholder="Enter recipient phone number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
+            {/* Network detection feedback */}
+            {phoneComplete && (
+              <div className={`flex items-center gap-1.5 mt-1.5 text-xs font-medium ${networkMismatch ? 'text-red-400' : 'text-success-500'}`}>
+                {networkMismatch ? (
+                  <>
+                    <AlertTriangle size={12} />
+                    <span>Number belongs to <strong>{NETWORK_LABELS[detectedNetwork]}</strong> — you selected <strong>{NETWORK_LABELS[network]}</strong></span>
+                  </>
+                ) : detectedNetwork ? (
+                  <>
+                    <CheckCircle size={12} />
+                    <span><strong>{NETWORK_LABELS[detectedNetwork]}</strong> number confirmed</span>
+                  </>
+                ) : (
+                  <span className="text-dark-500">Network could not be auto-detected</span>
+                )}
+              </div>
+            )}
             <p className="text-xs text-dark-500 mt-1">
               Your balance: ₦{(user?.walletBalance || 0).toLocaleString()}
               {selectedPlan && <span className="text-primary-400 ml-2">· Cost: ₦{effectivePrice(selectedPlan).toLocaleString()}</span>}
             </p>
           </div>
 
-          <button onClick={handleProceed} disabled={!selectedPlan || !phone} className="btn-primary w-full btn-lg">
+          <button onClick={handleProceed} disabled={!selectedPlan || !phone || networkMismatch} className="btn-primary w-full btn-lg">
             Continue
           </button>
         </div>

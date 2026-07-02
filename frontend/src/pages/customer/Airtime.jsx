@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { airtimeAPI } from '../../api';
-import { Phone } from 'lucide-react';
+import { Phone, CheckCircle, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
+import { detectNetwork, isPhoneComplete, NETWORK_LABELS } from '../../utils/phoneNetwork';
 
 const NETWORKS = [
   { id: 'mtn', label: 'MTN' },
@@ -71,11 +72,38 @@ export default function Airtime() {
           <div>
             <label className="label">Phone Number</label>
             <input
-              className="input"
+              className={`input ${isPhoneComplete(form.phone) && detectNetwork(form.phone) && detectNetwork(form.phone) !== form.network ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500' : ''}`}
               placeholder="08012345678"
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              onChange={(e) => {
+                const val = e.target.value;
+                const detected = detectNetwork(val);
+                if (detected && detected !== form.network) {
+                  setForm({ ...form, phone: val, network: detected });
+                  toast.success(`Network switched to ${NETWORK_LABELS[detected]}`, { icon: '📱', duration: 2500 });
+                } else {
+                  setForm({ ...form, phone: val });
+                }
+              }}
             />
+            {/* Detection badge */}
+            {isPhoneComplete(form.phone) && (
+              <div className={`flex items-center gap-1.5 mt-1.5 text-xs font-medium ${
+                detectNetwork(form.phone) && detectNetwork(form.phone) !== form.network
+                  ? 'text-red-400'
+                  : detectNetwork(form.phone) ? 'text-success-500' : 'text-dark-500'
+              }`}>
+                {detectNetwork(form.phone) ? (
+                  detectNetwork(form.phone) === form.network ? (
+                    <><CheckCircle size={12} /><span><strong>{NETWORK_LABELS[form.network]}</strong> number confirmed</span></>
+                  ) : (
+                    <><AlertTriangle size={12} /><span>Detected <strong>{NETWORK_LABELS[detectNetwork(form.phone)]}</strong> — switching network</span></>
+                  )
+                ) : (
+                  <span>Network could not be auto-detected</span>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
@@ -107,6 +135,10 @@ export default function Airtime() {
             onClick={() => {
               if (!form.phone) return toast.error('Enter phone number');
               if (!form.amount || Number(form.amount) < 100) return toast.error('Minimum amount is ₦100');
+              const detected = detectNetwork(form.phone);
+              if (isPhoneComplete(form.phone) && detected && detected !== form.network) {
+                return toast.error(`This number belongs to ${NETWORK_LABELS[detected]}, not ${NETWORK_LABELS[form.network]}. Please correct the selection.`, { duration: 5000 });
+              }
               setStep(2);
             }}
             className="btn-primary w-full btn-lg"
