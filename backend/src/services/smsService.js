@@ -47,8 +47,10 @@ const SMS_TEMPLATES = {
   otp: (otp) => `[BORHS Data] Your OTP is: ${otp}. Valid for 10 minutes. Do not share.`,
   walletFund: (amount, balance) =>
     `[BORHS Data] Your wallet has been credited with NGN ${amount}. Available balance: NGN ${balance}.`,
-  dataPurchase: (plan, phone, ref) =>
-    `[BORHS Data] ${plan} data purchased for ${phone}. Ref: ${ref}.`,
+  dataPurchase: (plan, phone, ref, validity) => {
+    const validityText = validity ? ` Validity: ${validity}.` : '';
+    return `[BORHS Data] ${plan} has been delivered to ${phone}. Ref: ${ref}.${validityText}`;
+  },
   transactionAlert: (type, amount, ref) =>
     `[BORHS Data] ${type} of NGN ${amount}. Ref: ${ref}. Contact support if not authorized.`,
 };
