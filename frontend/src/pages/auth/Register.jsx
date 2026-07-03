@@ -72,10 +72,8 @@ export default function Register() {
       </button>
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex flex-col items-center gap-3 mb-6">
-            <div style={{ borderRadius: 20, background: 'white', padding: 8, display: 'inline-block' }}>
-              <img src="/logo.png" alt="BORHS Data App" style={{ display: 'block', width: 160, height: 'auto' }} />
-            </div>
+          <Link to="/" className="inline-flex flex-col items-center mb-6">
+            <img src="/logo.png" alt="BORHS Data App" style={{ height: 100, width: 'auto', display: 'block' }} />
           </Link>
           <h1 className="text-2xl font-black text-dark-50">Create your account</h1>
           <p className="text-dark-400 mt-2 text-sm">Join 50,000+ Nigerians saving money on data & bills</p>

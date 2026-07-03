@@ -44,13 +44,8 @@ export default function AdminLayout() {
       `}>
         <div className="flex items-center justify-between p-4 border-b border-dark-700/50">
           <Link to="/admin" className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
-            <div style={{ width: 34, height: 34, borderRadius: 9, overflow: 'hidden', background: 'white', flexShrink: 0 }}>
-              <img src="/logo.png" alt="BORHS" style={{ display: 'block', width: 68, height: 'auto', marginLeft: -16, marginTop: -3 }} />
-            </div>
-            <div className="min-w-0">
-              <p className="font-bold text-dark-50 text-sm leading-none">Admin</p>
-              <p className="text-xs text-dark-400 mt-0.5 capitalize truncate">{user?.role?.replace('_', ' ')}</p>
-            </div>
+            <img src="/logo.png" alt="BORHS" style={{ height: 38, width: 'auto', display: 'block', maxWidth: 140 }} />
+            <span className="text-xs text-dark-400 capitalize truncate">{user?.role?.replace('_', ' ')}</span>
           </Link>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1.5 rounded-lg text-dark-400 hover:bg-dark-700">
             <X size={16} />

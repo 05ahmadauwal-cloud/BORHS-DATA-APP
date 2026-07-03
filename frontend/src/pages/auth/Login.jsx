@@ -52,10 +52,8 @@ export default function Login() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex flex-col items-center gap-3 mb-6">
-            <div style={{ borderRadius: 20, background: 'white', padding: 8, display: 'inline-block' }}>
-              <img src="/logo.png" alt="BORHS Data App" style={{ display: 'block', width: 160, height: 'auto' }} />
-            </div>
+          <Link to="/" className="inline-flex flex-col items-center mb-6">
+            <img src="/logo.png" alt="BORHS Data App" style={{ height: 100, width: 'auto', display: 'block' }} />
           </Link>
           <h1 className="text-2xl font-black text-dark-50">Welcome back</h1>
           <p className="text-dark-400 mt-2 text-sm">Sign in to your account to continue</p>

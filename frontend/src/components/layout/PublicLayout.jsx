@@ -35,13 +35,8 @@ export default function PublicLayout() {
           <div className="flex items-center justify-between h-16">
 
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2.5 shrink-0">
-              <div style={{ width: 38, height: 38, borderRadius: 10, overflow: 'hidden', background: 'white', flexShrink: 0 }}>
-                <img src="/logo.png" alt="BORHS Data App" style={{ display: 'block', width: 76, height: 'auto', marginLeft: -18, marginTop: -5 }} />
-              </div>
-              <span className="font-black text-lg" style={{ color: 'var(--text-primary)' }}>
-                BORHS <span className="text-primary-400">Data</span>
-              </span>
+            <Link to="/" className="flex items-center shrink-0">
+              <img src="/logo.png" alt="BORHS Data App" style={{ height: 42, width: 'auto', display: 'block' }} />
             </Link>
 
             {/* Desktop nav */}
@@ -125,13 +120,8 @@ export default function PublicLayout() {
           {/* Drawer header */}
           <div className="flex items-center justify-between px-5 py-4 border-b shrink-0"
             style={{ borderColor: 'var(--border)' }}>
-            <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-2">
-              <div style={{ width: 34, height: 34, borderRadius: 9, overflow: 'hidden', background: 'white', flexShrink: 0 }}>
-                <img src="/logo.png" alt="BORHS" style={{ display: 'block', width: 68, height: 'auto', marginLeft: -16, marginTop: -3 }} />
-              </div>
-              <span className="font-black text-sm" style={{ color: 'var(--text-primary)' }}>
-                BORHS <span className="text-primary-400">Data</span>
-              </span>
+            <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center">
+              <img src="/logo.png" alt="BORHS" style={{ height: 38, width: 'auto', display: 'block' }} />
             </Link>
             <button
               onClick={() => setMenuOpen(false)}
@@ -220,11 +210,8 @@ export default function PublicLayout() {
 
             {/* Brand */}
             <div className="sm:w-52 shrink-0">
-              <div className="flex items-center gap-2 mb-2.5">
-                <div style={{ width: 28, height: 28, borderRadius: 8, overflow: 'hidden', background: 'white', flexShrink: 0 }}>
-                  <img src="/logo.png" alt="" style={{ display: 'block', width: 56, height: 'auto', marginLeft: -14, marginTop: -3 }} />
-                </div>
-                <span className="font-black text-sm" style={{ color: 'var(--text-primary)' }}>BORHS Data</span>
+              <div className="mb-2.5">
+                <img src="/logo.png" alt="BORHS Data" style={{ height: 40, width: 'auto', display: 'block' }} />
               </div>
               <p className="text-xs leading-relaxed" style={{ color: 'var(--text-faint)' }}>
                 Nigeria's most reliable VTU platform. Fast, cheap, and secure.
