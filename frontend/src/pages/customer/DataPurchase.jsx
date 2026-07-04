@@ -14,12 +14,12 @@ const NETWORKS = [
   { id: 'glo', label: 'Glo' },
   { id: '9mobile', label: '9Mobile' },
 ];
-const DATA_TYPES = ['sme', 'corporate', 'gifting', 'direct'];
+const DATA_TYPES = ['SME', 'Corporate', 'Gifting', 'Direct'];
 
 export default function DataPurchase() {
   const { user, updateUser } = useAuthStore();
   const [network, setNetwork] = useState('mtn');
-  const [dataType, setDataType] = useState('sme');
+  const [dataType, setDataType] = useState('SME');
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [phone, setPhone] = useState('');
   const [step, setStep] = useState(1);
