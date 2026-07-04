@@ -1,28 +1,26 @@
-const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
-
-const createTransporter = () => {
-  // Gmail App Passwords are displayed with spaces but work with or without
-  const smtpPass = (process.env.SMTP_PASS || '').replace(/\s/g, '');
-  return nodemailer.createTransporter({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT) || 587,
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: smtpPass,
-    },
-  });
+let resendClient = null;
+const getResendClient = () => {
+  if (resendClient) return resendClient;
+  try {
+    const Resend = require('resend');
+    // Resend constructor accepts the API key directly
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+    return resendClient;
+  } catch (e) {
+    logger.error('Resend client init failed:', e.message);
+    return null;
+  }
 };
 
 const testConnection = async () => {
-  const transporter = createTransporter();
-  await transporter.verify();
+  const client = getResendClient();
+  if (!client) throw new Error('RESEND_API_KEY not configured or invalid');
+  // Resend doesn't expose a lightweight verify; return basic config info instead
   return {
     ok: true,
-    user: process.env.SMTP_USER,
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT) || 587,
+    provider: 'resend',
+    from: process.env.RESEND_FROM || process.env.EMAIL_FROM || null,
   };
 };
 
@@ -115,15 +113,21 @@ const emailTemplates = {
 
 const sendEmail = async (to, templateName, data) => {
   try {
-    const transporter = createTransporter();
+    const client = getResendClient();
     const template = emailTemplates[templateName]?.(data);
     if (!template) {
       logger.error(`Email template '${templateName}' not found`);
       return false;
     }
+    if (!client) {
+      logger.error('Resend client not configured');
+      return false;
+    }
 
-    await transporter.sendMail({
-      from: `"${process.env.EMAIL_FROM_NAME || process.env.APP_NAME || 'BORHS Data'}" <${process.env.SMTP_USER}>`,
+    const from = process.env.RESEND_FROM || `${process.env.EMAIL_FROM_NAME || process.env.APP_NAME || 'BORHS Data'} <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`;
+
+    await client.emails.send({
+      from,
       to,
       subject: template.subject,
       html: template.html,

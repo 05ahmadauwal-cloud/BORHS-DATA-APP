@@ -40,6 +40,12 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // If the failed request is an auth endpoint (login/refresh), don't try to refresh — return error immediately
+    const authPaths = ['/auth/login', '/auth/refresh-token', '/auth/register'];
+    if (originalRequest && originalRequest.url && authPaths.some(p => originalRequest.url.includes(p))) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
