@@ -7,7 +7,6 @@ const { withFallback } = require('../../services/providers');
 const { generateReference, sanitizePhone } = require('../../utils/helpers');
 const { TRANSACTION_TYPES, TRANSACTION_STATUS } = require('../../config/constants');
 const { processCommission } = require('../agent/agent.service');
-const { sendSMS, SMS_TEMPLATES } = require('../../services/smsService');
 const logger = require('../../utils/logger');
 
 const getDataPlans = async (network, dataType) => {
@@ -92,16 +91,6 @@ const purchaseData = async (userId, body) => {
     purchase.providerResponse = providerResult.response;
     purchase.completedAt = new Date();
     await purchase.save();
-
-    const dataMessage = SMS_TEMPLATES.dataPurchase(
-      `${plan.dataSize} ${plan.name}`,
-      targetPhone,
-      reference,
-      plan.validity
-    );
-
-    sendSMS(targetPhone, dataMessage)
-      .catch((e) => logger.error('Data purchase SMS notification failed:', e.message));
 
     // 6. Process agent/referral commission
     processCommission(userId, price, TRANSACTION_TYPES.DATA_PURCHASE, debitResult.transaction._id)

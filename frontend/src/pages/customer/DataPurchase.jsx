@@ -106,7 +106,7 @@ export default function DataPurchase() {
           {/* Data Type */}
           <div>
             <label className="label">Data Type</label>
-            <div className="flex gap-2 flex-wrap">
+            <div className="hidden md:flex gap-2 flex-wrap">
               {DATA_TYPES.map((t) => (
                 <button
                   key={t}
@@ -118,6 +118,17 @@ export default function DataPurchase() {
                   {t}
                 </button>
               ))}
+            </div>
+            <div className="md:hidden">
+              <select
+                className="input w-full"
+                value={dataType}
+                onChange={(e) => { setDataType(e.target.value); setSelectedPlan(null); }}
+              >
+                {DATA_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -131,27 +142,46 @@ export default function DataPurchase() {
                 ))}
               </div>
             ) : plans?.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {plans.map((plan) => (
-                  <button
-                    key={plan._id}
-                    onClick={() => setSelectedPlan(plan)}
-                    className={`p-4 rounded-xl border text-left transition-all ${
-                      selectedPlan?._id === plan._id
-                        ? 'border-primary-500 bg-primary-500/10'
-                        : 'border-dark-600 hover:border-dark-500 hover:bg-dark-700/50'
-                    }`}
+              <>
+                <div className="hidden md:grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {plans.map((plan) => (
+                    <button
+                      key={plan._id}
+                      onClick={() => setSelectedPlan(plan)}
+                      className={`p-4 rounded-xl border text-left transition-all ${
+                        selectedPlan?._id === plan._id
+                          ? 'border-primary-500 bg-primary-500/10'
+                          : 'border-dark-600 hover:border-dark-500 hover:bg-dark-700/50'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="badge-info text-xs">{plan.dataSize}</span>
+                        {selectedPlan?._id === plan._id && <CheckCircle size={14} className="text-primary-400" />}
+                      </div>
+                      <p className="font-bold text-dark-100 text-sm">{plan.name}</p>
+                      <p className="text-xl font-black text-primary-400">₦{effectivePrice(plan).toLocaleString()}</p>
+                      {plan.validity && <p className="text-xs text-dark-500">{plan.validity}</p>}
+                    </button>
+                  ))}
+                </div>
+                <div className="md:hidden">
+                  <select
+                    className="input w-full"
+                    value={selectedPlan?._id || ''}
+                    onChange={(e) => {
+                      const plan = plans.find((item) => item._id === e.target.value);
+                      setSelectedPlan(plan || null);
+                    }}
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <span className="badge-info text-xs">{plan.dataSize}</span>
-                      {selectedPlan?._id === plan._id && <CheckCircle size={14} className="text-primary-400" />}
-                    </div>
-                    <p className="font-bold text-dark-100 text-sm">{plan.name}</p>
-                    <p className="text-xl font-black text-primary-400">₦{effectivePrice(plan).toLocaleString()}</p>
-                    {plan.validity && <p className="text-xs text-dark-500">{plan.validity}</p>}
-                  </button>
-                ))}
-              </div>
+                    <option value="" disabled>Select a plan</option>
+                    {plans.map((plan) => (
+                      <option key={plan._id} value={plan._id}>
+                        {`${plan.dataSize} - ${plan.name} · ₦${effectivePrice(plan).toLocaleString()}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
             ) : (
               <div className="text-center py-8 text-dark-400 text-sm">No plans available for this selection</div>
             )}
