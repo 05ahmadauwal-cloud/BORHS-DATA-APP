@@ -3,8 +3,7 @@ let resendClient = null;
 const getResendClient = () => {
   if (resendClient) return resendClient;
   try {
-    const Resend = require('resend');
-    // Resend constructor accepts the API key directly
+    const { Resend } = require('resend');
     resendClient = new Resend(process.env.RESEND_API_KEY);
     return resendClient;
   } catch (e) {
@@ -124,7 +123,7 @@ const sendEmail = async (to, templateName, data) => {
       return false;
     }
 
-    const from = process.env.RESEND_FROM || `${process.env.EMAIL_FROM_NAME || process.env.APP_NAME || 'BORHS Data'} <${process.env.EMAIL_FROM || process.env.SMTP_USER}>`;
+    const from = process.env.RESEND_FROM || 'noreply@borhsdata.com';
 
     await client.emails.send({
       from,
