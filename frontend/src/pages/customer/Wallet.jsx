@@ -352,8 +352,13 @@ export default function Wallet() {
     onError: (err) => toast.error(err.response?.data?.message || 'Invalid coupon code'),
   });
 
+  const transferAmount = Number(transferForm.amount) || 0;
   const transferMutation = useMutation({
-    mutationFn: () => walletAPI.transfer(transferForm),
+    mutationFn: () => walletAPI.transfer({
+      recipient: transferForm.recipient.trim(),
+      amount: transferAmount,
+      pin: transferForm.pin,
+    }),
     onSuccess: () => {
       toast.success('Transfer successful!');
       setTransferForm({ recipient: '', amount: '', pin: '' });
@@ -363,7 +368,7 @@ export default function Wallet() {
     onError: (err) => toast.error(err.response?.data?.message || 'Transfer failed'),
   });
 
-  const walletBalance = Number(balance?.walletBalance) || 0;
+  const walletBalance = Number(balance?.walletBalance ?? 0);
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
@@ -394,7 +399,7 @@ export default function Wallet() {
         <div className="relative">
           <p className="text-primary-200 text-xs sm:text-sm mb-1">Available Balance</p>
           <h2 className="text-3xl sm:text-4xl font-black text-white mb-5 tabular-nums">
-            ₦{walletBalance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+            ₦{Number.isFinite(walletBalance) ? walletBalance.toLocaleString('en-NG', { minimumFractionDigits: 2 }) : '0.00'}
           </h2>
           <div className="flex gap-2 sm:gap-3">
             {fm.bankTransfer && (

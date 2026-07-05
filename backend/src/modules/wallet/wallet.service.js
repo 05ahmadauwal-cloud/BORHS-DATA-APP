@@ -116,7 +116,7 @@ const transferWallet = async (senderId, recipientIdentifier, amount, pin) => {
     if (!pinValid) throw Object.assign(new Error('Invalid transaction PIN'), { statusCode: 400 });
   }
 
-  if (amount < WALLET_LIMITS.MIN_TRANSFER) {
+  if (typeof amount !== 'number' || Number.isNaN(amount) || amount < WALLET_LIMITS.MIN_TRANSFER) {
     throw Object.assign(new Error(`Minimum transfer amount is ₦${WALLET_LIMITS.MIN_TRANSFER}`), { statusCode: 400 });
   }
 
@@ -124,21 +124,29 @@ const transferWallet = async (senderId, recipientIdentifier, amount, pin) => {
     throw Object.assign(new Error('Insufficient wallet balance'), { statusCode: 400 });
   }
 
-  // Normalize phone number for matching
-  const normalizePhone = (phone) => phone?.replace(/\D/g, '').slice(-10) || '';
-  const normalizedIdentifier = normalizePhone(recipientIdentifier);
+  const normalizePhone = (phone) => phone?.toString().replace(/\D/g, '').slice(-10) || '';
+  const cleanedIdentifier = String(recipientIdentifier || '').trim();
+  const normalizedIdentifier = normalizePhone(cleanedIdentifier);
 
-  let recipient = await User.findOne({
-    $or: [
-      { email: recipientIdentifier.toLowerCase() },
-      { referralCode: recipientIdentifier.toUpperCase() }
-    ],
-  });
+  const queryClauses = [];
+  if (cleanedIdentifier) {
+    queryClauses.push({ email: cleanedIdentifier.toLowerCase() });
+    queryClauses.push({ referralCode: cleanedIdentifier.toUpperCase() });
+  }
+  if (normalizedIdentifier.length === 10) {
+    queryClauses.push({ phone: { $regex: `${normalizedIdentifier}$` } });
+  }
 
-  // If not found by email or code, try phone number with normalization
-  if (!recipient && normalizedIdentifier) {
-    const allUsers = await User.find({ phone: { $exists: true } }).select('_id phone firstName lastName email');
-    recipient = allUsers.find(u => normalizePhone(u.phone) === normalizedIdentifier);
+  if (queryClauses.length === 0) {
+    throw Object.assign(new Error('Recipient not found'), { statusCode: 404 });
+  }
+
+  let recipient = await User.findOne({ $or: queryClauses });
+
+  if (!recipient) {
+    // Last-resort phone normalization search on stored phone values.
+    const allUsers = await User.find({ phone: { $exists: true } }).select('_id phone firstName lastName email walletBalance');
+    recipient = allUsers.find((u) => normalizePhone(u.phone) === normalizedIdentifier);
   }
 
   if (!recipient) throw Object.assign(new Error('Recipient not found'), { statusCode: 404 });
