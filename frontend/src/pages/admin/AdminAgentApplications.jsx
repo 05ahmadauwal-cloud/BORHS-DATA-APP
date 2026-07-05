@@ -81,7 +81,7 @@ function ReviewModal({ app, onClose, onDone }) {
               ['Amount Paid', `₦${app.amountPaid?.toLocaleString()}`],
               ['Submitted', app.submittedAt ? format(new Date(app.submittedAt), 'MMM d, yyyy') : '—'],
               ['Current Role', app.user?.role || '—'],
-              ['Wallet Balance', `₦${app.user?.walletBalance?.toLocaleString() || '0'}`],
+              ['Wallet Balance', `₦${(Number(app.user?.walletBalance) || 0).toLocaleString()}`],
             ].map(([l, v]) => (
               <div key={l} className="p-3 rounded-xl" style={{ background: 'var(--bg-elevated)' }}>
                 <p className="text-[10px] font-medium mb-0.5" style={{ color: 'var(--text-muted)' }}>{l}</p>

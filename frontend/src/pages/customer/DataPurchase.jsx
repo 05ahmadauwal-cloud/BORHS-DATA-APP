@@ -39,7 +39,7 @@ export default function DataPurchase() {
     mutationFn: () => dataAPI.purchase({ network, planId: selectedPlan.planId, phone, dataType }),
     onSuccess: (res) => {
       const purchase = res.data?.purchase || {};
-      updateUser({ walletBalance: user.walletBalance - effectivePrice(selectedPlan) });
+      updateUser({ walletBalance: Number(user?.walletBalance || 0) - effectivePrice(selectedPlan) });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       setReceipt({
         type: 'data',
@@ -234,7 +234,7 @@ export default function DataPurchase() {
               ['Validity', selectedPlan.validity || 'N/A'],
               ['Phone', phone],
               ['Amount', `₦${effectivePrice(selectedPlan).toLocaleString()}`],
-              ['New Balance', `₦${((user?.walletBalance || 0) - effectivePrice(selectedPlan)).toLocaleString()}`],
+              ['New Balance', `₦${(Number(user?.walletBalance || 0) - effectivePrice(selectedPlan)).toLocaleString()}`],
             ].map(([key, val]) => (
               <div key={key} className="flex justify-between text-sm">
                 <span className="text-dark-400">{key}</span>

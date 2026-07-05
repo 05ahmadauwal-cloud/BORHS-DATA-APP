@@ -43,7 +43,7 @@ export default function Education() {
         quantity: purchase.pins?.length || quantity,
         pins: purchase.pins,
       });
-      updateUser({ walletBalance: user.walletBalance - cost });
+      updateUser({ walletBalance: Number(user?.walletBalance || 0) - Number(cost) });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Purchase failed'),
@@ -107,17 +107,17 @@ export default function Education() {
               <span className="text-dark-100">Total</span>
               <span className="text-primary-400">₦{total.toLocaleString()}</span>
             </div>
-            <p className="text-xs text-dark-500 mt-1">Balance after: ₦{((user?.walletBalance || 0) - total).toLocaleString()}</p>
+            <p className="text-xs text-dark-500 mt-1">Balance after: ₦{(Number(user?.walletBalance || 0) - total).toLocaleString()}</p>
           </div>
 
           <button
             onClick={() => mutation.mutate()}
-            disabled={mutation.isPending || total > (user?.walletBalance || 0)}
+            disabled={mutation.isPending || total > Number(user?.walletBalance || 0)}
             className="btn-primary w-full btn-lg"
           >
             {mutation.isPending ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : `Purchase ${quantity} ${selectedExam?.label} PIN${quantity > 1 ? 's' : ''}`}
           </button>
-          {total > (user?.walletBalance || 0) && (
+          {total > Number(user?.walletBalance || 0) && (
             <p className="text-red-400 text-xs text-center">Insufficient balance. Please fund your wallet.</p>
           )}
         </div>

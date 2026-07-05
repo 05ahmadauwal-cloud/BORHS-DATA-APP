@@ -363,7 +363,7 @@ export default function Wallet() {
     onError: (err) => toast.error(err.response?.data?.message || 'Transfer failed'),
   });
 
-  const walletBalance = balance?.walletBalance || 0;
+  const walletBalance = Number(balance?.walletBalance) || 0;
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">

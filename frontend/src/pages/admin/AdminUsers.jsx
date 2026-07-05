@@ -117,7 +117,7 @@ export default function AdminUsers() {
                       </div>
                     </td>
                     <td><span className="badge-info capitalize text-xs">{user.role?.replace('_', ' ')}</span></td>
-                    <td><span className="font-bold text-success-500 text-sm">₦{(user.walletBalance || 0).toLocaleString()}</span></td>
+                    <td><span className="font-bold text-success-500 text-sm">₦{(Number(user.walletBalance) || 0).toLocaleString()}</span></td>
                     <td><span className="badge-gray uppercase text-xs">{user.kycStatus || 'none'}</span></td>
                     <td>
                       <span className={`badge text-xs ${user.isActive ? 'badge-success' : 'badge-danger'}`}>
@@ -190,7 +190,7 @@ export default function AdminUsers() {
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex gap-1.5 flex-wrap">
                         <span className="badge-info capitalize text-xs">{user.role?.replace('_', ' ')}</span>
-                        <span className="font-bold text-success-500 text-xs">₦{(user.walletBalance || 0).toLocaleString()}</span>
+                        <span className="font-bold text-success-500 text-xs">₦{(Number(user.walletBalance) || 0).toLocaleString()}</span>
                       </div>
                       <div className="flex gap-1.5">
                         <button
@@ -243,7 +243,7 @@ export default function AdminUsers() {
             <h3 className="text-base font-bold text-dark-100">
               Adjust Wallet — {selectedUser.firstName} {selectedUser.lastName}
             </h3>
-            <p className="text-dark-400 text-sm">Balance: <span className="text-success-500 font-bold">₦{(selectedUser.walletBalance || 0).toLocaleString()}</span></p>
+            <p className="text-dark-400 text-sm">Balance: <span className="text-success-500 font-bold">₦{(Number(selectedUser.walletBalance) || 0).toLocaleString()}</span></p>
             <div className="grid grid-cols-2 gap-2">
               {['credit', 'debit'].map((t) => (
                 <button key={t} onClick={() => setAdjustForm({ ...adjustForm, type: t })}

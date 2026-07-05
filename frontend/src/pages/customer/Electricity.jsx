@@ -38,7 +38,7 @@ export default function Electricity() {
     onSuccess: (res) => {
       const p = res.data.purchase;
       setResult(p);
-      updateUser({ walletBalance: user.walletBalance - Number(form.amount) });
+      updateUser({ walletBalance: Number(user?.walletBalance || 0) - Number(form.amount) });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       setReceipt({
         type: 'electricity',
@@ -134,7 +134,7 @@ export default function Electricity() {
                   value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })}
                 />
-                <p className="text-xs text-dark-500 mt-1">Balance: ₦{(user?.walletBalance || 0).toLocaleString()}</p>
+                <p className="text-xs text-dark-500 mt-1">Balance: ₦{(Number(user?.walletBalance) || 0).toLocaleString()}</p>
               </div>
               <div>
                 <label className="label">Phone (for token delivery)</label>

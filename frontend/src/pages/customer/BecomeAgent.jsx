@@ -112,9 +112,9 @@ export default function BecomeAgent() {
     onError: (err) => toast.error(err.response?.data?.message || 'Application failed'),
   });
 
-  const fee = feeData ?? 5000;
+  const fee = Number(feeData) || 5000;
   const application = appData?.application;
-  const balance = walletData?.walletBalance ?? 0;
+  const balance = Number(walletData?.walletBalance) || 0;
   const hasEnough = balance >= fee;
   const isAgent = user?.role === 'agent' || user?.role === 'admin' || user?.role === 'super_admin';
   const hasPending = application?.status === 'pending';

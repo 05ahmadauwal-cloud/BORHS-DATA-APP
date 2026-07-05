@@ -38,7 +38,7 @@ export default function Cable() {
     mutationFn: () => cableAPI.purchase({ provider, smartCardNumber: smartCard, packageId: selectedPkg.id }),
     onSuccess: (res) => {
       const purchase = res.data?.purchase || {};
-      updateUser({ walletBalance: user.walletBalance - selectedPkg.amount });
+      updateUser({ walletBalance: Number(user?.walletBalance || 0) - Number(selectedPkg.amount) });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       setReceipt({
         type: 'cable',

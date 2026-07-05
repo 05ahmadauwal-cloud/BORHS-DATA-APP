@@ -108,7 +108,7 @@ export default function Profile() {
 
   const initials = `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`.toUpperCase();
   const memberSince = user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-NG', { month: 'long', year: 'numeric' }) : '—';
-  const balance = (user?.walletBalance || 0).toLocaleString('en-NG');
+  const balance = (Number(user?.walletBalance) || 0).toLocaleString('en-NG');
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 pb-6">

@@ -27,7 +27,7 @@ export default function Airtime() {
     mutationFn: () => airtimeAPI.purchase(form),
     onSuccess: (res) => {
       const purchase = res.data?.purchase || {};
-      updateUser({ walletBalance: user.walletBalance - Number(form.amount) });
+      updateUser({ walletBalance: Number(user?.walletBalance || 0) - Number(form.amount) });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       setReceipt({
         type: 'airtime',
@@ -128,7 +128,7 @@ export default function Airtime() {
               value={form.amount}
               onChange={(e) => setForm({ ...form, amount: e.target.value })}
             />
-            <p className="text-xs text-dark-500 mt-1">Balance: ₦{(user?.walletBalance || 0).toLocaleString()}</p>
+            <p className="text-xs text-dark-500 mt-1">Balance: ₦{(Number(user?.walletBalance) || 0).toLocaleString()}</p>
           </div>
 
           <button
@@ -154,7 +154,7 @@ export default function Airtime() {
               ['Network', <NetworkLogo key="net" network={form.network} size="sm" />],
               ['Phone', form.phone],
               ['Amount', `₦${Number(form.amount).toLocaleString()}`],
-              ['New Balance', `₦${((user?.walletBalance || 0) - Number(form.amount)).toLocaleString()}`],
+              ['New Balance', `₦${(Number(user?.walletBalance || 0) - Number(form.amount)).toLocaleString()}`],
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between text-sm">
                 <span className="text-dark-400">{k}</span>

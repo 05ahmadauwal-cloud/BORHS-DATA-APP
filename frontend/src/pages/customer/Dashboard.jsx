@@ -49,7 +49,7 @@ export default function Dashboard() {
     staleTime: 30_000,
   });
 
-  const balance = balanceData?.walletBalance ?? user?.walletBalance ?? 0;
+  const balance = Number(balanceData?.walletBalance ?? user?.walletBalance ?? 0) || 0;
   const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening';
 
   return (

@@ -23,10 +23,10 @@ export default function AgentDashboard() {
   const referralLink = `${window.location.origin}/register?ref=${user?.referralCode}`;
 
   const statCards = [
-    { label: 'Wallet Balance', value: `₦${(stats?.walletBalance || 0).toLocaleString()}`, icon: Wallet, color: 'text-primary-400', bg: 'bg-primary-500/10 border-primary-500/20' },
-    { label: 'Commission Earned', value: `₦${(stats?.commissionEarned || 0).toLocaleString()}`, icon: DollarSign, color: 'text-success-500', bg: 'bg-success-500/10 border-success-500/20' },
-    { label: 'Referral Earnings', value: `₦${(stats?.referralEarnings || 0).toLocaleString()}`, icon: TrendingUp, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
-    { label: 'Total Downlines', value: (stats?.downlineCount || 0).toLocaleString(), icon: Users, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+    { label: 'Wallet Balance', value: `₦${(Number(stats?.walletBalance) || 0).toLocaleString()}`, icon: Wallet, color: 'text-primary-400', bg: 'bg-primary-500/10 border-primary-500/20' },
+    { label: 'Commission Earned', value: `₦${(Number(stats?.commissionEarned) || 0).toLocaleString()}`, icon: DollarSign, color: 'text-success-500', bg: 'bg-success-500/10 border-success-500/20' },
+    { label: 'Referral Earnings', value: `₦${(Number(stats?.referralEarnings) || 0).toLocaleString()}`, icon: TrendingUp, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
+    { label: 'Total Downlines', value: (Number(stats?.downlineCount) || 0).toLocaleString(), icon: Users, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
   ];
 
   return (

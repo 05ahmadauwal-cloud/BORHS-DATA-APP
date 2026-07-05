@@ -28,7 +28,7 @@ export default function Topbar({ onMenuClick }) {
   });
 
   const unreadCount = notifications?.unreadCount || 0;
-  const balance = user?.walletBalance || 0;
+  const balance = Number(user?.walletBalance) || 0;
 
   const openPanel = () => {
     setOpen(true);

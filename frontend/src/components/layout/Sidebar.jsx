@@ -95,7 +95,7 @@ export default function Sidebar({ isOpen, onClose }) {
   };
 
   const isAgentOrAdmin = ['agent', 'admin', 'super_admin'].includes(user?.role);
-  const balance = user?.walletBalance || 0;
+  const balance = Number(user?.walletBalance) || 0;
 
   return (
     <aside

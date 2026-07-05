@@ -43,7 +43,7 @@ export default function Downlines() {
                 <td className="text-dark-400 text-sm">{u.email}</td>
                 <td className="text-dark-400 text-sm">{u.phone}</td>
                 <td><span className="badge-info capitalize">{u.role}</span></td>
-                <td className="font-semibold text-success-500">₦{(u.walletBalance || 0).toLocaleString()}</td>
+                <td className="font-semibold text-success-500">₦{(Number(u.walletBalance) || 0).toLocaleString()}</td>
                 <td className="text-dark-400 text-xs">{format(new Date(u.createdAt), 'MMM dd, yyyy')}</td>
               </tr>
             )) : (
