@@ -124,9 +124,22 @@ const transferWallet = async (senderId, recipientIdentifier, amount, pin) => {
     throw Object.assign(new Error('Insufficient wallet balance'), { statusCode: 400 });
   }
 
-  const recipient = await User.findOne({
-    $or: [{ email: recipientIdentifier }, { phone: recipientIdentifier }, { referralCode: recipientIdentifier.toUpperCase() }],
+  // Normalize phone number for matching
+  const normalizePhone = (phone) => phone?.replace(/\D/g, '').slice(-10) || '';
+  const normalizedIdentifier = normalizePhone(recipientIdentifier);
+
+  let recipient = await User.findOne({
+    $or: [
+      { email: recipientIdentifier.toLowerCase() },
+      { referralCode: recipientIdentifier.toUpperCase() }
+    ],
   });
+
+  // If not found by email or code, try phone number with normalization
+  if (!recipient && normalizedIdentifier) {
+    const allUsers = await User.find({ phone: { $exists: true } }).select('_id phone firstName lastName email');
+    recipient = allUsers.find(u => normalizePhone(u.phone) === normalizedIdentifier);
+  }
 
   if (!recipient) throw Object.assign(new Error('Recipient not found'), { statusCode: 404 });
   if (recipient._id.toString() === senderId.toString()) {
@@ -156,7 +169,7 @@ const transferWallet = async (senderId, recipientIdentifier, amount, pin) => {
         reference: ref,
         gateway: 'wallet',
         description: `Transfer to ${recipient.firstName} ${recipient.lastName}`,
-        metadata: { recipientId: recipient._id, recipientName: recipient.fullName },
+        metadata: { recipientId: recipient._id, recipientName: `${recipient.firstName} ${recipient.lastName}` },
         completedAt: new Date(),
       },
       {
@@ -169,13 +182,13 @@ const transferWallet = async (senderId, recipientIdentifier, amount, pin) => {
         reference: generateReference('TF'),
         gateway: 'wallet',
         description: `Transfer from ${sender.firstName} ${sender.lastName}`,
-        metadata: { senderId, senderName: sender.fullName },
+        metadata: { senderId, senderName: `${sender.firstName} ${sender.lastName}` },
         completedAt: new Date(),
       },
-    ], { session });
+    ], { session, ordered: true });
 
     await session.commitTransaction();
-    return { success: true, newBalance: senderBalanceAfter, recipient: { name: recipient.fullName } };
+    return { success: true, newBalance: senderBalanceAfter, recipient: { name: `${recipient.firstName} ${recipient.lastName}` } };
   } catch (error) {
     await session.abortTransaction();
     throw error;
