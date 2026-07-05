@@ -114,7 +114,7 @@ export default function BecomeAgent() {
 
   const fee = feeData ?? 5000;
   const application = appData?.application;
-  const balance = walletData?.balance ?? 0;
+  const balance = walletData?.walletBalance ?? 0;
   const hasEnough = balance >= fee;
   const isAgent = user?.role === 'agent' || user?.role === 'admin' || user?.role === 'super_admin';
   const hasPending = application?.status === 'pending';

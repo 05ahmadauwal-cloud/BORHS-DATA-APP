@@ -3,8 +3,13 @@ let resendClient = null;
 const getResendClient = () => {
   if (resendClient) return resendClient;
   try {
+    if (!process.env.RESEND_API_KEY) {
+      logger.error('RESEND_API_KEY environment variable is not set');
+      return null;
+    }
     const { Resend } = require('resend');
     resendClient = new Resend(process.env.RESEND_API_KEY);
+    logger.info('Resend client initialized successfully');
     return resendClient;
   } catch (e) {
     logger.error('Resend client init failed:', e.message);
@@ -116,27 +121,28 @@ const sendEmail = async (to, templateName, data) => {
     const template = emailTemplates[templateName]?.(data);
     if (!template) {
       logger.error(`Email template '${templateName}' not found`);
-      return false;
+      throw new Error(`Email template '${templateName}' not found`);
     }
     if (!client) {
-      logger.error('Resend client not configured');
-      return false;
+      logger.error('Resend client not configured - RESEND_API_KEY missing');
+      throw new Error('Resend client not configured');
     }
 
     const from = process.env.RESEND_FROM || 'noreply@borhsdata.com';
+    logger.info(`Sending email to ${to} using from: ${from}`);
 
-    await client.emails.send({
+    const response = await client.emails.send({
       from,
       to,
       subject: template.subject,
       html: template.html,
     });
 
-    logger.info(`Email sent to ${to} - template: ${templateName}`);
+    logger.info(`Email sent successfully to ${to} - template: ${templateName}, response: ${JSON.stringify(response)}`);
     return true;
   } catch (error) {
-    logger.error(`Email send failed to ${to}: ${error.message}`);
-    return false;
+    logger.error(`Email send failed to ${to}: ${error.message}`, error);
+    throw error;
   }
 };
 
