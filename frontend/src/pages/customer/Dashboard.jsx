@@ -1,10 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   Wallet, Wifi, Phone, Zap, Tv, GraduationCap,
   ArrowUpRight, TrendingUp, Clock, CheckCircle, XCircle, Send
 } from 'lucide-react';
-import { walletAPI, bannerAPI } from '../../api';
+import toast from 'react-hot-toast';
+import { walletAPI, bannerAPI, couponAPI } from '../../api';
 import useAuthStore from '../../store/authStore';
 import { format } from 'date-fns';
 
@@ -41,12 +43,26 @@ export default function Dashboard() {
     select: (res) => res.data,
   });
 
+  const [couponCode, setCouponCode] = useState('');
+  const queryClient = useQueryClient();
+
   const { data: banner } = useQuery({
     queryKey: ['banner'],
     queryFn: () => bannerAPI.get(),
     select: (res) => res.data.data,
     refetchInterval: 60_000,
     staleTime: 30_000,
+  });
+
+  const couponMutation = useMutation({
+    mutationFn: () => couponAPI.redeem(couponCode.trim().toUpperCase()),
+    onSuccess: (res) => {
+      toast.success(res.data?.message || 'Coupon redeemed successfully!');
+      setCouponCode('');
+      queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      queryClient.invalidateQueries({ queryKey: ['recent-transactions'] });
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Coupon redeem failed'),
   });
 
   const balance = Number(balanceData?.walletBalance ?? user?.walletBalance ?? 0) || 0;
@@ -128,6 +144,36 @@ export default function Dashboard() {
             </Link>
           ))}
         </div>
+      </div>
+
+      {/* Coupon Claim */}
+      <div className="card p-4 sm:p-5 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-bold text-dark-100">Claim a Coupon</p>
+            <p className="text-xs text-dark-400">Enter your coupon code and redeem instantly.</p>
+          </div>
+          <span className="rounded-full bg-success-500/10 text-success-500 text-[11px] uppercase px-2 py-1 font-semibold">Wallet credit</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+          <input
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && couponCode && couponMutation.mutate()}
+            className="input"
+            placeholder="Enter coupon code"
+          />
+          <button
+            onClick={() => couponMutation.mutate()}
+            disabled={!couponCode || couponMutation.isPending}
+            className="btn-primary btn-sm w-full sm:w-auto"
+          >
+            {couponMutation.isPending ? 'Claiming…' : 'Claim Coupon'}
+          </button>
+        </div>
+        <p className="text-[11px] text-dark-400">
+          If you have a coupon code from promotions or referrals, redeem it here. Coupon balance is added directly to your wallet.
+        </p>
       </div>
 
       {/* Recent Transactions */}
