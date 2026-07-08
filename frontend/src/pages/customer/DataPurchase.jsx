@@ -24,6 +24,9 @@ export default function DataPurchase() {
   const [phone, setPhone] = useState('');
   const [step, setStep] = useState(1);
   const [receipt, setReceipt] = useState(null);
+  const [pin, setPin] = useState('');
+  const [pinAttempts, setPinAttempts] = useState(0);
+  const [lockUntil, setLockUntil] = useState(null);
   const queryClient = useQueryClient();
 
   const effectivePrice = (plan) =>
@@ -36,7 +39,7 @@ export default function DataPurchase() {
   });
 
   const purchaseMutation = useMutation({
-    mutationFn: () => dataAPI.purchase({ network, planId: selectedPlan.planId, phone, dataType }),
+    mutationFn: (payload) => dataAPI.purchase(payload),
     onSuccess: (res) => {
       const purchase = res.data?.purchase || {};
       updateUser({ walletBalance: Number(user?.walletBalance || 0) - effectivePrice(selectedPlan) });
@@ -57,8 +60,24 @@ export default function DataPurchase() {
       setStep(1);
       setSelectedPlan(null);
       setPhone('');
+      setPin('');
     },
-    onError: (err) => toast.error(err.response?.data?.message || 'Purchase failed'),
+    onError: (err) => {
+      const status = err?.response?.status;
+      if (status === 401) {
+        const next = pinAttempts + 1;
+        setPinAttempts(next);
+        if (next >= 3) {
+          const until = Date.now() + 5 * 60 * 1000; // 5 minutes
+          setLockUntil(until);
+          toast.error('Too many incorrect PIN attempts. Try again in 5 minutes.');
+        } else {
+          toast.error('Invalid transaction PIN');
+        }
+      } else {
+        toast.error(err.response?.data?.message || 'Purchase failed');
+      }
+    },
   });
 
   const detectedNetwork = detectNetwork(phone);
@@ -244,14 +263,34 @@ export default function DataPurchase() {
           </div>
           <div className="flex gap-3">
             <button onClick={() => setStep(1)} className="btn-secondary flex-1">Back</button>
-            <button
-              onClick={() => purchaseMutation.mutate()}
-              disabled={purchaseMutation.isPending}
-              className="btn-primary flex-1 gap-2"
-            >
-              {purchaseMutation.isPending ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
-              {purchaseMutation.isPending ? 'Processing...' : 'Confirm Purchase'}
-            </button>
+            <div className="space-y-3">
+              <div>
+                <label className="label">Transaction PIN</label>
+                <input
+                  className="input"
+                  placeholder="Enter 4-digit PIN"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value)}
+                  maxLength={4}
+                  disabled={lockUntil && Date.now() < lockUntil}
+                />
+                {lockUntil && Date.now() < lockUntil && (
+                  <p className="text-xs text-red-400 mt-1">Locked due to multiple failed attempts. Try again later.</p>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
+                  if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
+                  purchaseMutation.mutate({ network, planId: selectedPlan.planId, phone, dataType, pin });
+                }}
+                disabled={purchaseMutation.isPending}
+                className="btn-primary flex-1 gap-2"
+              >
+                {purchaseMutation.isPending ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                {purchaseMutation.isPending ? 'Processing...' : 'Confirm Purchase'}
+              </button>
+            </div>
           </div>
         </div>
       )}

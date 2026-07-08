@@ -22,9 +22,12 @@ export default function Airtime() {
   const [form, setForm] = useState({ network: 'mtn', phone: '', amount: '' });
   const [step, setStep] = useState(1);
   const [receipt, setReceipt] = useState(null);
+  const [pin, setPin] = useState('');
+  const [pinAttempts, setPinAttempts] = useState(0);
+  const [lockUntil, setLockUntil] = useState(null);
 
   const mutation = useMutation({
-    mutationFn: () => airtimeAPI.purchase(form),
+    mutationFn: (payload) => airtimeAPI.purchase(payload),
     onSuccess: (res) => {
       const purchase = res.data?.purchase || {};
       updateUser({ walletBalance: Number(user?.walletBalance || 0) - Number(form.amount) });
@@ -39,9 +42,25 @@ export default function Airtime() {
         phone: form.phone,
       });
       setForm({ network: 'mtn', phone: '', amount: '' });
+      setPin('');
       setStep(1);
     },
-    onError: (err) => toast.error(err.response?.data?.message || 'Airtime purchase failed'),
+    onError: (err) => {
+      const status = err?.response?.status;
+      if (status === 401) {
+        const next = pinAttempts + 1;
+        setPinAttempts(next);
+        if (next >= 3) {
+          const until = Date.now() + 5 * 60 * 1000;
+          setLockUntil(until);
+          toast.error('Too many incorrect PIN attempts. Try again in 5 minutes.');
+        } else {
+          toast.error('Invalid transaction PIN');
+        }
+      } else {
+        toast.error(err.response?.data?.message || 'Airtime purchase failed');
+      }
+    },
   });
 
   return (
@@ -162,16 +181,27 @@ export default function Airtime() {
               </div>
             ))}
           </div>
-          <div className="flex gap-3">
-            <button onClick={() => setStep(1)} className="btn-secondary flex-1">Back</button>
-            <button
-              onClick={() => mutation.mutate()}
-              disabled={mutation.isPending}
-              className="btn-primary flex-1"
-            >
-              {mutation.isPending ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : 'Buy Airtime'}
-            </button>
-          </div>
+            <div className="space-y-3">
+              <div>
+                <label className="label">Transaction PIN</label>
+                <input className="input" placeholder="Enter 4-digit PIN" value={pin} onChange={(e) => setPin(e.target.value)} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
+                {lockUntil && Date.now() < lockUntil && <p className="text-xs text-red-400 mt-1">Locked due to multiple failed attempts.</p>}
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setStep(1)} className="btn-secondary flex-1">Back</button>
+                <button
+                  onClick={() => {
+                    if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
+                    if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
+                    mutation.mutate({ ...form, pin });
+                  }}
+                  disabled={mutation.isPending}
+                  className="btn-primary flex-1"
+                >
+                  {mutation.isPending ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : 'Buy Airtime'}
+                </button>
+              </div>
+            </div>
         </div>
       )}
     </div>

@@ -52,7 +52,15 @@ const purchaseCable = async (userId, body) => {
   if (!selectedPkg) throw Object.assign(new Error('Invalid package'), { statusCode: 400 });
 
   const amount = selectedPkg.amount;
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select('+transactionPin');
+  if (!user) throw Object.assign(new Error('User not found'), { statusCode: 404 });
+
+  // Require and validate transaction PIN
+  const { pin } = body;
+  if (!user.isPinSet) throw Object.assign(new Error('Transaction PIN not set. Please set a PIN to continue.'), { statusCode: 400 });
+  if (!pin || !/^\d{4}$/.test(String(pin))) throw Object.assign(new Error('Transaction PIN must be a 4-digit code'), { statusCode: 400 });
+  const pinOk = await user.comparePin(String(pin));
+  if (!pinOk) throw Object.assign(new Error('Invalid transaction PIN'), { statusCode: 401 });
 
   if (user.walletBalance < amount) {
     throw Object.assign(new Error('Insufficient wallet balance'), { statusCode: 400 });

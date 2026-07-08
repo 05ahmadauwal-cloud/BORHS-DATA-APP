@@ -15,7 +15,15 @@ const purchaseAirtime = async (userId, body) => {
   if (amount < 100) throw Object.assign(new Error('Minimum airtime amount is ₦100'), { statusCode: 400 });
   if (amount > 50000) throw Object.assign(new Error('Maximum airtime amount is ₦50,000'), { statusCode: 400 });
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select('+transactionPin');
+  if (!user) throw Object.assign(new Error('User not found'), { statusCode: 404 });
+
+  // Require and validate transaction PIN
+  const { pin } = body;
+  if (!user.isPinSet) throw Object.assign(new Error('Transaction PIN not set. Please set a PIN to continue.'), { statusCode: 400 });
+  if (!pin || !/^\d{4}$/.test(String(pin))) throw Object.assign(new Error('Transaction PIN must be a 4-digit code'), { statusCode: 400 });
+  const pinOk = await user.comparePin(String(pin));
+  if (!pinOk) throw Object.assign(new Error('Invalid transaction PIN'), { statusCode: 401 });
   const discountRate = user.role === 'agent' ? 0.03 : 0;
   const price = Math.ceil(amount * (1 - discountRate));
 

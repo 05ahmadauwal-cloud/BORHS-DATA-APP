@@ -23,6 +23,9 @@ export default function Electricity() {
   const [step, setStep] = useState(1);
   const [result, setResult] = useState(null);
   const [receipt, setReceipt] = useState(null);
+  const [pin, setPin] = useState('');
+  const [pinAttempts, setPinAttempts] = useState(0);
+  const [lockUntil, setLockUntil] = useState(null);
 
   const verifyMutation = useMutation({
     mutationFn: () => electricityAPI.verifyMeter({ provider: form.provider, meterNumber: form.meterNumber, meterType: form.meterType }),
@@ -34,7 +37,7 @@ export default function Electricity() {
   });
 
   const purchaseMutation = useMutation({
-    mutationFn: () => electricityAPI.purchase(form),
+    mutationFn: (payload) => electricityAPI.purchase(payload),
     onSuccess: (res) => {
       const p = res.data.purchase;
       setResult(p);
@@ -55,7 +58,22 @@ export default function Electricity() {
       });
       setStep(4);
     },
-    onError: (err) => toast.error(err.response?.data?.message || 'Purchase failed'),
+    onError: (err) => {
+      const status = err?.response?.status;
+      if (status === 401) {
+        const next = pinAttempts + 1;
+        setPinAttempts(next);
+        if (next >= 3) {
+          const until = Date.now() + 5 * 60 * 1000;
+          setLockUntil(until);
+          toast.error('Too many incorrect PIN attempts. Try again in 5 minutes.');
+        } else {
+          toast.error('Invalid transaction PIN');
+        }
+      } else {
+        toast.error(err.response?.data?.message || 'Purchase failed');
+      }
+    },
   });
 
   return (
@@ -157,15 +175,26 @@ export default function Electricity() {
               {verifyMutation.isPending ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Verify Meter'}
             </button>
           ) : (
-            <div className="flex gap-3">
-              <button onClick={() => { setStep(1); setCustomerInfo(null); }} className="btn-secondary flex-1">Back</button>
-              <button
-                onClick={() => purchaseMutation.mutate()}
-                disabled={!form.amount || Number(form.amount) < 500 || purchaseMutation.isPending}
-                className="btn-primary flex-1"
-              >
-                {purchaseMutation.isPending ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Buy Units'}
-              </button>
+            <div className="space-y-3">
+              <div>
+                <label className="label">Transaction PIN</label>
+                <input className="input" placeholder="Enter 4-digit PIN" value={pin} onChange={(e) => setPin(e.target.value)} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
+              {lockUntil && Date.now() < lockUntil && <p className="text-xs text-red-400 mt-1">Locked due to multiple failed attempts.</p>}
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => { setStep(1); setCustomerInfo(null); }} className="btn-secondary flex-1">Back</button>
+                <button
+                  onClick={() => {
+                    if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
+                    if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
+                    purchaseMutation.mutate({ ...form, pin });
+                  }}
+                  disabled={!form.amount || Number(form.amount) < 500 || purchaseMutation.isPending}
+                  className="btn-primary flex-1"
+                >
+                  {purchaseMutation.isPending ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Buy Units'}
+                </button>
+              </div>
             </div>
           )}
         </div>

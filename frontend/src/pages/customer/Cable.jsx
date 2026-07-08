@@ -21,6 +21,9 @@ export default function Cable() {
   const [customerInfo, setCustomerInfo] = useState(null);
   const [step, setStep] = useState(1);
   const [receipt, setReceipt] = useState(null);
+  const [pin, setPin] = useState('');
+  const [pinAttempts, setPinAttempts] = useState(0);
+  const [lockUntil, setLockUntil] = useState(null);
 
   const { data: packages } = useQuery({
     queryKey: ['cable-packages', provider],
@@ -35,7 +38,7 @@ export default function Cable() {
   });
 
   const purchaseMutation = useMutation({
-    mutationFn: () => cableAPI.purchase({ provider, smartCardNumber: smartCard, packageId: selectedPkg.id }),
+    mutationFn: (payload) => cableAPI.purchase(payload),
     onSuccess: (res) => {
       const purchase = res.data?.purchase || {};
       updateUser({ walletBalance: Number(user?.walletBalance || 0) - Number(selectedPkg.amount) });
@@ -51,9 +54,24 @@ export default function Cable() {
         customerName: customerInfo?.customerName,
         packageName: selectedPkg.name,
       });
-      setStep(1); setSmartCard(''); setSelectedPkg(null); setCustomerInfo(null);
+      setStep(1); setSmartCard(''); setSelectedPkg(null); setCustomerInfo(null); setPin('');
     },
-    onError: (err) => toast.error(err.response?.data?.message || 'Subscription failed'),
+    onError: (err) => {
+      const status = err?.response?.status;
+      if (status === 401) {
+        const next = pinAttempts + 1;
+        setPinAttempts(next);
+        if (next >= 3) {
+          const until = Date.now() + 5 * 60 * 1000;
+          setLockUntil(until);
+          toast.error('Too many incorrect PIN attempts. Try again in 5 minutes.');
+        } else {
+          toast.error('Invalid transaction PIN');
+        }
+      } else {
+        toast.error(err.response?.data?.message || 'Subscription failed');
+      }
+    },
   });
 
   const pkgList = Array.isArray(packages) ? packages : packages?.[provider] || [];
@@ -137,13 +155,24 @@ export default function Cable() {
         )}
 
         {step >= 2 && selectedPkg && (
-          <button
-            onClick={() => purchaseMutation.mutate()}
-            disabled={purchaseMutation.isPending}
-            className="btn-primary w-full btn-lg"
-          >
-            {purchaseMutation.isPending ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : `Subscribe - ₦${selectedPkg.amount.toLocaleString()}`}
-          </button>
+          <div className="space-y-3">
+            <div>
+              <label className="label">Transaction PIN</label>
+              <input className="input" placeholder="Enter 4-digit PIN" value={pin} onChange={(e) => setPin(e.target.value)} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
+              {lockUntil && Date.now() < lockUntil && <p className="text-xs text-red-400 mt-1">Locked due to multiple failed attempts.</p>}
+            </div>
+            <button
+              onClick={() => {
+                if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
+                if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
+                purchaseMutation.mutate({ provider, smartCardNumber: smartCard, packageId: selectedPkg.id, pin });
+              }}
+              disabled={purchaseMutation.isPending}
+              className="btn-primary w-full btn-lg"
+            >
+              {purchaseMutation.isPending ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : `Subscribe - ₦${selectedPkg.amount.toLocaleString()}`}
+            </button>
+          </div>
         )}
       </div>
     </div>

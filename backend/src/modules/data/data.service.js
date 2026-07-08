@@ -25,8 +25,15 @@ const purchaseData = async (userId, body) => {
   if (!plan) throw Object.assign(new Error('Data plan not found or unavailable'), { statusCode: 404 });
 
   // 2. Determine price based on role
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select('+transactionPin');
   if (!user) throw Object.assign(new Error('User not found'), { statusCode: 404 });
+
+  // Require and validate transaction PIN
+  const { pin } = body;
+  if (!user.isPinSet) throw Object.assign(new Error('Transaction PIN not set. Please set a PIN to continue.'), { statusCode: 400 });
+  if (!pin || !/^\d{4}$/.test(String(pin))) throw Object.assign(new Error('Transaction PIN must be a 4-digit code'), { statusCode: 400 });
+  const pinOk = await user.comparePin(String(pin));
+  if (!pinOk) throw Object.assign(new Error('Invalid transaction PIN'), { statusCode: 401 });
 
   const price = user.role === 'agent'
     ? (plan.agentPrice || plan.sellingPrice)
