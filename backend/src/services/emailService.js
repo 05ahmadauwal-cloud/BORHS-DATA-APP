@@ -131,14 +131,56 @@ const sendEmail = async (to, templateName, data) => {
     const from = process.env.RESEND_FROM || 'noreply@borhsdata.com';
     logger.info(`Sending email to ${to} using from: ${from}`);
 
-    const response = await client.emails.send({
-      from,
-      to,
-      subject: template.subject,
-      html: template.html,
-    });
+    let sent = false;
+    if (client) {
+      try {
+        const response = await client.emails.send({
+          from,
+          to,
+          subject: template.subject,
+          html: template.html,
+        });
+        // Resend may return an object with statusCode on validation errors
+        if (response && response.statusCode && response.statusCode >= 400) {
+          logger.error(`Resend returned error for ${to}: ${JSON.stringify(response)}`);
+          throw new Error(response.message || 'Resend send failed');
+        }
+        logger.info(`Email sent successfully to ${to} via Resend - template: ${templateName}`);
+        sent = true;
+      } catch (err) {
+        logger.error(`Resend send failed for ${to}: ${err.message}`);
+      }
+    }
 
-    logger.info(`Email sent successfully to ${to} - template: ${templateName}, response: ${JSON.stringify(response)}`);
+    // Fallback to SMTP if Resend unavailable or returned an error
+    if (!sent) {
+      try {
+        const smtpUser = process.env.SMTP_USER;
+        const smtpPass = process.env.SMTP_PASS;
+        const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+        const smtpPort = parseInt(process.env.SMTP_PORT, 10) || 587;
+
+        if (!smtpUser || !smtpPass) {
+          throw new Error('No SMTP credentials configured for fallback');
+        }
+
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: smtpPort,
+          secure: smtpPort === 465, // true for 465, false for other ports
+          auth: { user: smtpUser, pass: smtpPass.replace(/\s/g, '') },
+        });
+
+        await transporter.sendMail({ from, to, subject: template.subject, html: template.html });
+        logger.info(`Email sent successfully to ${to} via SMTP - template: ${templateName}`);
+        return true;
+      } catch (smtpErr) {
+        logger.error(`SMTP fallback failed for ${to}: ${smtpErr.message}`);
+        throw smtpErr;
+      }
+    }
+
     return true;
   } catch (error) {
     logger.error(`Email send failed to ${to}: ${error.message}`, error);

@@ -187,10 +187,15 @@ const forgotPassword = async (email) => {
     ? (process.env.PRODUCTION_URL || process.env.CLIENT_URL)
     : process.env.CLIENT_URL;
   const resetLink = `${clientUrl}/reset-password/${resetToken}`;
-  await sendEmail(user.email, 'passwordReset', {
-    firstName: user.firstName,
-    resetLink,
-  });
+  try {
+    await sendEmail(user.email, 'passwordReset', {
+      firstName: user.firstName,
+      resetLink,
+    });
+  } catch (e) {
+    logger.error('Password reset email failed:', e.message || e);
+    // Intentionally do not rethrow to keep the forgot-password endpoint opaque
+  }
 
   return true;
 };

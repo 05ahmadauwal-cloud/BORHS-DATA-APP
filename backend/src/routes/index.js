@@ -120,7 +120,7 @@ router.get('/test/smtp', async (req, res) => {
 
   try {
     const nodemailer = require('nodemailer');
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: smtpHost,
       port: parseInt(process.env.SMTP_PORT) || 587,
       secure: false,
