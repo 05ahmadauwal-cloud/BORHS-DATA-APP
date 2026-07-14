@@ -128,7 +128,10 @@ const sendEmail = async (to, templateName, data) => {
       throw new Error('Resend client not configured');
     }
 
-    const from = process.env.RESEND_FROM || 'noreply@borhsdata.com';
+    const from = process.env.RESEND_FROM || process.env.EMAIL_FROM;
+    if (!from) {
+      throw new Error('RESEND_FROM or EMAIL_FROM must be configured');
+    }
     logger.info(`Sending email to ${to} using from: ${from}`);
 
     let sent = false;
