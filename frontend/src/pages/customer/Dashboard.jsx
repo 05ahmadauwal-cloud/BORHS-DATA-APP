@@ -1,231 +1,217 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
-  Wallet, Wifi, Phone, Zap, Tv, GraduationCap,
-  ArrowUpRight, TrendingUp, Clock, CheckCircle, XCircle, Send
+  ArrowUpRight,
+  CheckCircle,
+  Clock,
+  GraduationCap,
+  Phone,
+  Send,
+  TrendingUp,
+  Tv,
+  Wallet,
+  Wifi,
+  XCircle,
+  Zap,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { walletAPI, bannerAPI, couponAPI } from '../../api';
-import useAuthStore from '../../store/authStore';
 import { format } from 'date-fns';
+import toast from 'react-hot-toast';
+import { bannerAPI, couponAPI, walletAPI } from '../../api';
+import useAuthStore from '../../store/authStore';
 
 const quickActions = [
-  { to: '/data', icon: Wifi, label: 'Data', color: 'from-blue-500/20 to-blue-600/5', iconColor: 'text-blue-400', border: 'hover:border-blue-500/30' },
-  { to: '/airtime', icon: Phone, label: 'Airtime', color: 'from-green-500/20 to-green-600/5', iconColor: 'text-green-400', border: 'hover:border-green-500/30' },
-  { to: '/electricity', icon: Zap, label: 'Electricity', color: 'from-yellow-500/20 to-yellow-600/5', iconColor: 'text-yellow-400', border: 'hover:border-yellow-500/30' },
-  { to: '/cable', icon: Tv, label: 'Cable TV', color: 'from-purple-500/20 to-purple-600/5', iconColor: 'text-purple-400', border: 'hover:border-purple-500/30' },
-  { to: '/education', icon: GraduationCap, label: 'Exam PINs', color: 'from-red-500/20 to-red-600/5', iconColor: 'text-red-400', border: 'hover:border-red-500/30' },
-  { to: '/referrals', icon: TrendingUp, label: 'Refer & Earn', color: 'from-success-500/20 to-success-500/5', iconColor: 'text-success-500', border: 'hover:border-success-500/30' },
+  { to: '/data', icon: Wifi, label: 'Buy Data', color: '#2563eb', background: '#eff6ff' },
+  { to: '/airtime', icon: Phone, label: 'Airtime', color: '#059669', background: '#ecfdf5' },
+  { to: '/electricity', icon: Zap, label: 'Electricity', color: '#d97706', background: '#fffbeb' },
+  { to: '/cable', icon: Tv, label: 'Cable TV', color: '#7c3aed', background: '#f5f3ff' },
+  { to: '/education', icon: GraduationCap, label: 'Exam PINs', color: '#dc2626', background: '#fef2f2' },
+  { to: '/referrals', icon: TrendingUp, label: 'Refer & Earn', color: '#0f766e', background: '#f0fdfa' },
 ];
 
-const StatusIcon = ({ status }) => {
-  if (status === 'success') return <CheckCircle size={14} className="text-success-500" />;
-  if (status === 'failed') return <XCircle size={14} className="text-red-400" />;
-  return <Clock size={14} className="text-yellow-400" />;
-};
+const creditTypes = ['wallet_fund', 'commission_earned', 'referral_bonus', 'coupon'];
 
-const isCredit = (type) => ['wallet_fund', 'commission_earned', 'referral_bonus'].includes(type);
+function TransactionStatus({ status }) {
+  if (status === 'success') return <CheckCircle size={16} color="#10b981" />;
+  if (status === 'failed') return <XCircle size={16} color="#ef4444" />;
+  return <Clock size={16} color="#f59e0b" />;
+}
 
 export default function Dashboard() {
-  const { user } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
+  const queryClient = useQueryClient();
+  const [couponCode, setCouponCode] = useState('');
 
   const { data: balanceData } = useQuery({
     queryKey: ['wallet-balance'],
-    queryFn: () => walletAPI.getBalance(),
-    select: (res) => res.data,
+    queryFn: walletAPI.getBalance,
+    select: (response) => response.data,
     refetchInterval: 30000,
   });
 
-  const { data: txnsData } = useQuery({
+  const { data: transactionsData } = useQuery({
     queryKey: ['recent-transactions'],
     queryFn: () => walletAPI.getTransactions({ limit: 5 }),
-    select: (res) => res.data,
+    select: (response) => response.data,
   });
-
-  const [couponCode, setCouponCode] = useState('');
-  const queryClient = useQueryClient();
 
   const { data: banner } = useQuery({
     queryKey: ['banner'],
-    queryFn: () => bannerAPI.get(),
-    select: (res) => res.data.data,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    queryFn: bannerAPI.get,
+    select: (response) => response.data.data,
+    refetchInterval: 60000,
+    staleTime: 30000,
   });
 
   const couponMutation = useMutation({
     mutationFn: () => couponAPI.redeem(couponCode.trim().toUpperCase()),
-    onSuccess: (res) => {
-      toast.success(res.data?.message || 'Coupon redeemed successfully!');
+    onSuccess: (response) => {
+      toast.success(response.data?.message || 'Coupon redeemed successfully');
       setCouponCode('');
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       queryClient.invalidateQueries({ queryKey: ['recent-transactions'] });
     },
-    onError: (err) => toast.error(err.response?.data?.message || 'Coupon redeem failed'),
+    onError: (error) => toast.error(error.response?.data?.message || 'Coupon redeem failed'),
   });
 
   const balance = Number(balanceData?.walletBalance ?? user?.walletBalance ?? 0) || 0;
-  const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening';
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const transactions = transactionsData?.data || [];
+
+  const redeemCoupon = () => {
+    if (!couponCode.trim() || couponMutation.isPending) return;
+    couponMutation.mutate();
+  };
 
   return (
-    <div className="space-y-5 md:space-y-7 max-w-5xl mx-auto">
-
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-dark-400 text-xs sm:text-sm">{greeting},</p>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-dark-50 truncate">
-            {user?.firstName} {user?.lastName} 👋
+    <div className="mx-auto w-full max-w-5xl space-y-5">
+      <section className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-xs text-dark-400 sm:text-sm">{greeting}</p>
+          <h1 className="truncate text-xl font-black text-dark-50 sm:text-2xl">
+            {user?.firstName} {user?.lastName}
           </h1>
         </div>
-        <Link to="/wallet" className="btn-primary btn-sm sm:btn gap-1.5 shrink-0">
-          <Wallet size={14} /> Fund
+        <Link to="/wallet" className="btn-primary btn-sm shrink-0">
+          <Wallet size={15} /> Fund wallet
         </Link>
-      </div>
+      </section>
 
-      {/* Balance Card */}
-      <div className="mobile-safe-balance relative rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 p-5 sm:p-7 overflow-hidden shadow-2xl shadow-primary-900/40">
-        <div className="hidden sm:block absolute top-0 right-0 w-56 h-56 bg-white/5 rounded-full -translate-y-28 translate-x-28" />
-        <div className="hidden sm:block absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full translate-y-20 -translate-x-20" />
-        <div className="relative">
-          <p className="text-primary-200 text-xs sm:text-sm font-medium mb-1">Available Balance</p>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-5 tabular-nums">
-            ₦{balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
-          </h2>
-          <div className="flex flex-wrap gap-2 sm:gap-3">
-            <Link to="/wallet" className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 active:bg-white/10 text-white rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors">
-              <ArrowUpRight size={14} /> Fund Wallet
-            </Link>
-            <Link to="/wallet" className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 active:bg-white/10 text-white rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors">
-              <Send size={14} /> Transfer
-            </Link>
-          </div>
+      <section
+        className="rounded-2xl border p-5 sm:p-7"
+        style={{ backgroundColor: '#1d4ed8', borderColor: '#2563eb' }}
+      >
+        <p className="text-sm font-medium text-blue-100">Available balance</p>
+        <p className="mt-1 text-3xl font-black tabular-nums text-white sm:text-4xl">
+          ₦{balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Link to="/wallet" className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-blue-700">
+            <ArrowUpRight size={15} /> Fund Wallet
+          </Link>
+          <Link to="/wallet" className="inline-flex items-center gap-2 rounded-lg border border-blue-300 px-4 py-2 text-sm font-bold text-white">
+            <Send size={15} /> Transfer
+          </Link>
         </div>
-      </div>
+      </section>
 
-      {/* Advert Banner */}
       {banner?.active && banner?.text && (
-        <div className={`relative overflow-hidden rounded-xl py-2.5 flex items-center gap-2 ${
-          banner.color === 'yellow' ? 'bg-yellow-500/15 border border-yellow-500/30' :
-          banner.color === 'green'  ? 'bg-success-500/15 border border-success-500/30' :
-          banner.color === 'red'    ? 'bg-red-500/15 border border-red-500/30' :
-          'bg-primary-500/15 border border-primary-500/30'
-        }`}>
-          <span className="shrink-0 pl-3 text-base select-none">📢</span>
-          <div className="flex-1 overflow-hidden">
-            <p
-              className="animate-marquee whitespace-nowrap text-xs sm:text-sm font-semibold"
-              style={{
-                color: 'var(--text-primary)',
-                '--marquee-speed': `${Math.max(15, banner.text.length * 0.4)}s`,
-              }}
-            >
-              {banner.text}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{banner.text}
-            </p>
-          </div>
-        </div>
+        <section className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3">
+          <p className="text-sm font-semibold text-dark-200">Announcement</p>
+          <p className="mt-1 text-sm leading-relaxed text-dark-300">{banner.text}</p>
+        </section>
       )}
 
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-sm sm:text-base font-bold text-dark-300 mb-3">Quick Actions</h2>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
-          {quickActions.map((action) => (
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-base font-bold text-dark-100">Quick actions</h2>
+          <Link to="/pricing" className="text-xs font-semibold text-primary-400">View pricing</Link>
+        </div>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6 sm:gap-3">
+          {quickActions.map(({ to, icon: Icon, label, color, background }) => (
             <Link
-              key={action.to}
-              to={action.to}
-              className={`mobile-safe-action flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br ${action.color} border border-dark-700/40 ${action.border} sm:hover:scale-105 sm:active:scale-95 transition-all duration-200 group`}
+              key={to}
+              to={to}
+              className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-xl border border-dark-700 bg-dark-800 p-3 text-center"
             >
-              <div className={`w-9 h-9 sm:w-10 sm:h-10 bg-dark-800/80 rounded-xl flex items-center justify-center ${action.iconColor} sm:group-hover:scale-110 transition-transform`}>
-                <action.icon size={18} />
-              </div>
-              <span className="text-[10px] sm:text-xs font-semibold text-dark-300 text-center leading-tight">{action.label}</span>
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ color, backgroundColor: background }}>
+                <Icon size={19} />
+              </span>
+              <span className="text-[11px] font-bold leading-tight text-dark-200 sm:text-xs">{label}</span>
             </Link>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Coupon Claim */}
-      <div className="card p-4 sm:p-5 space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-bold text-dark-100">Claim a Coupon</p>
-            <p className="text-xs text-dark-400">Enter your coupon code and redeem instantly.</p>
-          </div>
-          <span className="rounded-full bg-success-500/10 text-success-500 text-[11px] uppercase px-2 py-1 font-semibold">Wallet credit</span>
+      <section className="rounded-2xl border border-dark-700 bg-dark-800 p-4 sm:p-5">
+        <div className="mb-4">
+          <h2 className="text-base font-bold text-dark-100">Claim a coupon</h2>
+          <p className="mt-1 text-xs text-dark-400">Enter a valid coupon code to add its value to your wallet.</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
           <input
             value={couponCode}
-            onChange={(e) => setCouponCode(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && couponCode && couponMutation.mutate()}
+            onChange={(event) => setCouponCode(event.target.value)}
+            onKeyDown={(event) => event.key === 'Enter' && redeemCoupon()}
             className="input"
             placeholder="Enter coupon code"
           />
           <button
-            onClick={() => couponMutation.mutate()}
-            disabled={!couponCode || couponMutation.isPending}
-            className="btn-primary btn-sm w-full sm:w-auto"
+            type="button"
+            onClick={redeemCoupon}
+            disabled={!couponCode.trim() || couponMutation.isPending}
+            className="btn-primary min-w-32"
           >
             {couponMutation.isPending ? 'Claiming…' : 'Claim Coupon'}
           </button>
         </div>
-        <p className="text-[11px] text-dark-400">
-          If you have a coupon code from promotions or referrals, redeem it here. Coupon balance is added directly to your wallet.
-        </p>
-      </div>
+      </section>
 
-      {/* Recent Transactions */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm sm:text-base font-bold text-dark-300">Recent Transactions</h2>
-          <Link to="/transactions" className="text-xs text-primary-400 hover:text-primary-300 font-semibold">
-            View all
-          </Link>
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-base font-bold text-dark-100">Recent transactions</h2>
+          <Link to="/transactions" className="text-xs font-semibold text-primary-400">View all</Link>
         </div>
 
-        {txnsData?.data?.length > 0 ? (
-          <div className="card overflow-hidden">
-            <div className="divide-y divide-dark-700/40">
-              {txnsData.data.map((txn) => (
-                <div key={txn._id} className="flex items-center gap-3 p-3.5 sm:p-4 hover:bg-dark-700/20 transition-colors active:bg-dark-700/30">
-                  <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                    txn.status === 'success' ? 'bg-success-500/10' :
-                    txn.status === 'failed' ? 'bg-red-500/10' : 'bg-yellow-500/10'
-                  }`}>
-                    <StatusIcon status={txn.status} />
+        {transactions.length ? (
+          <div className="overflow-hidden rounded-2xl border border-dark-700 bg-dark-800">
+            {transactions.map((transaction, index) => {
+              const isCredit = creditTypes.includes(transaction.type);
+              return (
+                <div
+                  key={transaction._id}
+                  className={`flex items-center gap-3 p-4 ${index ? 'border-t border-dark-700' : ''}`}
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-dark-700">
+                    <TransactionStatus status={transaction.status} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-dark-100">
+                      {transaction.description || transaction.type?.replace(/_/g, ' ')}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-dark-400">
+                      {transaction.createdAt ? format(new Date(transaction.createdAt), 'MMM dd, h:mm a') : ''}
+                    </p>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-semibold text-dark-100 truncate">
-                      {txn.description || txn.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                  <div className="shrink-0 text-right">
+                    <p className={`text-sm font-black ${isCredit ? 'text-success-500' : 'text-dark-100'}`}>
+                      {isCredit ? '+' : '-'}₦{Number(transaction.amount || 0).toLocaleString()}
                     </p>
-                    <p className="text-[10px] sm:text-xs text-dark-400 truncate">
-                      {txn.reference} · {format(new Date(txn.createdAt), 'MMM dd, h:mm a')}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className={`text-sm font-black ${isCredit(txn.type) ? 'text-success-500' : 'text-red-400'}`}>
-                      {isCredit(txn.type) ? '+' : '-'}₦{txn.amount.toLocaleString()}
-                    </p>
-                    <span className={`badge text-[10px] mt-0.5 ${
-                      txn.status === 'success' ? 'badge-success' :
-                      txn.status === 'failed' ? 'badge-danger' : 'badge-warning'
-                    }`}>{txn.status}</span>
+                    <p className="mt-0.5 text-[10px] capitalize text-dark-400">{transaction.status}</p>
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
         ) : (
-          <div className="card p-8 sm:p-12 text-center">
-            <Clock size={36} className="text-dark-600 mx-auto mb-3" />
-            <p className="text-dark-400 text-sm">No transactions yet.</p>
-            <p className="text-dark-500 text-xs mt-1 mb-4">Fund your wallet to get started</p>
-            <Link to="/wallet" className="btn-primary btn-sm">Fund Wallet</Link>
+          <div className="rounded-2xl border border-dark-700 bg-dark-800 p-8 text-center">
+            <Clock size={30} className="mx-auto text-dark-500" />
+            <p className="mt-3 text-sm font-semibold text-dark-300">No transactions yet</p>
+            <p className="mt-1 text-xs text-dark-400">Fund your wallet to get started.</p>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
