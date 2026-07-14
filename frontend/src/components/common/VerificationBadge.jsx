@@ -34,13 +34,13 @@ export default function VerificationBadge({ user, compact = false }) {
   return (
     <span
       className={`inline-flex items-center rounded-full border font-bold ${colors} ${
-        compact ? 'h-5 gap-1 px-1.5 text-[9px]' : 'gap-1.5 px-2.5 py-1 text-[11px]'
+        compact || isVerified ? 'h-6 w-6 justify-center' : 'gap-1.5 px-2.5 py-1 text-[11px]'
       }`}
       title={label}
       aria-label={label}
     >
-      <Icon size={compact ? 11 : 13} strokeWidth={2.5} />
-      {!compact && label}
+      <Icon size={compact || isVerified ? 14 : 13} strokeWidth={2.5} />
+      {!compact && !isVerified && label}
     </span>
   );
 }

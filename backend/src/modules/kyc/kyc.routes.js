@@ -81,7 +81,8 @@ router.get('/:id', authorize('admin', 'super_admin'), asyncHandler(async (req, r
 
 router.patch('/:id/review', authorize('admin', 'super_admin'), asyncHandler(async (req, res) => {
   const data = await kycService.reviewKYC(req.user._id, req.params.id, req.body.action, req.body.rejectionReason);
-  return ApiResponse.success(res, { kyc: data }, `KYC ${req.body.action}d successfully`);
+  const message = req.body.action === 'approve' ? 'KYC verified successfully' : 'KYC rejected successfully';
+  return ApiResponse.success(res, { kyc: data }, message);
 }));
 
 module.exports = router;

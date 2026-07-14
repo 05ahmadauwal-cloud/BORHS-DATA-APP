@@ -23,9 +23,10 @@ function StatusBadge({ status }) {
     rejected: 'bg-red-500/15 text-red-400',
   };
   const Icon = status === 'approved' ? CheckCircle : status === 'rejected' ? XCircle : Clock;
+  const label = status === 'approved' ? 'Verified' : status;
   return (
     <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${map[status] || 'bg-dark-700 text-dark-400'}`}>
-      <Icon size={10} /> {status}
+      <Icon size={10} /> {label}
     </span>
   );
 }
@@ -63,7 +64,7 @@ function ReviewModal({ kycId, onClose, onDone }) {
   const reviewMutation = useMutation({
     mutationFn: ({ act, r }) => adminAPI.reviewKYC(kycId, act, r),
     onSuccess: (_, { act }) => {
-      toast.success(`KYC ${act}d successfully`);
+      toast.success(act === 'approve' ? 'KYC verified successfully' : 'KYC rejected successfully');
       queryClient.invalidateQueries({ queryKey: ['kyc-submissions'] });
       queryClient.invalidateQueries({ queryKey: ['kyc-counts'] });
       onDone();
@@ -126,7 +127,7 @@ function ReviewModal({ kycId, onClose, onDone }) {
                   <p className="text-xs font-bold" style={{ color: 'var(--text-muted)' }}>BASIC VERIFICATION</p>
                   <div className="p-4 rounded-2xl" style={{ background: 'var(--bg-elevated)' }}>
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      User confirmed their account details (name, phone, email) at registration. Auto-approved.
+                      User confirmed their account details (name, phone, email) at registration. Automatically verified.
                     </p>
                   </div>
                 </div>
@@ -214,7 +215,7 @@ function ReviewModal({ kycId, onClose, onDone }) {
               {isPending && !action && (
                 <div className="flex gap-3 pt-2">
                   <button onClick={() => setAction('approve')} className="btn-success flex-1 gap-2">
-                    <CheckCircle size={15} /> Approve
+                    <CheckCircle size={15} /> Verify
                   </button>
                   <button onClick={() => setAction('reject')} className="btn-danger flex-1 gap-2">
                     <XCircle size={15} /> Reject
@@ -225,7 +226,7 @@ function ReviewModal({ kycId, onClose, onDone }) {
               {isPending && action === 'approve' && (
                 <div className="space-y-3 p-4 rounded-2xl border"
                   style={{ background: 'rgba(16,185,129,0.06)', borderColor: 'rgba(16,185,129,0.2)' }}>
-                  <p className="text-sm font-semibold text-success-400">Confirm Approval</p>
+                  <p className="text-sm font-semibold text-success-400">Confirm Verification</p>
                   <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                     This will mark Tier {kyc.tier} as verified and unlock the next tier for this user.
                   </p>
@@ -239,7 +240,7 @@ function ReviewModal({ kycId, onClose, onDone }) {
                       {reviewMutation.isPending
                         ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         : <CheckCircle size={14} />}
-                      {reviewMutation.isPending ? 'Approving…' : 'Yes, Approve'}
+                      {reviewMutation.isPending ? 'Verifying…' : 'Yes, Verify'}
                     </button>
                   </div>
                 </div>
@@ -322,7 +323,7 @@ export default function AdminKYC() {
 
   const STATUS_TABS = [
     { value: 'pending', label: 'Pending', color: 'text-yellow-400', count: counts?.pending },
-    { value: 'approved', label: 'Approved', color: 'text-success-400', count: counts?.approved },
+    { value: 'approved', label: 'Verified', color: 'text-success-400', count: counts?.approved },
     { value: 'rejected', label: 'Rejected', color: 'text-red-400', count: counts?.rejected },
     { value: 'all', label: 'All', color: 'text-dark-300', count: counts?.all },
   ];
@@ -413,7 +414,7 @@ export default function AdminKYC() {
           style={{ background: 'rgba(37,99,235,0.08)', color: 'var(--text-muted)' }}>
           <AlertCircle size={14} className="text-primary-400 mt-0.5 shrink-0" />
           <span>
-            <strong className="text-primary-400">Note:</strong> Tier 1 is auto-approved instantly — only Tier 2 (ID document) and Tier 3 (selfie) submissions appear here for review.
+            <strong className="text-primary-400">Note:</strong> Tier 1 is verified instantly — only Tier 2 (ID document) and Tier 3 (selfie) submissions appear here for review.
           </span>
         </div>
       )}
@@ -470,7 +471,7 @@ export default function AdminKYC() {
               : <CheckCircle size={28} className="text-success-400 opacity-60" />}
           </div>
           <p className="font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>
-            No {status === 'all' ? '' : status} KYC submissions{tier ? ` for Tier ${tier}` : ''}
+            No {status === 'all' ? '' : status === 'approved' ? 'verified' : status} KYC submissions{tier ? ` for Tier ${tier}` : ''}
           </p>
           {status === 'pending' && (
             <p className="text-xs mt-1" style={{ color: 'var(--text-faint)' }}>

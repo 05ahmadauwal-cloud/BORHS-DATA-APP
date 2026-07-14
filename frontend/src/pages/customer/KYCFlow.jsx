@@ -18,7 +18,7 @@ const ID_TYPES = [
 function StatusBadge({ status }) {
   if (status === 'approved') return (
     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-success-500/15 text-success-400">
-      <CheckCircle size={10} /> Approved
+      <CheckCircle size={10} /> Verified
     </span>
   );
   if (status === 'pending') return (
@@ -346,7 +346,7 @@ export default function KYCFlow() {
       {/* ── TIER 3 ── */}
       <TierCard tier={3} label="Selfie Verification" desc="A live selfie to confirm your identity — optional, unlocks maximum limits"
         icon={Camera} status={tier3?.status}
-        locked={!t2Done} lockedMsg="Complete Tier 2 first" optional={!tier3}>
+        locked={!t2Done} lockedMsg="Complete Tier 2 verification first" optional={!tier3}>
 
         {t2Done && (!tier3 || (tier3.status === 'rejected' && resubmitT3)) && (
           <div className="px-5 pb-5 border-t pt-4 space-y-4" style={{ borderColor: 'var(--border)' }}>

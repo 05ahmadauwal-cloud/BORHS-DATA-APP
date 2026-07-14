@@ -45,10 +45,17 @@ const submitTier2 = async (userId, body, images = {}) => {
 };
 
 const submitTier3 = async (userId, images = {}) => {
-  const user = await User.findById(userId);
-  if (user.kycStatus !== KYC_STATUS.TIER2) {
-    throw Object.assign(new Error('Complete Tier 2 KYC approval first'), { statusCode: 400 });
+  // The KYC record is authoritative. User.kycStatus can briefly be stale
+  // after an admin review and must not block an already verified user.
+  const verifiedTier2 = await KYC.exists({
+    user: userId,
+    tier: 2,
+    status: KYC_APPROVAL_STATUS.APPROVED,
+  });
+  if (!verifiedTier2) {
+    throw Object.assign(new Error('Complete Tier 2 verification first'), { statusCode: 400 });
   }
+  if (!images.selfie) throw Object.assign(new Error('A selfie image is required'), { statusCode: 400 });
 
   await KYC.findOneAndUpdate(
     { user: userId, tier: 3 },
@@ -56,7 +63,7 @@ const submitTier3 = async (userId, images = {}) => {
       user: userId,
       tier: 3,
       status: KYC_APPROVAL_STATUS.PENDING,
-      selfieImage: images.selfie || null,
+      selfieImage: images.selfie,
       submittedAt: new Date(),
     },
     { upsert: true, new: true }
