@@ -36,7 +36,7 @@ export default function AdminDashboard() {
   const statCards = [
     { label: 'Total Revenue', value: `₦${(summary.revenue || 0).toLocaleString()}`, icon: DollarSign, color: 'text-success-500', bg: 'bg-success-500/10 border-success-500/20', trend: trends.revenue ?? 0 },
     { label: 'New Users', value: (summary.users || 0).toLocaleString(), icon: Users, color: 'text-primary-400', bg: 'bg-primary-500/10 border-primary-500/20', trend: trends.users ?? 0 },
-    { label: 'Total Transactions', value: (summary.transactions || 0).toLocaleString(), icon: Activity, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20', trend: trends.transactions ?? 0 },
+    { label: 'Transactions', value: (summary.transactions || 0).toLocaleString(), icon: Activity, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20', trend: trends.transactions ?? 0 },
     { label: 'Avg. Order', value: summary.periodTransactions ? formatK(Math.round((summary.revenue || 0) / summary.periodTransactions)) : '₦0', icon: TrendingUp, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20', trend: trends.averageOrder ?? 0 },
   ];
 

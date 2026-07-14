@@ -179,7 +179,7 @@ const getAnalytics = async (period = '30d') => {
   const previousStartDate = new Date(startDate.getTime() - periodMs);
 
   const [
-    totalRevenue, totalUsers, totalTransactions, periodTransactions,
+    totalRevenue, totalUsers, periodTransactions,
     periodAllTransactions, previousRevenue, previousUsers,
     previousTransactions, previousSuccessfulTransactions,
     revenueByType, dailyRevenue, userGrowth,
@@ -189,9 +189,6 @@ const getAnalytics = async (period = '30d') => {
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]),
     User.countDocuments({ createdAt: { $gte: startDate } }),
-    // The transaction page's unfiltered total is all-time and includes every
-    // status, so expose the same figure in the overview summary.
-    Transaction.countDocuments({}),
     Transaction.countDocuments({ createdAt: { $gte: startDate }, status: 'success' }),
     Transaction.countDocuments({ createdAt: { $gte: startDate } }),
     Transaction.aggregate([
@@ -231,7 +228,7 @@ const getAnalytics = async (period = '30d') => {
     summary: {
       revenue,
       users: totalUsers,
-      transactions: totalTransactions,
+      transactions: periodAllTransactions,
       periodTransactions,
     },
     trends: {
