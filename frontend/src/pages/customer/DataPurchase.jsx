@@ -14,7 +14,25 @@ const NETWORKS = [
   { id: 'glo', label: 'Glo' },
   { id: '9mobile', label: '9Mobile' },
 ];
-const DATA_TYPES = ['sme', 'corporate', 'gifting', 'direct'];
+const DATA_TYPES = [
+  { value: 'sme', label: 'SME' },
+  { value: 'corporate', label: 'Corporate' },
+  { value: 'gifting', label: 'Gifting' },
+  { value: 'direct', label: 'Direct' },
+];
+
+const formatPlanSize = (plan) => {
+  const source = `${plan?.dataSize || ''} ${plan?.name || ''}`;
+  const match = source.match(/(\d+(?:\.\d+)?)\s*(GB|G|MB|M)\b/i);
+  if (!match) return plan?.dataSize || plan?.name || 'Data plan';
+  const unit = match[2].toUpperCase();
+  return `${match[1]}${unit === 'G' ? 'GB' : unit === 'M' ? 'MB' : unit}`;
+};
+
+const formatDataType = (value) => {
+  if (value?.toLowerCase() === 'corperate') return 'Corporate';
+  return DATA_TYPES.find((type) => type.value === value?.toLowerCase())?.label || value || '';
+};
 
 export default function DataPurchase() {
   const { user, updateUser } = useAuthStore();
@@ -55,7 +73,7 @@ export default function DataPurchase() {
         dataSize: selectedPlan.dataSize,
         planName: selectedPlan.name,
         validity: selectedPlan.validity,
-        dataType: dataType.toUpperCase(),
+        dataType: formatDataType(dataType),
       });
       setStep(1);
       setSelectedPlan(null);
@@ -126,15 +144,15 @@ export default function DataPurchase() {
           <div>
             <label className="label">Data Type</label>
             <div className="hidden md:flex gap-2 flex-wrap">
-              {DATA_TYPES.map((t) => (
+              {DATA_TYPES.map((type) => (
                 <button
-                  key={t}
-                  onClick={() => { setDataType(t); setSelectedPlan(null); }}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
-                    dataType === t ? 'bg-primary-600/20 text-primary-300 border border-primary-500/30' : 'bg-dark-700 text-dark-400 hover:bg-dark-600'
+                  key={type.value}
+                  onClick={() => { setDataType(type.value); setSelectedPlan(null); }}
+                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    dataType === type.value ? 'bg-primary-600/20 text-primary-300 border border-primary-500/30' : 'bg-dark-700 text-dark-400 hover:bg-dark-600'
                   }`}
                 >
-                  {t}
+                  {type.label}
                 </button>
               ))}
             </div>
@@ -144,8 +162,8 @@ export default function DataPurchase() {
                 value={dataType}
                 onChange={(e) => { setDataType(e.target.value); setSelectedPlan(null); }}
               >
-                {DATA_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                {DATA_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>{type.label}</option>
                 ))}
               </select>
             </div>
@@ -174,10 +192,10 @@ export default function DataPurchase() {
                       }`}
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <span className="badge-info text-xs">{plan.dataSize}</span>
+                        <span className="badge-info text-xs">{formatPlanSize(plan)}</span>
                         {selectedPlan?._id === plan._id && <CheckCircle size={14} className="text-primary-400" />}
                       </div>
-                      <p className="font-bold text-dark-100 text-sm">{plan.name}</p>
+                      <p className="font-bold text-dark-100 text-sm">{formatDataType(plan.dataType || dataType)}</p>
                       <p className="text-xl font-black text-primary-400">₦{effectivePrice(plan).toLocaleString()}</p>
                       {plan.validity && <p className="text-xs text-dark-500">{plan.validity}</p>}
                     </button>
@@ -195,7 +213,7 @@ export default function DataPurchase() {
                     <option value="" disabled>Select a plan</option>
                     {plans.map((plan) => (
                       <option key={plan._id} value={plan._id}>
-                        {`${plan.dataSize} - ${plan.name} · ₦${effectivePrice(plan).toLocaleString()}`}
+                        {`${formatPlanSize(plan)} · ₦${effectivePrice(plan).toLocaleString()}`}
                       </option>
                     ))}
                   </select>
@@ -249,7 +267,7 @@ export default function DataPurchase() {
           <div className="bg-dark-700/50 rounded-xl p-5 space-y-3">
             {[
               ['Network', <NetworkLogo key="net" network={network} size="sm" />],
-              ['Plan', `${selectedPlan.dataSize} - ${selectedPlan.name}`],
+              ['Plan', formatPlanSize(selectedPlan)],
               ['Validity', selectedPlan.validity || 'N/A'],
               ['Phone', phone],
               ['Amount', `₦${effectivePrice(selectedPlan).toLocaleString()}`],
