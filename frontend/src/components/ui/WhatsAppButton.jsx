@@ -48,7 +48,7 @@ export default function WhatsAppButton() {
         aria-label="Chat on WhatsApp"
       >
         {/* Ping animation */}
-        <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-30" />
+        <span className="hidden lg:block absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-30" />
 
         {/* WhatsApp SVG icon */}
         <svg

@@ -224,3 +224,21 @@
 .animate-slide-up { animation: slideUp 0.35s ease-out; }
 .animate-slide-in { animation: slideIn 0.3s ease-out; }
 .animate-marquee  { animation: marquee var(--marquee-speed, 25s) linear infinite; }
+
+/* Avoid Android GPU compositing artifacts on animation-heavy mobile layouts. */
+@media (max-width: 639px) {
+  .animate-marquee {
+    animation: none;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-slide-in,
+  .animate-marquee {
+    animation: none !important;
+    transform: none !important;
+  }
+}

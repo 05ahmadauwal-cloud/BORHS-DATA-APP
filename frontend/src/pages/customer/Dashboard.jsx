@@ -135,7 +135,7 @@ export default function Dashboard() {
             <Link
               key={action.to}
               to={action.to}
-              className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br ${action.color} border border-dark-700/40 ${action.border} hover:scale-105 active:scale-95 transition-all duration-200 group`}
+              className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br ${action.color} border border-dark-700/40 ${action.border} sm:hover:scale-105 active:scale-95 transition-all duration-200 group`}
             >
               <div className={`w-9 h-9 sm:w-10 sm:h-10 bg-dark-800/80 rounded-xl flex items-center justify-center ${action.iconColor} group-hover:scale-110 transition-transform`}>
                 <action.icon size={18} />

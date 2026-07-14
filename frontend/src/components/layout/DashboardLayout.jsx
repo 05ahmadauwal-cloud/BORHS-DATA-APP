@@ -142,7 +142,7 @@ export default function DashboardLayout() {
       <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 pb-24 lg:pb-8 overflow-auto animate-fade-in">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
           <Outlet />
         </main>
 
@@ -152,7 +152,7 @@ export default function DashboardLayout() {
         <nav className="lg:hidden fixed bottom-0 inset-x-0 z-20">
           {/* bar */}
           <div
-            className="relative bg-dark-900 backdrop-blur-xl border-t border-white/[0.07] px-1 pb-safe"
+            className="relative bg-dark-900 border-t border-white/[0.07] px-1 pb-safe"
             style={{ borderRadius: '22px 22px 0 0', boxShadow: '0 -8px 32px rgba(0,0,0,0.45)' }}
           >
             <div className="flex items-end justify-around h-[62px]">
