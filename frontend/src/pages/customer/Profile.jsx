@@ -83,6 +83,8 @@ export default function Profile() {
   const [pin, setPin] = useState('');
   const [resetPinForm, setResetPinForm] = useState({ password: '', newPin: '' });
   const [showResetPin, setShowResetPin] = useState(false);
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [showPhoneOtp, setShowPhoneOtp] = useState(false);
   const [username, setUsername] = useState(user?.username || '');
 
   const usernameMutation = useMutation({
@@ -93,6 +95,32 @@ export default function Profile() {
       toast.success('Username updated successfully');
     },
     onError: (error) => toast.error(error.response?.data?.message || 'Could not update username'),
+  });
+
+  const resendEmailMutation = useMutation({
+    mutationFn: authAPI.resendEmailVerification,
+    onSuccess: (response) => toast.success(response.data.message || 'Verification email sent'),
+    onError: (error) => toast.error(error.response?.data?.message || 'Could not send verification email'),
+  });
+
+  const sendPhoneOtpMutation = useMutation({
+    mutationFn: authAPI.sendPhoneOTP,
+    onSuccess: () => {
+      setShowPhoneOtp(true);
+      toast.success('A new verification code was sent to your phone');
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Could not send phone verification code'),
+  });
+
+  const verifyPhoneMutation = useMutation({
+    mutationFn: () => authAPI.verifyPhoneOTP(phoneOtp),
+    onSuccess: () => {
+      updateUser({ isPhoneVerified: true });
+      setPhoneOtp('');
+      setShowPhoneOtp(false);
+      toast.success('Phone number verified successfully');
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Invalid or expired verification code'),
   });
 
   const changePwMutation = useMutation({
@@ -276,6 +304,73 @@ export default function Profile() {
               KYC: {user?.kycStatus || 'None'}
             </span>
           </div>
+
+          {(!user?.isEmailVerified || !user?.isPhoneVerified) && (
+            <div className="border-t px-5 py-4 space-y-3" style={{ borderColor: 'var(--border)' }}>
+              <div>
+                <h3 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Complete account verification</h3>
+                <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Request a fresh verification message if the previous one expired or did not arrive.
+                </p>
+              </div>
+
+              {!user?.isEmailVerified && (
+                <div className="flex items-center justify-between gap-3 rounded-xl border p-3" style={{ borderColor: 'var(--border)', background: 'var(--bg-elevated)' }}>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Email verification</p>
+                    <p className="truncate text-[11px]" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => resendEmailMutation.mutate()}
+                    disabled={resendEmailMutation.isPending}
+                    className="btn-secondary btn-sm shrink-0"
+                  >
+                    {resendEmailMutation.isPending ? 'Sending…' : 'Resend link'}
+                  </button>
+                </div>
+              )}
+
+              {!user?.isPhoneVerified && (
+                <div className="rounded-xl border p-3 space-y-3" style={{ borderColor: 'var(--border)', background: 'var(--bg-elevated)' }}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Phone verification</p>
+                      <p className="truncate text-[11px]" style={{ color: 'var(--text-muted)' }}>{user?.phone}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => sendPhoneOtpMutation.mutate()}
+                      disabled={sendPhoneOtpMutation.isPending}
+                      className="btn-secondary btn-sm shrink-0"
+                    >
+                      {sendPhoneOtpMutation.isPending ? 'Sending…' : showPhoneOtp ? 'Send again' : 'Send code'}
+                    </button>
+                  </div>
+                  {showPhoneOtp && (
+                    <div className="flex gap-2">
+                      <input
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        className="input text-center font-black tracking-[0.35em]"
+                        placeholder="6-digit code"
+                        value={phoneOtp}
+                        onChange={(event) => setPhoneOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => verifyPhoneMutation.mutate()}
+                        disabled={phoneOtp.length !== 6 || verifyPhoneMutation.isPending}
+                        className="btn-primary shrink-0"
+                      >
+                        {verifyPhoneMutation.isPending ? 'Checking…' : 'Verify'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

@@ -7,6 +7,7 @@ export const authAPI = {
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
   verifyEmail: (token) => api.get(`/auth/verify-email/${token}`),
+  resendEmailVerification: () => api.post('/auth/resend-email-verification'),
   sendPhoneOTP: () => api.post('/auth/send-phone-otp'),
   verifyPhoneOTP: (otp) => api.post('/auth/verify-phone-otp', { otp }),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),

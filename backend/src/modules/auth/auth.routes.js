@@ -39,6 +39,7 @@ router.post('/reset-password/:token', [
 // Protected routes
 router.use(authenticate);
 router.get('/me', asyncHandler(ctrl.getMe));
+router.post('/resend-email-verification', asyncHandler(ctrl.resendEmailVerification));
 router.post('/send-phone-otp', asyncHandler(ctrl.sendPhoneOTP));
 router.post('/verify-phone-otp', body('otp').isLength({ min: 6, max: 6 }), validate, asyncHandler(ctrl.verifyPhoneOTP));
 router.post('/change-password', [

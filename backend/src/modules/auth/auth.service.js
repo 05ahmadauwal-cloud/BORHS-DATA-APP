@@ -140,6 +140,26 @@ const verifyEmail = async (token) => {
   return user;
 };
 
+const resendEmailVerification = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) throw Object.assign(new Error('User not found'), { statusCode: 404 });
+  if (user.isEmailVerified) return { alreadyVerified: true };
+
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  user.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+  user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
+  await user.save({ validateBeforeSave: false });
+
+  const clientUrl = process.env.NODE_ENV === 'production'
+    ? (process.env.PRODUCTION_URL || process.env.CLIENT_URL)
+    : process.env.CLIENT_URL;
+  await sendEmail(user.email, 'welcome', {
+    firstName: user.firstName,
+    verificationLink: `${clientUrl}/verify-email/${verificationToken}`,
+  });
+  return { alreadyVerified: false };
+};
+
 const sendPhoneOTP = async (userId) => {
   const otp = generateOTP();
   const hashedOTP = crypto.createHash('sha256').update(otp).digest('hex');
@@ -264,6 +284,7 @@ module.exports = {
   register,
   login,
   verifyEmail,
+  resendEmailVerification,
   sendPhoneOTP,
   verifyPhoneOTP,
   forgotPassword,

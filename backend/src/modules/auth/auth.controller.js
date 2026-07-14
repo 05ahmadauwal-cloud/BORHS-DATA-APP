@@ -46,6 +46,15 @@ const verifyEmail = async (req, res) => {
   return ApiResponse.success(res, {}, 'Email verified successfully');
 };
 
+const resendEmailVerification = async (req, res) => {
+  const result = await authService.resendEmailVerification(req.user._id);
+  return ApiResponse.success(
+    res,
+    {},
+    result.alreadyVerified ? 'Email is already verified' : 'A new verification link has been sent to your email'
+  );
+};
+
 const sendPhoneOTP = async (req, res) => {
   await authService.sendPhoneOTP(req.user._id);
   return ApiResponse.success(res, {}, 'OTP sent to your phone number');
@@ -88,4 +97,4 @@ const getMe = async (req, res) => {
   return ApiResponse.success(res, { user: req.user.toPublicJSON() });
 };
 
-module.exports = { register, login, logout, verifyEmail, sendPhoneOTP, verifyPhoneOTP, forgotPassword, resetPassword, changePassword, updateUsername, refreshToken, getMe };
+module.exports = { register, login, logout, verifyEmail, resendEmailVerification, sendPhoneOTP, verifyPhoneOTP, forgotPassword, resetPassword, changePassword, updateUsername, refreshToken, getMe };

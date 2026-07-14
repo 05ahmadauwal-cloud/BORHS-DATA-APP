@@ -81,10 +81,20 @@ const authLimiter = rateLimit({
   skipSuccessfulRequests: true,
 });
 
+const verificationDeliveryLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { success: false, message: 'Too many verification requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use('/api', limiter);
 app.use('/api/v1/auth/login', authLimiter);
 app.use('/api/v1/auth/register', authLimiter);
 app.use('/api/v1/auth/forgot-password', authLimiter);
+app.use('/api/v1/auth/resend-email-verification', verificationDeliveryLimiter);
+app.use('/api/v1/auth/send-phone-otp', verificationDeliveryLimiter);
 
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
 // Raw body for payment webhooks
