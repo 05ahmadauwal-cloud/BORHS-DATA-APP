@@ -99,9 +99,9 @@ export default function Sidebar({ isOpen, onClose }) {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-30 w-64 flex flex-col transform transition-all duration-300 ease-in-out ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:translate-x-0`}
+      className={`fixed inset-y-0 left-0 z-30 w-64 flex-col transform transition-all duration-300 ease-in-out ${
+        isOpen ? 'flex translate-x-0' : 'hidden -translate-x-full'
+      } lg:flex lg:translate-x-0`}
       style={{
         background: 'linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-card) 100%)',
         borderRight: '1px solid var(--border)',

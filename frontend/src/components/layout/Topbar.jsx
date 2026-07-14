@@ -39,7 +39,7 @@ export default function Topbar({ onMenuClick }) {
 
   return (
     <>
-      <header className="sticky top-0 z-10 bg-dark-900 lg:bg-dark-900/90 border-b border-dark-700/50 lg:backdrop-blur-md">
+      <header className="relative lg:sticky lg:top-0 z-10 bg-dark-900 lg:bg-dark-900/90 border-b border-dark-700/50 lg:backdrop-blur-md">
         <div className="flex items-center gap-3 px-3 sm:px-4 md:px-6 h-14 md:h-16">
 
           {/* Hamburger */}

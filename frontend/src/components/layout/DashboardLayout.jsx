@@ -139,7 +139,7 @@ export default function DashboardLayout() {
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
+      <div className="mobile-safe-shell flex-1 flex flex-col min-w-0 lg:ml-64">
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
 
         <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
@@ -168,17 +168,14 @@ export default function DashboardLayout() {
                     {({ isActive }) =>
                       isCenter ? (
                         /* ── Elevated center FAB ── */
-                        <div className="flex flex-col items-center absolute left-1/2 -translate-x-1/2" style={{ bottom: 10 }}>
+                        <div className="flex flex-col items-center pt-1">
                           <div
-                            className="w-[52px] h-[52px] rounded-2xl flex items-center justify-center transition-all duration-200 active:scale-90"
+                            className="w-10 h-[30px] rounded-xl flex items-center justify-center"
                             style={{
-                              background: isActive
-                                ? 'linear-gradient(135deg,#3b82f6 0%,#1d4ed8 100%)'
-                                : 'linear-gradient(135deg,#2563eb 0%,#1e40af 100%)',
-                              boxShadow: '0 4px 18px rgba(37,99,235,0.55)',
+                              backgroundColor: isActive ? '#2563eb' : '#1e3a8a',
                             }}
                           >
-                            <item.icon size={22} className="text-white" strokeWidth={2.2} />
+                            <item.icon size={19} className="text-white" strokeWidth={2.2} />
                           </div>
                           <span className={`text-[9px] font-black mt-1 tracking-wide ${isActive ? 'text-primary-400' : 'text-dark-500'}`}>
                             {item.label}

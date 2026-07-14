@@ -10,7 +10,9 @@ const mongoose = require('mongoose');
 // ─── User Management ──────────────────────────────────────────────────────────
 const getUsers = async (query = {}) => {
   const { page = 1, limit = 20, role, search, isActive, kycStatus } = query;
-  const skip = (page - 1) * limit;
+  const currentPage = Math.max(1, Number(page) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(limit) || 20));
+  const skip = (currentPage - 1) * pageSize;
   const filter = {};
   if (role) filter.role = role;
   if (isActive === 'true') filter.isActive = true;
@@ -25,10 +27,21 @@ const getUsers = async (query = {}) => {
     ];
   }
   const [users, total] = await Promise.all([
-    User.find(filter).select('-password').sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
+    User.find(filter).select('-password').sort({ createdAt: -1 }).skip(skip).limit(pageSize).lean(),
     User.countDocuments(filter),
   ]);
-  return { data: users, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) } };
+  const pages = Math.ceil(total / pageSize);
+  return {
+    data: users,
+    pagination: {
+      total,
+      page: currentPage,
+      limit: pageSize,
+      pages,
+      hasNext: currentPage < pages,
+      hasPrev: currentPage > 1,
+    },
+  };
 };
 
 const getUserById = async (userId) => {
@@ -98,7 +111,9 @@ const adjustWallet = async (adminId, userId, amount, type, reason) => {
 // ─── Transaction Management ───────────────────────────────────────────────────
 const getTransactions = async (query = {}) => {
   const { page = 1, limit = 20, type, status, startDate, endDate, userId, search, reference, amountMin, amountMax } = query;
-  const skip = (page - 1) * limit;
+  const currentPage = Math.max(1, Number(page) || 1);
+  const pageSize = Math.min(100, Math.max(1, Number(limit) || 20));
+  const skip = (currentPage - 1) * pageSize;
   const filter = {};
   if (type) filter.type = type;
   if (status) filter.status = status;
@@ -122,10 +137,21 @@ const getTransactions = async (query = {}) => {
     filter.user = { $in: matchedUsers.map((u) => u._id) };
   }
   const [data, total] = await Promise.all([
-    Transaction.find(filter).populate('user', 'firstName lastName email username').sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
+    Transaction.find(filter).populate('user', 'firstName lastName email username').sort({ createdAt: -1 }).skip(skip).limit(pageSize).lean(),
     Transaction.countDocuments(filter),
   ]);
-  return { data, pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / limit) } };
+  const pages = Math.ceil(total / pageSize);
+  return {
+    data,
+    pagination: {
+      total,
+      page: currentPage,
+      limit: pageSize,
+      pages,
+      hasNext: currentPage < pages,
+      hasPrev: currentPage > 1,
+    },
+  };
 };
 
 const reverseTransaction = async (adminId, transactionId, reason) => {
@@ -147,15 +173,34 @@ const reverseTransaction = async (adminId, transactionId, reason) => {
 // ─── Analytics ────────────────────────────────────────────────────────────────
 const getAnalytics = async (period = '30d') => {
   const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
-  const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const periodMs = days * 24 * 60 * 60 * 1000;
+  const now = new Date();
+  const startDate = new Date(now.getTime() - periodMs);
+  const previousStartDate = new Date(startDate.getTime() - periodMs);
 
-  const [totalRevenue, totalUsers, totalTransactions, revenueByType, dailyRevenue, userGrowth] = await Promise.all([
+  const [
+    totalRevenue, totalUsers, totalTransactions, periodTransactions,
+    periodAllTransactions, previousRevenue, previousUsers,
+    previousTransactions, previousSuccessfulTransactions,
+    revenueByType, dailyRevenue, userGrowth,
+  ] = await Promise.all([
     Transaction.aggregate([
       { $match: { status: 'success', createdAt: { $gte: startDate } } },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]),
     User.countDocuments({ createdAt: { $gte: startDate } }),
+    // The transaction page's unfiltered total is all-time and includes every
+    // status, so expose the same figure in the overview summary.
+    Transaction.countDocuments({}),
     Transaction.countDocuments({ createdAt: { $gte: startDate }, status: 'success' }),
+    Transaction.countDocuments({ createdAt: { $gte: startDate } }),
+    Transaction.aggregate([
+      { $match: { status: 'success', createdAt: { $gte: previousStartDate, $lt: startDate } } },
+      { $group: { _id: null, total: { $sum: '$amount' } } },
+    ]),
+    User.countDocuments({ createdAt: { $gte: previousStartDate, $lt: startDate } }),
+    Transaction.countDocuments({ createdAt: { $gte: previousStartDate, $lt: startDate } }),
+    Transaction.countDocuments({ status: 'success', createdAt: { $gte: previousStartDate, $lt: startDate } }),
     Transaction.aggregate([
       { $match: { status: 'success', createdAt: { $gte: startDate } } },
       { $group: { _id: '$type', total: { $sum: '$amount' }, count: { $sum: 1 } } },
@@ -173,11 +218,27 @@ const getAnalytics = async (period = '30d') => {
     ]),
   ]);
 
+  const revenue = totalRevenue[0]?.total || 0;
+  const oldRevenue = previousRevenue[0]?.total || 0;
+  const averageOrder = periodTransactions ? revenue / periodTransactions : 0;
+  const previousAverageOrder = previousSuccessfulTransactions ? oldRevenue / previousSuccessfulTransactions : 0;
+  const percentageChange = (current, previous) => {
+    if (previous === 0) return current === 0 ? 0 : 100;
+    return Math.round(((current - previous) / Math.abs(previous)) * 1000) / 10;
+  };
+
   return {
     summary: {
-      revenue: totalRevenue[0]?.total || 0,
+      revenue,
       users: totalUsers,
       transactions: totalTransactions,
+      periodTransactions,
+    },
+    trends: {
+      revenue: percentageChange(revenue, oldRevenue),
+      users: percentageChange(totalUsers, previousUsers),
+      transactions: percentageChange(periodAllTransactions, previousTransactions),
+      averageOrder: percentageChange(averageOrder, previousAverageOrder),
     },
     revenueByType,
     dailyRevenue,

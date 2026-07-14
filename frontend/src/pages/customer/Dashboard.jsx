@@ -85,9 +85,9 @@ export default function Dashboard() {
       </div>
 
       {/* Balance Card */}
-      <div className="relative rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 p-5 sm:p-7 overflow-hidden shadow-2xl shadow-primary-900/40">
-        <div className="absolute top-0 right-0 w-56 h-56 bg-white/5 rounded-full -translate-y-28 translate-x-28" />
-        <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full translate-y-20 -translate-x-20" />
+      <div className="mobile-safe-balance relative rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 p-5 sm:p-7 overflow-hidden shadow-2xl shadow-primary-900/40">
+        <div className="hidden sm:block absolute top-0 right-0 w-56 h-56 bg-white/5 rounded-full -translate-y-28 translate-x-28" />
+        <div className="hidden sm:block absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full translate-y-20 -translate-x-20" />
         <div className="relative">
           <p className="text-primary-200 text-xs sm:text-sm font-medium mb-1">Available Balance</p>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-5 tabular-nums">
@@ -135,9 +135,9 @@ export default function Dashboard() {
             <Link
               key={action.to}
               to={action.to}
-              className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br ${action.color} border border-dark-700/40 ${action.border} sm:hover:scale-105 active:scale-95 transition-all duration-200 group`}
+              className={`mobile-safe-action flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br ${action.color} border border-dark-700/40 ${action.border} sm:hover:scale-105 sm:active:scale-95 transition-all duration-200 group`}
             >
-              <div className={`w-9 h-9 sm:w-10 sm:h-10 bg-dark-800/80 rounded-xl flex items-center justify-center ${action.iconColor} group-hover:scale-110 transition-transform`}>
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 bg-dark-800/80 rounded-xl flex items-center justify-center ${action.iconColor} sm:group-hover:scale-110 transition-transform`}>
                 <action.icon size={18} />
               </div>
               <span className="text-[10px] sm:text-xs font-semibold text-dark-300 text-center leading-tight">{action.label}</span>

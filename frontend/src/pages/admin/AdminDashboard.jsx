@@ -4,7 +4,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar
 } from 'recharts';
-import { TrendingUp, Users, DollarSign, Activity, ArrowUpRight } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Activity, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { useState } from 'react';
 
 const formatK = (v) =>
@@ -31,12 +31,13 @@ export default function AdminDashboard() {
   });
 
   const summary = analytics?.summary || {};
+  const trends = analytics?.trends || {};
 
   const statCards = [
-    { label: 'Total Revenue', value: `₦${(summary.revenue || 0).toLocaleString()}`, icon: DollarSign, color: 'text-success-500', bg: 'bg-success-500/10 border-success-500/20', trend: '+12%' },
-    { label: 'New Users', value: (summary.users || 0).toLocaleString(), icon: Users, color: 'text-primary-400', bg: 'bg-primary-500/10 border-primary-500/20', trend: '+8%' },
-    { label: 'Transactions', value: (summary.transactions || 0).toLocaleString(), icon: Activity, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20', trend: '+15%' },
-    { label: 'Avg. Order', value: summary.transactions ? formatK(Math.round((summary.revenue || 0) / summary.transactions)) : '₦0', icon: TrendingUp, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20', trend: '+3%' },
+    { label: 'Total Revenue', value: `₦${(summary.revenue || 0).toLocaleString()}`, icon: DollarSign, color: 'text-success-500', bg: 'bg-success-500/10 border-success-500/20', trend: trends.revenue ?? 0 },
+    { label: 'New Users', value: (summary.users || 0).toLocaleString(), icon: Users, color: 'text-primary-400', bg: 'bg-primary-500/10 border-primary-500/20', trend: trends.users ?? 0 },
+    { label: 'Total Transactions', value: (summary.transactions || 0).toLocaleString(), icon: Activity, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20', trend: trends.transactions ?? 0 },
+    { label: 'Avg. Order', value: summary.periodTransactions ? formatK(Math.round((summary.revenue || 0) / summary.periodTransactions)) : '₦0', icon: TrendingUp, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20', trend: trends.averageOrder ?? 0 },
   ];
 
   return (
@@ -71,8 +72,11 @@ export default function AdminDashboard() {
               <div className={`w-9 h-9 md:w-10 md:h-10 ${stat.bg} border rounded-xl flex items-center justify-center`}>
                 <stat.icon size={16} className={stat.color} />
               </div>
-              <span className="flex items-center gap-0.5 text-xs font-semibold text-success-500">
-                <ArrowUpRight size={11} />{stat.trend}
+              <span className={`flex items-center gap-0.5 text-xs font-semibold ${
+                stat.trend > 0 ? 'text-success-500' : stat.trend < 0 ? 'text-red-400' : 'text-dark-400'
+              }`} title="Compared with the previous equivalent period">
+                {stat.trend > 0 ? <ArrowUpRight size={11} /> : stat.trend < 0 ? <ArrowDownRight size={11} /> : <Minus size={11} />}
+                {stat.trend > 0 ? '+' : ''}{stat.trend}%
               </span>
             </div>
             <p className="text-lg md:text-2xl font-black text-dark-50 mb-0.5 tabular-nums leading-tight">

@@ -227,6 +227,31 @@
 
 /* Avoid Android GPU compositing artifacts on animation-heavy mobile layouts. */
 @media (max-width: 639px) {
+  .mobile-safe-shell *,
+  .mobile-safe-shell *::before,
+  .mobile-safe-shell *::after {
+    animation: none !important;
+    transition: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .mobile-safe-balance {
+    background-image: none !important;
+    background-color: #1d4ed8 !important;
+    box-shadow: 0 8px 24px rgba(30, 64, 175, 0.25) !important;
+  }
+
+  .mobile-safe-action {
+    background-image: none !important;
+    background-color: var(--bg-card) !important;
+  }
+
+  .mobile-safe-shell nav > div {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
   .animate-marquee {
     animation: none;
     transform: none;
