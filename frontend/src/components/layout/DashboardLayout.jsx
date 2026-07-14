@@ -1,10 +1,13 @@
 import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { LayoutDashboard, Wallet, Wifi, MoreHorizontal, User, Shield, Lock, KeyRound } from 'lucide-react';
+import toast from 'react-hot-toast';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import WhatsAppButton from '../ui/WhatsAppButton';
 import useAuthStore from '../../store/authStore';
+import { walletAPI } from '../../api';
 
 const ADMIN_ROLES = ['admin', 'super_admin'];
 
@@ -22,31 +25,90 @@ const KYC_EXEMPT_PATHS = ['/profile', '/wallet', '/transactions'];
 const PIN_EXEMPT_PATHS = ['/profile', '/wallet', '/dashboard', '/transactions'];
 
 function PinGate() {
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const updateUser = useAuthStore((state) => state.updateUser);
+
+  const setPinMutation = useMutation({
+    mutationFn: () => walletAPI.setPin(pin),
+    onSuccess: () => {
+      updateUser({ isPinSet: true });
+      toast.success('Transaction PIN created successfully');
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Could not create PIN'),
+  });
+
+  const submitPin = (event) => {
+    event.preventDefault();
+    if (!/^\d{4}$/.test(pin)) return toast.error('PIN must be exactly 4 digits');
+    if (pin !== confirmPin) return toast.error('PINs do not match');
+    setPinMutation.mutate();
+  };
+
+  const updatePin = (setter) => (event) => {
+    setter(event.target.value.replace(/\D/g, '').slice(0, 4));
+  };
+
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4"
-      style={{ background: 'rgba(2,6,23,0.92)', backdropFilter: 'blur(12px)' }}>
-      <div className="w-full max-w-sm text-center space-y-6 animate-fade-in">
-        <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto"
-          style={{ background: 'rgba(234,179,8,0.15)', border: '1px solid rgba(234,179,8,0.3)' }}>
-          <KeyRound size={36} className="text-yellow-400" />
+      style={{ background: 'rgba(2,6,23,0.9)' }}>
+      <form onSubmit={submitPin} className="card w-full max-w-sm space-y-5 p-5 sm:p-6">
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-yellow-500/10 text-yellow-400">
+            <KeyRound size={21} />
+          </div>
+          <div>
+            <h2 className="text-lg font-black" style={{ color: 'var(--text-primary)' }}>
+              Create transaction PIN
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+              Choose a private 4-digit PIN to approve purchases and protect your wallet.
+            </p>
+          </div>
         </div>
-        <div className="space-y-2">
-          <h2 className="text-xl font-black" style={{ color: 'var(--text-primary)' }}>
-            Set Your Transaction PIN
-          </h2>
-          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-            A 4-digit PIN is required to make purchases. This protects your wallet from unauthorized transactions.
-          </p>
+
+        <div>
+          <label className="label">Enter PIN</label>
+          <input
+            type="password"
+            inputMode="numeric"
+            autoComplete="new-password"
+            value={pin}
+            onChange={updatePin(setPin)}
+            className="input text-center text-xl font-black tracking-[0.5em]"
+            placeholder="••••"
+            autoFocus
+          />
         </div>
-        <Link to="/profile?tab=security" className="btn-primary w-full gap-2 justify-center"
-          style={{ background: 'linear-gradient(135deg,#ca8a04,#a16207)' }}>
-          <KeyRound size={16} /> Set Transaction PIN
-        </Link>
-        <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-          You can still browse your dashboard and fund your wallet.{' '}
-          <Link to="/wallet" className="text-primary-400 hover:underline">Fund wallet</Link>
+
+        <div>
+          <label className="label">Confirm PIN</label>
+          <input
+            type="password"
+            inputMode="numeric"
+            autoComplete="new-password"
+            value={confirmPin}
+            onChange={updatePin(setConfirmPin)}
+            className={`input text-center text-xl font-black tracking-[0.5em] ${confirmPin && pin !== confirmPin ? 'input-error' : ''}`}
+            placeholder="••••"
+          />
+          {confirmPin && pin !== confirmPin && <p className="mt-1 text-xs text-red-400">PINs do not match</p>}
+        </div>
+
+        <button
+          type="submit"
+          disabled={pin.length !== 4 || confirmPin.length !== 4 || pin !== confirmPin || setPinMutation.isPending}
+          className="btn-primary w-full gap-2"
+        >
+          {setPinMutation.isPending
+            ? <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+            : <KeyRound size={16} />}
+          {setPinMutation.isPending ? 'Creating PIN…' : 'Create PIN and continue'}
+        </button>
+        <p className="text-center text-[11px]" style={{ color: 'var(--text-faint)' }}>
+          Never share this PIN with anyone.
         </p>
-      </div>
+      </form>
     </div>
   );
 }
