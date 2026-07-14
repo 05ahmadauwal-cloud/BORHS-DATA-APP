@@ -4,7 +4,9 @@ const logger = require('../utils/logger');
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      maxPoolSize: 10,
+      maxPoolSize: Math.max(10, parseInt(process.env.MONGODB_MAX_POOL_SIZE) || 50),
+      minPoolSize: Math.max(0, parseInt(process.env.MONGODB_MIN_POOL_SIZE) || 5),
+      maxIdleTimeMS: 60000,
       serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 60000,
       connectTimeoutMS: 30000,

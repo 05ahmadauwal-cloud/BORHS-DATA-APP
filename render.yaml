@@ -26,6 +26,10 @@ services:
         value: 30d
       - key: BCRYPT_ROUNDS
         value: 12
+      - key: MONGODB_MAX_POOL_SIZE
+        value: 50
+      - key: MONGODB_MIN_POOL_SIZE
+        value: 5
       - key: PAYSTACK_SECRET_KEY
         sync: false
       - key: PAYSTACK_PUBLIC_KEY

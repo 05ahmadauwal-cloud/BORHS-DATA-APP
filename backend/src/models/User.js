@@ -165,6 +165,8 @@ userSchema.virtual('isLocked').get(function () {
 userSchema.index({ referredBy: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ createdAt: -1 });
+userSchema.index({ role: 1, createdAt: -1 });
+userSchema.index({ isActive: 1, createdAt: -1 });
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();

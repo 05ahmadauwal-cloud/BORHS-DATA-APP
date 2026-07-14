@@ -10,6 +10,7 @@ const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
 const compression = require('compression');
 const path = require('path');
+const mongoose = require('mongoose');
 
 const connectDB = require('./config/database');
 const logger = require('./utils/logger');
@@ -135,6 +136,21 @@ app.use(errorHandler);
 const server = app.listen(PORT, () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
+
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
+
+const shutdown = (signal) => {
+  logger.info(`${signal} received. Closing connections gracefully...`);
+  server.close(async () => {
+    await mongoose.connection.close(false).catch((error) => logger.error(`MongoDB shutdown error: ${error.message}`));
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10000).unref();
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
