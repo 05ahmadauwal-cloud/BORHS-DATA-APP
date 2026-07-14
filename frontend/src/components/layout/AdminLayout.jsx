@@ -8,6 +8,7 @@ import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
 import toast from 'react-hot-toast';
 import WhatsAppButton from '../ui/WhatsAppButton';
+import VerificationBadge from '../common/VerificationBadge';
 
 const adminNav = [
   { to: '/admin', icon: LayoutDashboard, label: 'Overview' },
@@ -103,6 +104,7 @@ export default function AdminLayout() {
           </button>
           <span className="font-bold text-dark-200 text-sm lg:hidden">Admin Panel</span>
           <div className="flex-1" />
+          <VerificationBadge user={user} />
           <Link to="/dashboard" className="text-xs text-dark-400 hover:text-dark-200 transition-colors hidden sm:block">
             ← Customer View
           </Link>

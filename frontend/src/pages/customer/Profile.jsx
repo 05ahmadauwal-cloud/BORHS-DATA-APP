@@ -9,6 +9,7 @@ import {
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import KYCFlow from './KYCFlow';
+import VerificationBadge from '../../components/common/VerificationBadge';
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -161,9 +162,12 @@ export default function Profile() {
 
           {/* Name & email */}
           <div className="mb-4">
-            <h1 className="text-xl sm:text-2xl font-black" style={{ color: 'var(--text-primary)' }}>
-              {user?.firstName} {user?.lastName}
-            </h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-black" style={{ color: 'var(--text-primary)' }}>
+                {user?.firstName} {user?.lastName}
+              </h1>
+              <VerificationBadge user={user} />
+            </div>
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
           </div>
 
