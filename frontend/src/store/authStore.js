@@ -48,11 +48,12 @@ const useAuthStore = create(
       },
 
       logout: async () => {
+        // Clear the local session immediately; the server request is best effort.
+        get().setToken(null);
+        set({ user: null, isAuthenticated: false });
         try {
           await authAPI.logout();
         } catch {}
-        get().setToken(null);
-        set({ user: null, isAuthenticated: false });
       },
 
       refreshUser: async () => {

@@ -75,10 +75,12 @@ const register = async (data) => {
     ? (process.env.PRODUCTION_URL || process.env.CLIENT_URL)
     : process.env.CLIENT_URL;
   const verificationLink = `${clientUrl}/verify-email/${verificationToken}`;
-  await sendEmail(user.email, 'welcome', {
+  // The account is already committed at this point. Email delivery must not
+  // delay the registration response or turn a successful signup into an error.
+  sendEmail(user.email, 'welcome', {
     firstName: user.firstName,
     verificationLink,
-  });
+  }).catch((e) => logger.error('Welcome email failed:', e.message || e));
 
   const { accessToken, refreshToken } = generateTokens(user._id);
   return { user: user.toPublicJSON(), accessToken, refreshToken };

@@ -36,7 +36,7 @@ export default function Register() {
   const [searchParams] = useSearchParams();
   const refCode = searchParams.get('ref') || '';
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { referralCode: refCode },
   });
@@ -170,12 +170,12 @@ export default function Register() {
               <input {...register('referralCode')} className="input" placeholder="Enter referral code" />
             </div>
 
-            <button type="submit" disabled={isLoading} className="btn-primary w-full btn-lg gap-2 mt-2">
-              {isLoading
+            <button type="submit" disabled={isLoading || isSubmitting} className="btn-primary w-full btn-lg gap-2 mt-2">
+              {isLoading || isSubmitting
                 ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 : <UserPlus size={18} />
               }
-              {isLoading ? 'Creating account...' : 'Create Account'}
+              {isLoading || isSubmitting ? 'Creating account...' : 'Create Account'}
             </button>
 
             <p className="text-xs text-dark-400 text-center">

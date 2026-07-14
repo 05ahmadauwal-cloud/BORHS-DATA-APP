@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import useAuthStore from './store/authStore';
 import useThemeStore from './store/themeStore';
+import useIdleLogout from './hooks/useIdleLogout';
 
 // Layouts
 import PublicLayout from './components/layout/PublicLayout';
@@ -57,6 +58,7 @@ import RoleRoute from './components/common/RoleRoute';
 export default function App() {
   const { isAuthenticated, refreshUser, accessToken } = useAuthStore();
   const { initTheme } = useThemeStore();
+  useIdleLogout();
 
   useEffect(() => {
     initTheme();
