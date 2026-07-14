@@ -19,6 +19,11 @@ const routes = require('./routes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Render terminates HTTPS at one trusted reverse proxy. This lets Express and
+// the rate limiter use the visitor's IP instead of grouping everyone under the
+// proxy IP.
+if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
+
 // ─── Database ─────────────────────────────────────────────────────────────────
 connectDB();
 
@@ -57,17 +62,23 @@ app.use(cors({
 // Rate limiting (global)
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX) || 100,
+  // Normal dashboard polling can exceed 100 requests in 15 minutes.
+  max: parseInt(process.env.RATE_LIMIT_MAX) || 600,
   message: { success: false, message: 'Too many requests. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS',
 });
 
 // Stricter limiter for auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 15,
   message: { success: false, message: 'Too many login attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Successful authentication should not consume the failed-attempt budget.
+  skipSuccessfulRequests: true,
 });
 
 app.use('/api', limiter);

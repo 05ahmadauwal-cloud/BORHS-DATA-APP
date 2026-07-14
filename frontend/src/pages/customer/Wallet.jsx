@@ -297,7 +297,7 @@ export default function Wallet() {
     queryKey: ['wallet-balance'],
     queryFn: () => walletAPI.getBalance(),
     select: (res) => res.data,
-    refetchInterval: 15_000, // poll faster so bank transfer credit shows quickly
+    refetchInterval: 30_000,
   });
 
   const { data: txns, isLoading: txLoading } = useQuery({

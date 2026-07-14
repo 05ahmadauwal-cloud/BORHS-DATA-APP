@@ -17,7 +17,7 @@ export default function Topbar({ onMenuClick }) {
     queryKey: ['notifications', 'unread'],
     queryFn: () => notificationAPI.getAll({ unreadOnly: 'false', limit: 20 }),
     select: (res) => res.data,
-    refetchInterval: 30000,
+    refetchInterval: 60000,
   });
 
   const markReadMutation = useMutation({
