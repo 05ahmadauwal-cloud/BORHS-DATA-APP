@@ -82,6 +82,17 @@ export default function Profile() {
   const [pin, setPin] = useState('');
   const [resetPinForm, setResetPinForm] = useState({ password: '', newPin: '' });
   const [showResetPin, setShowResetPin] = useState(false);
+  const [username, setUsername] = useState(user?.username || '');
+
+  const usernameMutation = useMutation({
+    mutationFn: () => authAPI.updateUsername(username),
+    onSuccess: (response) => {
+      updateUser({ username: response.data.user.username });
+      setUsername(response.data.user.username);
+      toast.success('Username updated successfully');
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Could not update username'),
+  });
 
   const changePwMutation = useMutation({
     mutationFn: () => authAPI.changePassword({ currentPassword: pwForm.currentPassword, newPassword: pwForm.newPassword }),
@@ -213,6 +224,33 @@ export default function Profile() {
             <InfoRow icon={Phone} label="Phone Number" value={user?.phone} copyable />
             <InfoRow icon={Star} label="Referral Code" value={user?.referralCode} copyable />
             <InfoRow icon={Calendar} label="Member Since" value={memberSince} />
+          </div>
+
+          <div className="border-t px-5 py-4" style={{ borderColor: 'var(--border)' }}>
+            <label className="label">Username</label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-dark-400">@</span>
+                <input
+                  className="input pl-7"
+                  value={username}
+                  placeholder="choose_username"
+                  maxLength={20}
+                  autoComplete="username"
+                  onChange={(event) => setUsername(event.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                  onKeyDown={(event) => event.key === 'Enter' && usernameMutation.mutate()}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => usernameMutation.mutate()}
+                disabled={!/^[a-z0-9_]{3,20}$/.test(username) || username === user?.username || usernameMutation.isPending}
+                className="btn-primary shrink-0"
+              >
+                {usernameMutation.isPending ? 'Saving…' : user?.username ? 'Update' : 'Add'}
+              </button>
+            </div>
+            <p className="mt-1.5 text-[11px] text-dark-500">3–20 characters. Use letters, numbers, or underscores.</p>
           </div>
 
           {/* Badges */}

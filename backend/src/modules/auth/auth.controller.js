@@ -71,6 +71,11 @@ const changePassword = async (req, res) => {
   return ApiResponse.success(res, {}, 'Password changed successfully');
 };
 
+const updateUsername = async (req, res) => {
+  const user = await authService.updateUsername(req.user._id, req.body.username);
+  return ApiResponse.success(res, { user: user.toPublicJSON() }, 'Username updated successfully');
+};
+
 const refreshToken = async (req, res) => {
   const token = req.cookies?.refreshToken || req.body.refreshToken;
   if (!token) return ApiResponse.unauthorized(res, 'Refresh token required');
@@ -83,4 +88,4 @@ const getMe = async (req, res) => {
   return ApiResponse.success(res, { user: req.user.toPublicJSON() });
 };
 
-module.exports = { register, login, logout, verifyEmail, sendPhoneOTP, verifyPhoneOTP, forgotPassword, resetPassword, changePassword, refreshToken, getMe };
+module.exports = { register, login, logout, verifyEmail, sendPhoneOTP, verifyPhoneOTP, forgotPassword, resetPassword, changePassword, updateUsername, refreshToken, getMe };

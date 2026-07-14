@@ -231,6 +231,25 @@ const changePassword = async (userId, currentPassword, newPassword) => {
   return true;
 };
 
+const updateUsername = async (userId, username) => {
+  const normalizedUsername = username.trim().toLowerCase();
+  const existingUser = await User.findOne({
+    username: normalizedUsername,
+    _id: { $ne: userId },
+  }).select('_id').lean();
+  if (existingUser) {
+    throw Object.assign(new Error('Username is already taken'), { statusCode: 409 });
+  }
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { username: normalizedUsername },
+    { new: true, runValidators: true }
+  );
+  if (!user) throw Object.assign(new Error('User not found'), { statusCode: 404 });
+  return user;
+};
+
 const refreshAccessToken = async (refreshToken) => {
   const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
   const user = await User.findById(decoded.id);
@@ -250,6 +269,7 @@ module.exports = {
   forgotPassword,
   resetPassword,
   changePassword,
+  updateUsername,
   refreshAccessToken,
   generateTokens,
 };

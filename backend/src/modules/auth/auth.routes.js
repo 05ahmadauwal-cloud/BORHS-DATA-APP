@@ -45,5 +45,11 @@ router.post('/change-password', [
   body('currentPassword').notEmpty(),
   body('newPassword').isLength({ min: 8 }),
 ], validate, asyncHandler(ctrl.changePassword));
+router.patch('/username', [
+  body('username')
+    .trim()
+    .matches(/^[a-z0-9_]{3,20}$/i)
+    .withMessage('Username must be 3–20 characters (letters, numbers, underscore only)'),
+], validate, asyncHandler(ctrl.updateUsername));
 
 module.exports = router;
