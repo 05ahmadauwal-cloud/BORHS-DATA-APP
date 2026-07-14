@@ -41,11 +41,12 @@ function NavSection({ label, children }) {
   );
 }
 
-function SidebarLink({ to, icon: Icon, label, end = false, accent }) {
+function SidebarLink({ to, icon: Icon, label, end = false, accent, onNavigate }) {
   return (
     <NavLink
       to={to}
       end={end}
+      onClick={onNavigate}
       className={({ isActive }) =>
         `group relative flex items-center gap-3 px-3 py-2.5 rounded-xl mx-1 text-sm font-medium transition-all duration-150 ${
           isActive
@@ -89,6 +90,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
+    onClose();
     await logout();
     toast.success('Logged out successfully');
     navigate('/login');
@@ -149,13 +151,13 @@ export default function Sidebar({ isOpen, onClose }) {
 
         <NavSection label="Menu">
           {mainNav.map((item) => (
-            <SidebarLink key={item.to} {...item} />
+            <SidebarLink key={item.to} {...item} onNavigate={onClose} />
           ))}
         </NavSection>
 
         <NavSection label="Services">
           {servicesNav.map((item) => (
-            <SidebarLink key={item.to} {...item} />
+            <SidebarLink key={item.to} {...item} onNavigate={onClose} />
           ))}
         </NavSection>
 
@@ -182,14 +184,14 @@ export default function Sidebar({ isOpen, onClose }) {
         {isAgentOrAdmin && (
           <NavSection label="Agent Tools">
             {agentNav.map((item) => (
-              <SidebarLink key={item.to} {...item} />
+              <SidebarLink key={item.to} {...item} onNavigate={onClose} />
             ))}
           </NavSection>
         )}
 
         {isAgentOrAdmin && (
           <NavSection label="Administration">
-            <SidebarLink to="/admin" icon={ShieldCheck} label="Admin Panel" />
+            <SidebarLink to="/admin" icon={ShieldCheck} label="Admin Panel" onNavigate={onClose} />
           </NavSection>
         )}
       </nav>
