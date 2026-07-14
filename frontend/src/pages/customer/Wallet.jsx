@@ -438,8 +438,19 @@ export default function Wallet() {
       {/* Online Payment Tab */}
       {activeTab === 'Online Payment' && hasAnyOnline && (
         <div className="card p-4 sm:p-6 space-y-5">
+          <div className="flex items-start gap-3 rounded-2xl border border-primary-500/20 bg-primary-500/5 p-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-500/15 text-primary-400">
+              <CreditCard size={19} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-dark-100">Secure online wallet funding</p>
+              <p className="mt-1 text-xs leading-relaxed text-dark-400">
+                Choose an amount and complete payment securely. Your wallet is credited automatically after verification.
+              </p>
+            </div>
+          </div>
           <div>
-            <label className="label">Quick Amount</label>
+            <label className="label">Select an amount</label>
             <div className="grid grid-cols-3 gap-2">
               {QUICK_AMOUNTS.map((amt) => {
                 const { fee, credit } = computeFee(amt, chargeInfo?.type, chargeInfo?.value);
@@ -454,10 +465,10 @@ export default function Wallet() {
                         : 'border-dark-600 text-dark-400 hover:border-primary-500/40'
                     }`}
                   >
-                    <p className="text-sm font-bold">₦{amt >= 1000 ? `${amt / 1000}k` : amt}</p>
+                    <p className="text-sm font-bold">₦{amt.toLocaleString('en-NG')}</p>
                     {hasCharge && (
                       <p className="text-[9px] mt-0.5 text-orange-400 font-medium">
-                        get ₦{credit >= 1000 ? `${(credit / 1000).toFixed(credit % 1000 === 0 ? 0 : 1)}k` : credit}
+                        get ₦{credit.toLocaleString('en-NG')}
                       </p>
                     )}
                   </button>
@@ -467,7 +478,7 @@ export default function Wallet() {
           </div>
 
           <div>
-            <label className="label">Or enter amount</label>
+            <label className="label">Or enter a custom amount</label>
             <input
               type="number"
               className="input text-base"
@@ -485,7 +496,7 @@ export default function Wallet() {
           />
 
           <div>
-            <label className="label">Payment Gateway</label>
+            <label className="label">Choose payment provider</label>
             <div className="grid grid-cols-2 gap-3">
               {[['paystack', 'Paystack', 'Card · Transfer · USSD'], ['flutterwave', 'Flutterwave', 'Card · Bank · USSD']].filter(([id]) => fm[id]).map(([id, name, desc]) => (
                 <button
@@ -495,7 +506,10 @@ export default function Wallet() {
                     gateway === id ? 'border-primary-500 bg-primary-500/10' : 'border-dark-600 hover:border-primary-500/30'
                   }`}
                 >
-                  <p className={`text-sm font-bold ${gateway === id ? 'text-primary-300' : 'text-dark-300'}`}>{name}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className={`text-sm font-bold ${gateway === id ? 'text-primary-300' : 'text-dark-300'}`}>{name}</p>
+                    {gateway === id && <CheckCircle size={15} className="text-primary-400" />}
+                  </div>
                   <p className="text-[10px] text-dark-500 mt-0.5">{desc}</p>
                 </button>
               ))}
@@ -507,7 +521,20 @@ export default function Wallet() {
             const hasCharge = fee > 0;
             const displayAmt = Number(fundAmount || 0);
             return (
-              <button
+              <div className="space-y-3">
+                {displayAmt >= 100 && (
+                  <div className="flex items-center justify-between rounded-xl bg-dark-700/50 px-4 py-3">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-dark-500">Payment total</p>
+                      <p className="text-lg font-black text-dark-100">₦{displayAmt.toLocaleString('en-NG')}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-dark-500">Wallet receives</p>
+                      <p className="text-lg font-black text-success-500">₦{credit.toLocaleString('en-NG')}</p>
+                    </div>
+                  </div>
+                )}
+                <button
                 onClick={() => fundMutation.mutate()}
                 disabled={!fundAmount || displayAmt < 100 || fundMutation.isPending}
                 className="btn-primary w-full btn-lg gap-2 text-base"
@@ -520,7 +547,12 @@ export default function Wallet() {
                   : hasCharge
                   ? `Pay ₦${displayAmt.toLocaleString()} → Get ₦${credit.toLocaleString()}`
                   : `Pay ₦${displayAmt.toLocaleString()}`}
-              </button>
+                </button>
+                <div className="flex items-center justify-center gap-2 text-[10px] text-dark-500">
+                  <CheckCircle size={11} className="text-success-500" />
+                  Payments are verified before your wallet is credited
+                </div>
+              </div>
             );
           })()}
         </div>

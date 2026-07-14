@@ -17,7 +17,16 @@ const paystackInitialize = async (userId, email, amount, metadata = {}) => {
       amount: Math.round(amount * 100),
       reference,
       callback_url: `${process.env.CLIENT_URL}/wallet`,
-      metadata: { userId: userId.toString(), ...metadata },
+      channels: ['card', 'bank', 'ussd', 'bank_transfer'],
+      metadata: {
+        userId: userId.toString(),
+        ...metadata,
+        custom_fields: [{
+          display_name: 'Payment purpose',
+          variable_name: 'payment_purpose',
+          value: 'BORHS wallet funding',
+        }],
+      },
     },
     {
       headers: {
