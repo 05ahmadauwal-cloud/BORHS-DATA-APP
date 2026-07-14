@@ -17,6 +17,14 @@
   --text-muted:   #94a3b8;
   --text-faint:   #64748b;
   --shadow:       0 20px 60px rgba(0,0,0,0.5);
+  --kyc-info-bg: rgba(37,99,235,0.09);
+  --kyc-info-border: rgba(96,165,250,0.3);
+  --kyc-info-text: #93c5fd;
+  --kyc-success-bg: rgba(16,185,129,0.09);
+  --kyc-success-border: rgba(52,211,153,0.3);
+  --kyc-success-text: #34d399;
+  --kyc-pending-bg: rgba(245,158,11,0.08);
+  --kyc-rejected-bg: rgba(239,68,68,0.08);
 }
 
 :root.light {
@@ -32,6 +40,14 @@
   --text-muted:   #475569;
   --text-faint:   #94a3b8;
   --shadow:       0 4px 24px rgba(0,0,0,0.08);
+  --kyc-info-bg: #eff6ff;
+  --kyc-info-border: #bfdbfe;
+  --kyc-info-text: #1d4ed8;
+  --kyc-success-bg: #ecfdf5;
+  --kyc-success-border: #a7f3d0;
+  --kyc-success-text: #047857;
+  --kyc-pending-bg: #fffbeb;
+  --kyc-rejected-bg: #fef2f2;
 }
 
 /* ─── Base ───────────────────────────────────────────────────────────────────── */
@@ -122,6 +138,19 @@
 
   /* Stat card */
   .stat-card { @apply card p-6 flex items-start gap-4; }
+
+  .kyc-info-panel {
+    background-color: var(--kyc-info-bg);
+    border-color: var(--kyc-info-border);
+  }
+  .kyc-info-text { color: var(--kyc-info-text); }
+  .kyc-success-panel {
+    background-color: var(--kyc-success-bg);
+    border-color: var(--kyc-success-border);
+  }
+  .kyc-success-text { color: var(--kyc-success-text); }
+  .kyc-pending-panel { background-color: var(--kyc-pending-bg); }
+  .kyc-rejected-panel { background-color: var(--kyc-rejected-bg); }
 
   /* Gradient text */
   .gradient-text { @apply bg-gradient-to-r from-primary-400 to-success-500 bg-clip-text text-transparent; }

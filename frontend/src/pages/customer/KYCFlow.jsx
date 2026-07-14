@@ -17,7 +17,7 @@ const ID_TYPES = [
 
 function StatusBadge({ status }) {
   if (status === 'approved') return (
-    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-success-500/15 text-success-400">
+    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-success-500/15 kyc-success-text">
       <CheckCircle size={10} /> Verified
     </span>
   );
@@ -215,13 +215,12 @@ export default function KYCFlow() {
   return (
     <div className="space-y-3">
       {/* Info banner */}
-      <div className="flex gap-3 p-4 rounded-2xl border"
-        style={{ background: 'rgba(37,99,235,0.07)', borderColor: 'rgba(37,99,235,0.2)' }}>
-        <Shield size={17} className="text-blue-400 shrink-0 mt-0.5" />
+      <div className="kyc-info-panel flex gap-3 p-4 rounded-2xl border">
+        <Shield size={17} className="kyc-info-text shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-bold text-blue-300">Identity Verification</p>
+          <p className="kyc-info-text text-sm font-bold">Identity Verification</p>
           <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            <strong className="text-blue-300">Tier 1 is required</strong> to use the platform. Tiers 2 &amp; 3 are optional and unlock higher transaction limits.
+            <strong className="kyc-info-text">Tier 1 is required</strong> to use the platform. Tiers 2 &amp; 3 are optional and unlock higher transaction limits.
           </p>
         </div>
       </div>
@@ -317,7 +316,7 @@ export default function KYCFlow() {
         {/* Pending state */}
         {t1Done && tier2?.status === 'pending' && (
           <div className="px-5 pb-5 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-            <div className="flex gap-3 p-3 rounded-xl" style={{ background: 'rgba(234,179,8,0.07)' }}>
+            <div className="kyc-pending-panel flex gap-3 p-3 rounded-xl">
               <Clock size={15} className="text-yellow-400 shrink-0 mt-0.5" />
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 Your ID documents are under review. This typically takes 1–24 hours. We'll notify you once reviewed.
@@ -329,7 +328,7 @@ export default function KYCFlow() {
         {/* Rejected state */}
         {t1Done && tier2?.status === 'rejected' && !resubmitT2 && (
           <div className="px-5 pb-5 border-t pt-4 space-y-3" style={{ borderColor: 'var(--border)' }}>
-            <div className="flex gap-3 p-3 rounded-xl" style={{ background: 'rgba(239,68,68,0.07)' }}>
+            <div className="kyc-rejected-panel flex gap-3 p-3 rounded-xl">
               <AlertCircle size={15} className="text-red-400 shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-semibold text-red-400">Rejection Reason</p>
@@ -375,7 +374,7 @@ export default function KYCFlow() {
 
         {t2Done && tier3?.status === 'pending' && (
           <div className="px-5 pb-5 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-            <div className="flex gap-3 p-3 rounded-xl" style={{ background: 'rgba(234,179,8,0.07)' }}>
+            <div className="kyc-pending-panel flex gap-3 p-3 rounded-xl">
               <Clock size={15} className="text-yellow-400 shrink-0 mt-0.5" />
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 Your selfie is under review. This usually takes a few hours.
@@ -386,7 +385,7 @@ export default function KYCFlow() {
 
         {t2Done && tier3?.status === 'rejected' && !resubmitT3 && (
           <div className="px-5 pb-5 border-t pt-4 space-y-3" style={{ borderColor: 'var(--border)' }}>
-            <div className="flex gap-3 p-3 rounded-xl" style={{ background: 'rgba(239,68,68,0.07)' }}>
+            <div className="kyc-rejected-panel flex gap-3 p-3 rounded-xl">
               <AlertCircle size={15} className="text-red-400 shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-semibold text-red-400">Rejection Reason</p>
@@ -402,15 +401,18 @@ export default function KYCFlow() {
 
       {/* Fully verified banner */}
       {allDone && (
-        <div className="card p-6 text-center space-y-3"
-          style={{ background: 'rgba(16,185,129,0.05)', borderColor: 'rgba(16,185,129,0.25)' }}>
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto"
-            style={{ background: 'rgba(16,185,129,0.12)' }}>
-            <CheckCircle size={32} className="text-success-400" />
+        <div className="kyc-success-panel rounded-2xl border p-6 text-center space-y-3">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto bg-success-500/15">
+            <CheckCircle size={32} className="kyc-success-text" />
           </div>
-          <p className="font-black text-lg text-success-400">Fully Verified!</p>
+          <div>
+            <p className="kyc-success-text font-black text-lg">Successfully Verified</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-faint)' }}>
+              Identity verification complete
+            </p>
+          </div>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            All 3 KYC tiers completed. Your account is fully unlocked.
+            All three KYC tiers have been verified successfully. Your account now has access to the highest available limits.
           </p>
         </div>
       )}
