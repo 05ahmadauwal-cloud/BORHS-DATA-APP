@@ -124,11 +124,11 @@ export default function Topbar({ onMenuClick }) {
           />
 
           {/* Panel */}
-          <div className="fixed z-50 animate-slide-up"
+          <div className="fixed safe-fixed-inset z-50 animate-slide-up"
             style={{
-              top: 0,
-              right: 0,
-              bottom: 0,
+              top: 'env(safe-area-inset-top, 0px)',
+              right: 'env(safe-area-inset-right, 0px)',
+              bottom: 'env(safe-area-inset-bottom, 0px)',
               width: '100%',
               maxWidth: '380px',
               display: 'flex',

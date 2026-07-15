@@ -44,6 +44,9 @@ app.use(helmet({
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
+  'http://localhost',
+  'https://localhost',
+  'capacitor://localhost',
   'https://borhs-data-app.onrender.com',
   process.env.CLIENT_URL,
 ].filter(Boolean);

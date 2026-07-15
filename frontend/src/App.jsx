@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import useAuthStore from './store/authStore';
 import useThemeStore from './store/themeStore';
 import useIdleLogout from './hooks/useIdleLogout';
+import NativeAppLifecycle from './components/common/NativeAppLifecycle';
 
 const PublicLayout = lazy(() => import('./components/layout/PublicLayout'));
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
@@ -45,9 +47,13 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import RoleRoute from './components/common/RoleRoute';
 
 export default function App() {
-  const { isAuthenticated, refreshUser, accessToken } = useAuthStore();
+  const { user, isAuthenticated, refreshUser, accessToken } = useAuthStore();
   const { initTheme } = useThemeStore();
   useIdleLogout();
+  const isNativeApp = Capacitor.isNativePlatform();
+  const dashboardHome = ['admin', 'super_admin'].includes(user?.role)
+    ? '/admin'
+    : user?.role === 'agent' ? '/agent' : '/dashboard';
 
   useEffect(() => {
     initTheme();
@@ -56,6 +62,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <NativeAppLifecycle />
       <Suspense fallback={(
         <div className="min-h-screen flex items-center justify-center bg-dark-950">
           <div className="flex items-center gap-3 text-sm font-semibold text-dark-300">
@@ -66,17 +73,21 @@ export default function App() {
       )}>
       <Routes>
         {/* Public */}
-        <Route element={<PublicLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/verify-email/:token" element={<VerifyEmail />} />
-        </Route>
+        {isNativeApp ? (
+          <Route path="/" element={<Navigate to={isAuthenticated ? dashboardHome : '/login'} replace />} />
+        ) : (
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
+          </Route>
+        )}
 
         {/* Auth */}
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
-        <Route path="/register" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />} />
+        <Route path="/login" element={isAuthenticated ? <Navigate to={dashboardHome} replace /> : <Login />} />
+        <Route path="/register" element={isAuthenticated ? <Navigate to={dashboardHome} replace /> : <Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
 
@@ -115,7 +126,7 @@ export default function App() {
           <Route path="/admin/notifications" element={<AdminNotifications />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to={isNativeApp ? (isAuthenticated ? dashboardHome : '/login') : '/'} replace />} />
       </Routes>
       </Suspense>
     </BrowserRouter>

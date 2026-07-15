@@ -84,6 +84,9 @@
 
   html {
     @apply scroll-smooth;
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
   }
 
   body {
@@ -92,7 +95,16 @@
     @apply font-sans antialiased;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     transition: background-color 0.2s ease, color 0.2s ease;
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    width: 100%;
+    min-height: 100dvh;
+    overflow-x: hidden;
   }
+
+  #root { min-height: 100dvh; width: 100%; }
 
   input, select, textarea, button { color-scheme: inherit; }
   select option { background-color: var(--bg-card); color: var(--text-primary); }
@@ -235,6 +247,23 @@
   }
   .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-none::-webkit-scrollbar { display: none; }
+
+  .safe-fixed-inset {
+    top: env(safe-area-inset-top, 0px);
+    right: env(safe-area-inset-right, 0px);
+    bottom: env(safe-area-inset-bottom, 0px);
+    left: env(safe-area-inset-left, 0px);
+  }
+  .safe-fixed-y {
+    top: env(safe-area-inset-top, 0px);
+    bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 
 }
 

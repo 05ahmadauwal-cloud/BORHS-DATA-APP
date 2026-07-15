@@ -50,7 +50,7 @@ function PinGate() {
   };
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center p-4"
+    <div className="fixed inset-0 safe-fixed-inset z-40 flex items-center justify-center p-4 overflow-y-auto"
       style={{ background: 'rgba(2,6,23,0.9)' }}>
       <form onSubmit={submitPin} className="card w-full max-w-sm space-y-5 p-5 sm:p-6">
         <div className="flex items-start gap-3">
@@ -115,7 +115,7 @@ function PinGate() {
 
 function KYCGate() {
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center p-4"
+    <div className="fixed inset-0 safe-fixed-inset z-40 flex items-center justify-center p-4 overflow-y-auto"
       style={{ background: 'rgba(2,6,23,0.92)', backdropFilter: 'blur(12px)' }}>
       <div className="w-full max-w-sm text-center space-y-6 animate-fade-in">
         {/* Icon */}
@@ -204,17 +204,17 @@ export default function DashboardLayout() {
       <div className="mobile-safe-shell flex-1 flex flex-col min-w-0 lg:ml-64">
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
+        <main className="flex-1 min-w-0 w-full p-3 sm:p-4 md:p-6 lg:p-8 pb-24 lg:pb-8 overflow-x-hidden">
           <Outlet />
         </main>
 
         <WhatsAppButton />
 
         {/* Mobile bottom navigation */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-20">
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-20 safe-bottom">
           {/* bar */}
           <div
-            className="relative bg-dark-900 border-t border-white/[0.07] px-1 pb-safe"
+            className="relative bg-dark-900 border-t border-white/[0.07] px-1"
             style={{ borderRadius: '22px 22px 0 0', boxShadow: '0 -8px 32px rgba(0,0,0,0.45)' }}
           >
             <div className="flex items-end justify-around h-[62px]">
