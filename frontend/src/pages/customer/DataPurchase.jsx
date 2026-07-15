@@ -213,7 +213,7 @@ export default function DataPurchase() {
                     <option value="" disabled>Select a plan</option>
                     {plans.map((plan) => (
                       <option key={plan._id} value={plan._id}>
-                        {`${formatPlanSize(plan)} · ₦${effectivePrice(plan).toLocaleString()}`}
+                        {`${formatPlanSize(plan)} · ₦${effectivePrice(plan).toLocaleString()}${plan.validity ? ` · ${plan.validity}` : ''}`}
                       </option>
                     ))}
                   </select>
