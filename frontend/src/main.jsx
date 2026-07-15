@@ -4,7 +4,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'react-hot-toast';
 import App from './App';
+import useThemeStore from './store/themeStore';
 import './index.css';
+
+// Apply the persisted theme before React paints to avoid a light/dark flash.
+useThemeStore.getState().initTheme();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,18 +32,18 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         toastOptions={{
           duration: 4000,
           style: {
-            background: '#1e293b',
-            color: '#f1f5f9',
-            border: '1px solid #334155',
+            background: 'var(--bg-card)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border)',
             borderRadius: '12px',
             padding: '12px 16px',
             fontSize: '14px',
           },
           success: {
-            iconTheme: { primary: '#10B981', secondary: '#f1f5f9' },
+            iconTheme: { primary: '#10B981', secondary: 'var(--bg-card)' },
           },
           error: {
-            iconTheme: { primary: '#ef4444', secondary: '#f1f5f9' },
+            iconTheme: { primary: '#ef4444', secondary: 'var(--bg-card)' },
           },
         }}
       />

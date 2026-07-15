@@ -5,6 +5,18 @@
 /* ─── CSS Variables ──────────────────────────────────────────────────────────── */
 :root {
   /* Dark theme (default) */
+  color-scheme: dark;
+  --color-dark-50: 248 250 252;
+  --color-dark-100: 241 245 249;
+  --color-dark-200: 226 232 240;
+  --color-dark-300: 203 213 225;
+  --color-dark-400: 148 163 184;
+  --color-dark-500: 100 116 139;
+  --color-dark-600: 71 85 105;
+  --color-dark-700: 51 65 85;
+  --color-dark-800: 30 41 59;
+  --color-dark-900: 15 23 42;
+  --color-dark-950: 2 6 23;
   --bg-base:      #020617;
   --bg-surface:   #0f172a;
   --bg-card:      #1e293b;
@@ -28,6 +40,19 @@
 }
 
 :root.light {
+  color-scheme: light;
+  /* Theme-aware values for every legacy dark-* utility in the app. */
+  --color-dark-50: 15 23 42;
+  --color-dark-100: 30 41 59;
+  --color-dark-200: 51 65 85;
+  --color-dark-300: 71 85 105;
+  --color-dark-400: 100 116 139;
+  --color-dark-500: 148 163 184;
+  --color-dark-600: 203 213 225;
+  --color-dark-700: 226 232 240;
+  --color-dark-800: 255 255 255;
+  --color-dark-900: 255 255 255;
+  --color-dark-950: 241 245 249;
   --bg-base:      #f1f5f9;
   --bg-surface:   #ffffff;
   --bg-card:      #ffffff;
@@ -68,6 +93,9 @@
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     transition: background-color 0.2s ease, color 0.2s ease;
   }
+
+  input, select, textarea, button { color-scheme: inherit; }
+  select option { background-color: var(--bg-card); color: var(--text-primary); }
 
   ::-webkit-scrollbar { @apply w-1.5 h-1.5; }
   ::-webkit-scrollbar-track { background: var(--bg-surface); }
@@ -208,38 +236,6 @@
   .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
   .scrollbar-none::-webkit-scrollbar { display: none; }
 
-  /* Light mode specific overrides */
-  :root.light .bg-dark-950 { background-color: var(--bg-base) !important; }
-  :root.light .bg-dark-900 { background-color: var(--bg-surface) !important; }
-  :root.light .bg-dark-800 { background-color: var(--bg-card) !important; }
-  :root.light .bg-dark-700 { background-color: var(--bg-elevated) !important; }
-  :root.light .bg-dark-700\/50 { background-color: rgba(248,250,252,0.8) !important; }
-  :root.light .bg-dark-800\/50 { background-color: rgba(255,255,255,0.8) !important; }
-  :root.light .bg-dark-800\/80 { background-color: rgba(255,255,255,0.9) !important; }
-
-  :root.light .text-dark-50  { color: #0f172a !important; }
-  :root.light .text-dark-100 { color: #1e293b !important; }
-  :root.light .text-dark-200 { color: #334155 !important; }
-  :root.light .text-dark-300 { color: #475569 !important; }
-  :root.light .text-dark-400 { color: #64748b !important; }
-  :root.light .text-dark-500 { color: #94a3b8 !important; }
-  :root.light .text-dark-600 { color: #cbd5e1 !important; }
-
-  :root.light .border-dark-700\/50 { border-color: #e2e8f0 !important; }
-  :root.light .border-dark-700    { border-color: #e2e8f0 !important; }
-  :root.light .border-dark-600    { border-color: #cbd5e1 !important; }
-
-  :root.light .divide-dark-700\/50 > * { border-color: #e2e8f0 !important; }
-  :root.light .divide-dark-700\/40 > * { border-color: #e2e8f0 !important; }
-
-  :root.light .hover\:bg-dark-700\/20:hover { background-color: rgba(226,232,240,0.5) !important; }
-  :root.light .hover\:bg-dark-700\/30:hover { background-color: rgba(226,232,240,0.7) !important; }
-  :root.light .hover\:bg-dark-700\/60:hover { background-color: rgba(226,232,240,0.9) !important; }
-  :root.light .active\:bg-dark-700\/30:active { background-color: rgba(226,232,240,0.7) !important; }
-
-  :root.light .bg-dark-900\/80 { background-color: rgba(255,255,255,0.9) !important; }
-  :root.light .bg-dark-900\/90 { background-color: rgba(255,255,255,0.95) !important; }
-  :root.light .bg-dark-900\/95 { background-color: rgba(255,255,255,0.97) !important; }
 }
 
 /* ─── Animations ─────────────────────────────────────────────────────────────── */
