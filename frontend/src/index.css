@@ -17,6 +17,26 @@
   --color-dark-800: 30 41 59;
   --color-dark-900: 15 23 42;
   --color-dark-950: 2 6 23;
+  --color-primary-50: 239 246 255;
+  --color-primary-100: 219 234 254;
+  --color-primary-200: 191 219 254;
+  --color-primary-300: 147 197 253;
+  --color-primary-400: 96 165 250;
+  --color-primary-500: 59 130 246;
+  --color-primary-600: 37 99 235;
+  --color-primary-700: 29 78 216;
+  --color-primary-800: 30 64 175;
+  --color-primary-900: 30 58 138;
+  --color-success-50: 236 253 245;
+  --color-success-100: 209 250 229;
+  --color-success-200: 167 243 208;
+  --color-success-300: 110 231 183;
+  --color-success-400: 52 211 153;
+  --color-success-500: 16 185 129;
+  --color-success-600: 5 150 105;
+  --color-success-700: 4 120 87;
+  --color-success-800: 6 95 70;
+  --color-success-900: 6 78 59;
   --bg-base:      #020617;
   --bg-surface:   #0f172a;
   --bg-card:      #1e293b;
@@ -25,9 +45,9 @@
   --border:       rgba(51,65,85,0.5);
   --border-hover: #475569;
   --text-primary: #f1f5f9;
-  --text-secondary:#cbd5e1;
-  --text-muted:   #94a3b8;
-  --text-faint:   #64748b;
+  --text-secondary:#d7e0eb;
+  --text-muted:   #a7b4c5;
+  --text-faint:   #7f8fa8;
   --shadow:       0 20px 60px rgba(0,0,0,0.5);
   --kyc-info-bg: rgba(37,99,235,0.09);
   --kyc-info-border: rgba(96,165,250,0.3);
@@ -53,6 +73,27 @@
   --color-dark-800: 255 255 255;
   --color-dark-900: 255 255 255;
   --color-dark-950: 241 245 249;
+  /* Stronger foreground shades maintain WCAG-friendly contrast on white. */
+  --color-primary-50: 239 246 255;
+  --color-primary-100: 219 234 254;
+  --color-primary-200: 191 219 254;
+  --color-primary-300: 29 78 216;
+  --color-primary-400: 37 99 235;
+  --color-primary-500: 29 78 216;
+  --color-primary-600: 29 78 216;
+  --color-primary-700: 30 64 175;
+  --color-primary-800: 30 58 138;
+  --color-primary-900: 23 37 84;
+  --color-success-50: 236 253 245;
+  --color-success-100: 209 250 229;
+  --color-success-200: 167 243 208;
+  --color-success-300: 4 120 87;
+  --color-success-400: 4 120 87;
+  --color-success-500: 4 120 87;
+  --color-success-600: 6 95 70;
+  --color-success-700: 6 78 59;
+  --color-success-800: 2 44 34;
+  --color-success-900: 1 31 24;
   --bg-base:      #f1f5f9;
   --bg-surface:   #ffffff;
   --bg-card:      #ffffff;
@@ -63,7 +104,7 @@
   --text-primary: #0f172a;
   --text-secondary:#1e293b;
   --text-muted:   #475569;
-  --text-faint:   #94a3b8;
+  --text-faint:   #64748b;
   --shadow:       0 4px 24px rgba(0,0,0,0.08);
   --kyc-info-bg: #eff6ff;
   --kyc-info-border: #bfdbfe;
@@ -164,6 +205,14 @@
     color: var(--text-primary);
   }
   .input::placeholder { color: var(--text-faint); }
+  .input:-webkit-autofill,
+  .input:-webkit-autofill:hover,
+  .input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text-primary);
+    caret-color: var(--text-primary);
+    box-shadow: 0 0 0 1000px var(--bg-input) inset;
+    transition: background-color 9999s ease-out;
+  }
   .input-error { @apply border-red-500 focus:ring-red-500/50 focus:border-red-500; }
 
   .label { @apply block text-sm font-medium mb-1.5; color: var(--text-muted); }
@@ -321,3 +370,22 @@
     transform: none !important;
   }
 }
+
+/* Contrast-safe semantic foregrounds for light surfaces. These utilities are
+   intentionally scoped to light mode; dark mode keeps the brighter accents. */
+:root.light .text-red-300,
+:root.light .text-red-400 { color: #b91c1c !important; }
+:root.light .text-yellow-300,
+:root.light .text-yellow-400 { color: #92400e !important; }
+:root.light .text-orange-300,
+:root.light .text-orange-400 { color: #c2410c !important; }
+:root.light .text-green-400,
+:root.light .text-emerald-400 { color: #047857 !important; }
+:root.light .text-blue-400 { color: #1d4ed8 !important; }
+:root.light .text-purple-300,
+:root.light .text-purple-400 { color: #6d28d9 !important; }
+
+/* dark-* is also used as a surface palette, so foreground contrast is
+   corrected here without lightening cards, borders, inputs, or skeletons. */
+:root.dark .text-dark-500 { color: #94a3b8 !important; }
+:root.dark .text-dark-600 { color: #7f8fa8 !important; }
