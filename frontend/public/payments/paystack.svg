@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-labelledby="title">
+  <title id="title">Paystack</title>
+  <rect width="48" height="48" rx="12" fill="#0BA4DB"/>
+  <path fill="#fff" d="M12 12h23.5a3.5 3.5 0 1 1 0 7H12v-7Zm0 9.5h19a3.5 3.5 0 1 1 0 7H12v-7Zm0 9.5h14.5a3.5 3.5 0 1 1 0 7H12v-7Z"/>
+</svg>

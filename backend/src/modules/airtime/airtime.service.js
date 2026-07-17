@@ -28,7 +28,10 @@ const purchaseAirtime = async (userId, body) => {
   const price = Math.ceil(amount * (1 - discountRate));
 
   if (user.walletBalance < price) {
-    throw Object.assign(new Error('Insufficient wallet balance'), { statusCode: 400 });
+    throw Object.assign(
+      new Error(`Insufficient funds. Required: ₦${price.toLocaleString()}, Available: ₦${user.walletBalance.toLocaleString()}`),
+      { statusCode: 400 }
+    );
   }
 
   const reference = generateReference('AIR');

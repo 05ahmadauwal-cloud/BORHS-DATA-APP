@@ -25,6 +25,10 @@ export default function Airtime() {
   const [pin, setPin] = useState('');
   const [pinAttempts, setPinAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState(null);
+  const walletBalance = Number(user?.walletBalance) || 0;
+  const airtimeAmount = Number(form.amount) || 0;
+  const insufficientFunds = airtimeAmount > walletBalance;
+  const amountShort = Math.max(0, airtimeAmount - walletBalance);
 
   const mutation = useMutation({
     mutationFn: (payload) => airtimeAPI.purchase(payload),
@@ -148,18 +152,28 @@ export default function Airtime() {
               onChange={(e) => setForm({ ...form, amount: e.target.value })}
             />
             <p className="text-xs text-dark-500 mt-1">Balance: ₦{(Number(user?.walletBalance) || 0).toLocaleString()}</p>
+            {insufficientFunds && (
+              <div className="flex items-start gap-2 mt-3 p-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400">
+                <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+                <p className="text-xs font-semibold">
+                  Insufficient funds. Add ₦{amountShort.toLocaleString()} to your wallet to buy this airtime.
+                </p>
+              </div>
+            )}
           </div>
 
           <button
             onClick={() => {
               if (!form.phone) return toast.error('Enter phone number');
               if (!form.amount || Number(form.amount) < 100) return toast.error('Minimum amount is ₦100');
+              if (insufficientFunds) return toast.error(`Insufficient funds. You need ₦${amountShort.toLocaleString()} more.`);
               const detected = detectNetwork(form.phone);
               if (isPhoneComplete(form.phone) && detected && detected !== form.network) {
                 return toast.error(`This number belongs to ${NETWORK_LABELS[detected]}, not ${NETWORK_LABELS[form.network]}. Please correct the selection.`, { duration: 5000 });
               }
               setStep(2);
             }}
+            disabled={!form.phone || !form.amount || Number(form.amount) < 100 || insufficientFunds}
             className="btn-primary w-full btn-lg"
           >
             Continue
@@ -192,6 +206,7 @@ export default function Airtime() {
                 <button
                   onClick={() => {
                     if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
+                    if (Number(form.amount) > (Number(user?.walletBalance) || 0)) return toast.error('Insufficient funds. Please fund your wallet and try again.');
                     if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
                     mutation.mutate({ ...form, pin });
                   }}

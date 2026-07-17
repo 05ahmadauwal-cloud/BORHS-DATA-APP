@@ -506,7 +506,10 @@ export default function Wallet() {
           <div>
             <label className="label">Choose payment provider</label>
             <div className="grid grid-cols-2 gap-3">
-              {[['paystack', 'Paystack', 'Card · Transfer · USSD'], ['flutterwave', 'Flutterwave', 'Card · Bank · USSD']].filter(([id]) => fm[id]).map(([id, name, desc]) => (
+              {[
+                ['paystack', 'Paystack', 'Card · Transfer · USSD', '/payments/paystack.svg'],
+                ['flutterwave', 'Flutterwave', 'Card · Bank · USSD', '/payments/flutterwave.svg'],
+              ].filter(([id]) => fm[id]).map(([id, name, desc, logo]) => (
                 <button
                   key={id}
                   onClick={() => setGateway(id)}
@@ -515,10 +518,13 @@ export default function Wallet() {
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className={`text-sm font-bold ${gateway === id ? 'text-primary-300' : 'text-dark-300'}`}>{name}</p>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img src={logo} alt="" className="w-9 h-9 rounded-lg shrink-0" />
+                      <p className={`text-sm font-bold truncate ${gateway === id ? 'text-primary-300' : 'text-dark-300'}`}>{name}</p>
+                    </div>
                     {gateway === id && <CheckCircle size={15} className="text-primary-400" />}
                   </div>
-                  <p className="text-[10px] text-dark-500 mt-0.5">{desc}</p>
+                  <p className="text-[10px] text-dark-500 mt-1.5 pl-[46px]">{desc}</p>
                 </button>
               ))}
             </div>
