@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { airtimeAPI } from '../../api';
 import { Phone, CheckCircle, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -30,12 +30,30 @@ export default function Airtime() {
   const insufficientFunds = airtimeAmount > walletBalance;
   const amountShort = Math.max(0, airtimeAmount - walletBalance);
 
+  const { data: recentRecipients = [] } = useQuery({
+    queryKey: ['airtime-recipient-history'],
+    queryFn: () => airtimeAPI.getHistory({ limit: 30 }),
+    select: (res) => {
+      const seen = new Set();
+      return (res.data?.data || [])
+        .filter((item) => item.status === 'success' && item.phone)
+        .filter((item) => {
+          if (seen.has(item.phone)) return false;
+          seen.add(item.phone);
+          return true;
+        })
+        .slice(0, 5);
+    },
+    staleTime: 60_000,
+  });
+
   const mutation = useMutation({
     mutationFn: (payload) => airtimeAPI.purchase(payload),
     onSuccess: (res) => {
       const purchase = res.data?.purchase || {};
       updateUser({ walletBalance: Number(user?.walletBalance || 0) - Number(form.amount) });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      queryClient.invalidateQueries({ queryKey: ['airtime-recipient-history'] });
       setReceipt({
         type: 'airtime',
         reference: purchase.reference,
@@ -109,6 +127,25 @@ export default function Airtime() {
                 }
               }}
             />
+            {recentRecipients.some((recipient) => !form.phone || recipient.phone.includes(form.phone)) && form.phone.length < 11 && (
+              <div className="mt-3">
+                <p className="text-[11px] font-semibold mb-2" style={{ color: 'var(--text-muted)' }}>Recent recipients</p>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {recentRecipients.filter((recipient) => !form.phone || recipient.phone.includes(form.phone)).map((recipient) => (
+                    <button
+                      key={recipient.phone}
+                      type="button"
+                      onClick={() => setForm({ ...form, phone: recipient.phone, network: recipient.network || form.network })}
+                      className="shrink-0 px-3 py-2 rounded-xl border text-left transition-colors hover:border-primary-500/50"
+                      style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)' }}
+                    >
+                      <span className="block text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{recipient.phone}</span>
+                      <span className="block text-[10px] uppercase mt-0.5" style={{ color: 'var(--text-muted)' }}>{recipient.network}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {/* Detection badge */}
             {isPhoneComplete(form.phone) && (
               <div className={`flex items-center gap-1.5 mt-1.5 text-xs font-medium ${

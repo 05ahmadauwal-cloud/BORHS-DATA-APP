@@ -56,12 +56,30 @@ export default function DataPurchase() {
     select: (res) => res.data.plans,
   });
 
+  const { data: recentRecipients = [] } = useQuery({
+    queryKey: ['data-recipient-history'],
+    queryFn: () => dataAPI.getHistory({ limit: 30 }),
+    select: (res) => {
+      const seen = new Set();
+      return (res.data?.data || [])
+        .filter((item) => item.status === 'success' && item.phone)
+        .filter((item) => {
+          if (seen.has(item.phone)) return false;
+          seen.add(item.phone);
+          return true;
+        })
+        .slice(0, 5);
+    },
+    staleTime: 60_000,
+  });
+
   const purchaseMutation = useMutation({
     mutationFn: (payload) => dataAPI.purchase(payload),
     onSuccess: (res) => {
       const purchase = res.data?.purchase || {};
       updateUser({ walletBalance: Number(user?.walletBalance || 0) - effectivePrice(selectedPlan) });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      queryClient.invalidateQueries({ queryKey: ['data-recipient-history'] });
       setReceipt({
         type: 'data',
         reference: purchase.reference,
@@ -240,6 +258,28 @@ export default function DataPurchase() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
+            {recentRecipients.some((recipient) => !phone || recipient.phone.includes(phone)) && phone.length < 11 && (
+              <div className="mt-3">
+                <p className="text-[11px] font-semibold mb-2" style={{ color: 'var(--text-muted)' }}>Recent recipients</p>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {recentRecipients.filter((recipient) => !phone || recipient.phone.includes(phone)).map((recipient) => (
+                    <button
+                      key={recipient.phone}
+                      type="button"
+                      onClick={() => {
+                        setPhone(recipient.phone);
+                        if (recipient.network) setNetwork(recipient.network);
+                      }}
+                      className="shrink-0 px-3 py-2 rounded-xl border text-left transition-colors hover:border-primary-500/50"
+                      style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)' }}
+                    >
+                      <span className="block text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{recipient.phone}</span>
+                      <span className="block text-[10px] uppercase mt-0.5" style={{ color: 'var(--text-muted)' }}>{recipient.network}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {/* Network detection feedback */}
             {phoneComplete && (
               <div className={`flex items-center gap-1.5 mt-1.5 text-xs font-medium ${networkMismatch ? 'text-red-400' : 'text-success-500'}`}>
