@@ -6,7 +6,7 @@ const { generateReference, paginate, paginateResponse } = require('../../utils/h
 const { TRANSACTION_TYPES, TRANSACTION_STATUS, WALLET_LIMITS } = require('../../config/constants');
 const { notifyTransaction } = require('../notification/notification.service');
 
-const CHARGEABLE_GATEWAYS = ['paystack', 'monnify', 'flutterwave'];
+const CHARGEABLE_GATEWAYS = ['paystack', 'monnify', 'flutterwave', 'billstack'];
 
 const computeDepositCharge = async (amount, gateway) => {
   if (!CHARGEABLE_GATEWAYS.includes(gateway)) return { fee: 0, creditAmount: amount };

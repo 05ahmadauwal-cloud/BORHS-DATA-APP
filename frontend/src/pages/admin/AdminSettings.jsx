@@ -217,6 +217,7 @@ export default function AdminSettings() {
             { key: 'funding_bank_transfer', label: 'Bank Transfer (Monnify)', desc: 'Customers pay via dedicated bank account' },
             { key: 'funding_paystack', label: 'Paystack (Card / Transfer)', desc: 'Online payment via Paystack checkout' },
             { key: 'funding_flutterwave', label: 'Flutterwave (Card / Transfer)', desc: 'Online payment via Flutterwave checkout' },
+            { key: 'funding_billstack', label: 'Billstack (Bank Transfer)', desc: 'Dedicated virtual account powered by Billstack' },
           ].map(({ key, label, desc }) => (
             <div key={key} className="flex items-center justify-between gap-4">
               <div>
@@ -224,7 +225,7 @@ export default function AdminSettings() {
                 <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{desc}</p>
               </div>
               <ToggleSwitch
-                checked={form[key] !== false}
+                checked={key === 'funding_billstack' ? form[key] === true : form[key] !== false}
                 onChange={(v) => set(key, v)}
                 colorOn="bg-blue-600"
               />

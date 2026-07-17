@@ -1,6 +1,6 @@
-import { Menu, Bell, Wallet, Sun, Moon, X, CheckCheck } from 'lucide-react';
+import { Menu, Bell, Wallet, Sun, Moon, X, CheckCheck, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useIsFetching } from '@tanstack/react-query';
 import { notificationAPI } from '../../api';
 import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
@@ -13,6 +13,11 @@ export default function Topbar({ onMenuClick }) {
   const { theme, toggleTheme } = useThemeStore();
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const isFetching = useIsFetching();
+
+  const refreshAppData = async () => {
+    await queryClient.invalidateQueries();
+  };
 
   const { data: notifications } = useQuery({
     queryKey: ['notifications', 'unread'],
@@ -71,6 +76,17 @@ export default function Topbar({ onMenuClick }) {
               ₦{balance.toLocaleString()}
             </span>
           </Link>
+
+          <button
+            onClick={refreshAppData}
+            disabled={isFetching > 0}
+            className="p-2 rounded-xl transition-colors hover:bg-dark-700/60 disabled:opacity-60"
+            title="Refresh app data"
+            aria-label="Refresh app data"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <RefreshCw size={18} className={isFetching > 0 ? 'animate-spin' : ''} />
+          </button>
 
           {/* Theme toggle */}
           <button

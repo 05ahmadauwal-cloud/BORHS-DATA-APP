@@ -126,6 +126,15 @@ const userSchema = new mongoose.Schema(
         },
       ],
     },
+    billstackVirtualAccount: {
+      reference: String,
+      accountName: String,
+      accounts: [{
+        accountNumber: String,
+        bankName: String,
+        bankCode: String,
+      }],
+    },
     agentLevel: {
       type: Number,
       default: 0,

@@ -74,10 +74,11 @@ router.get('/banner', cachePublicResponse(30), async (req, res) => {
 // Public funding methods — which payment channels are enabled
 router.get('/funding-methods', cachePublicResponse(30), async (req, res) => {
   const Settings = require('../models/Settings');
-  const [bankTransfer, paystack, flutterwave] = await Promise.all([
+  const [bankTransfer, paystack, flutterwave, billstack] = await Promise.all([
     Settings.get('funding_bank_transfer', true),
     Settings.get('funding_paystack', true),
     Settings.get('funding_flutterwave', true),
+    Settings.get('funding_billstack', false),
   ]);
   res.json({
     success: true,
@@ -85,6 +86,7 @@ router.get('/funding-methods', cachePublicResponse(30), async (req, res) => {
       bankTransfer: bankTransfer !== false,
       paystack: paystack !== false,
       flutterwave: flutterwave !== false,
+      billstack: billstack !== false,
     },
   });
 });

@@ -165,6 +165,38 @@ const handleMonnifyWebhook = async (rawBody, signature) => {
   logger.info(`Monnify wallet funded: userId=${user._id}, amount=${amountPaid}, ref=${transactionReference}`);
 };
 
+// Billstack reserved-account payment notifications
+const handleBillstackWebhook = async (rawBody, signature) => {
+  const { verifyWebhookSignature } = require('../../services/billstack');
+  if (!verifyWebhookSignature(signature)) {
+    throw Object.assign(new Error('Invalid Billstack webhook signature'), { statusCode: 401 });
+  }
+
+  const body = typeof rawBody === 'string' ? JSON.parse(rawBody) : rawBody;
+  if (body?.event !== 'PAYMENT_NOTIFICATION' && body?.event !== 'PAYMENT_NOTIFIFICATION') return;
+  if (body?.data?.type !== 'RESERVED_ACCOUNT_TRANSACTION') return;
+
+  const { reference, merchant_reference: merchantReference, amount, payer } = body.data;
+  const user = await User.findOne({ 'billstackVirtualAccount.reference': merchantReference });
+  if (!user) {
+    logger.warn(`Billstack webhook: could not resolve user for merchant ref ${merchantReference}`);
+    return;
+  }
+
+  const existing = await Transaction.findOne({ externalReference: reference });
+  if (existing) return;
+
+  const amountNGN = Number(amount);
+  if (!Number.isFinite(amountNGN) || amountNGN <= 0) throw new Error('Invalid Billstack payment amount');
+
+  await fundWallet(user._id, amountNGN, 'billstack', reference, {
+    merchantReference,
+    payerAccount: payer?.account_number,
+    payerName: [payer?.first_name, payer?.last_name].filter(Boolean).join(' '),
+  });
+  logger.info(`Billstack wallet funded: userId=${user._id}, amount=${amountNGN}, ref=${reference}`);
+};
+
 module.exports = {
   paystackInitialize,
   paystackVerify,
@@ -175,4 +207,5 @@ module.exports = {
   verifyFlutterwaveWebhook,
   handleFlutterwaveWebhook,
   handleMonnifyWebhook,
+  handleBillstackWebhook,
 };

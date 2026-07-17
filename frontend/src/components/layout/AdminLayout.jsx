@@ -1,8 +1,9 @@
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import {
   BarChart3, Users, History, Settings, Shield, Zap,
-  LogOut, LayoutDashboard, Menu, X, Star, Tag, Megaphone, Sun, Moon,
+  LogOut, LayoutDashboard, Menu, X, Star, Tag, Megaphone, Sun, Moon, RefreshCw,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
@@ -27,6 +28,12 @@ export default function AdminLayout() {
   const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const isFetching = useIsFetching();
+
+  const refreshAppData = async () => {
+    await queryClient.invalidateQueries();
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -108,6 +115,16 @@ export default function AdminLayout() {
           <Link to="/dashboard" className="text-xs text-dark-400 hover:text-dark-200 transition-colors hidden sm:block">
             ← Customer View
           </Link>
+          <button
+            onClick={refreshAppData}
+            disabled={isFetching > 0}
+            className="p-2 rounded-xl transition-colors hover:bg-dark-700/60 disabled:opacity-60"
+            style={{ color: 'var(--text-muted)' }}
+            title="Refresh app data"
+            aria-label="Refresh app data"
+          >
+            <RefreshCw size={17} className={isFetching > 0 ? 'animate-spin' : ''} />
+          </button>
           <button
             onClick={toggleTheme}
             className="p-2 rounded-xl transition-colors hover:bg-dark-700/60"

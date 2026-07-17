@@ -10,7 +10,7 @@ import {
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
-const ALL_TABS = ['Bank Transfer', 'Online Payment', 'Promo Code', 'Send Money', 'History'];
+const ALL_TABS = ['Bank Transfer', 'Billstack', 'Online Payment', 'Promo Code', 'Send Money', 'History'];
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 const isCredit = (type) => [
   'wallet_fund', 'commission_earned', 'referral_bonus', 'refund',
@@ -85,13 +85,16 @@ function CopyButton({ text }) {
   );
 }
 
-function BankTransferTab({ chargeType, chargeValue }) {
+function BankTransferTab({ chargeType, chargeValue, provider = 'monnify' }) {
   const queryClient = useQueryClient();
   const [previewAmt, setPreviewAmt] = useState('');
+  const isBillstack = provider === 'billstack';
 
   const { data: vaRes, isLoading, isError, refetch } = useQuery({
-    queryKey: ['virtual-account'],
-    queryFn: () => paymentAPI.getVirtualAccount(),
+    queryKey: [isBillstack ? 'billstack-virtual-account' : 'virtual-account'],
+    queryFn: () => isBillstack
+      ? paymentAPI.getBillstackVirtualAccount()
+      : paymentAPI.getVirtualAccount(),
     select: (res) => res.data?.virtualAccount,
     retry: 1,
   });
@@ -107,7 +110,7 @@ function BankTransferTab({ chargeType, chargeValue }) {
         <Banknote size={18} className="text-primary-400 shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-            Your Dedicated Account Number
+            {isBillstack ? 'Your Billstack Account Number' : 'Your Dedicated Account Number'}
           </p>
           <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
             Transfer any amount to this account from any Nigerian bank. Your wallet is credited automatically within seconds.
@@ -272,10 +275,11 @@ export default function Wallet() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const fm = fundingMethods || { bankTransfer: true, paystack: true, flutterwave: true };
+  const fm = fundingMethods || { bankTransfer: true, billstack: false, paystack: true, flutterwave: true };
   const hasAnyOnline = fm.paystack || fm.flutterwave;
   const TABS = ALL_TABS.filter((t) => {
     if (t === 'Bank Transfer' && !fm.bankTransfer) return false;
+    if (t === 'Billstack' && !fm.billstack) return false;
     if (t === 'Online Payment' && !hasAnyOnline) return false;
     return true;
   });
@@ -433,6 +437,10 @@ export default function Wallet() {
       {/* Bank Transfer Tab */}
       {activeTab === 'Bank Transfer' && fm.bankTransfer && (
         <BankTransferTab chargeType={chargeInfo?.type} chargeValue={chargeInfo?.value} />
+      )}
+
+      {activeTab === 'Billstack' && fm.billstack && (
+        <BankTransferTab provider="billstack" chargeType={chargeInfo?.type} chargeValue={chargeInfo?.value} />
       )}
 
       {/* Online Payment Tab */}

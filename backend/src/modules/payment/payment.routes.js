@@ -9,6 +9,7 @@ const asyncHandler = require('express-async-handler');
 // Webhooks (no auth) — Monnify needs raw body for HMAC verification
 router.post('/webhook/paystack', express.raw({ type: 'application/json' }), asyncHandler(ctrl.paystackWebhook));
 router.post('/webhook/flutterwave', asyncHandler(ctrl.flutterwaveWebhook));
+router.post('/webhook/billstack', asyncHandler(ctrl.billstackWebhook));
 router.post(
   '/webhook/monnify',
   express.raw({ type: 'application/json' }),
@@ -23,5 +24,6 @@ router.get('/paystack/verify/:reference', asyncHandler(ctrl.verifyPaystack));
 router.post('/flutterwave/initialize', [body('amount').isNumeric().toFloat()], validate, asyncHandler(ctrl.initializeFlutterwave));
 router.get('/flutterwave/verify/:transaction_id', asyncHandler(ctrl.verifyFlutterwave));
 router.get('/virtual-account', asyncHandler(ctrl.getOrCreateVirtualAccount));
+router.get('/billstack/virtual-account', asyncHandler(ctrl.getOrCreateBillstackAccount));
 
 module.exports = router;

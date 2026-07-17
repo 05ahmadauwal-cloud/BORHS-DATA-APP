@@ -172,8 +172,42 @@ const getOrCreateVirtualAccount = async (req, res) => {
   return ApiResponse.success(res, { virtualAccount: user.monnifyVirtualAccount });
 };
 
+const getOrCreateBillstackAccount = async (req, res) => {
+  const Settings = require('../../models/Settings');
+  const enabled = await Settings.get('funding_billstack', false);
+  if (enabled === false) return ApiResponse.error(res, 'Billstack payments are currently disabled', 403);
+
+  const User = require('../../models/User');
+  let user = await User.findById(req.user._id);
+  if (!user.billstackVirtualAccount?.reference) {
+    try {
+      const { createReservedAccount } = require('../../services/billstack');
+      const account = await createReservedAccount(user);
+      user = await User.findByIdAndUpdate(req.user._id, { billstackVirtualAccount: account }, { new: true });
+    } catch (error) {
+      logger.error('Billstack account creation failed:', error.response?.data || error.message);
+      return ApiResponse.error(res, 'Billstack account is not available yet. Please try again later.', 503);
+    }
+  }
+  return ApiResponse.success(res, { virtualAccount: user.billstackVirtualAccount });
+};
+
+const billstackWebhook = async (req, res) => {
+  const signature = req.headers['x-wiaxy-signature'];
+  const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : JSON.stringify(req.body);
+
+  try {
+    await paymentService.handleBillstackWebhook(rawBody, signature);
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    logger.error('Billstack webhook error:', error.message);
+    return res.status(error.statusCode || 400).json({ success: false });
+  }
+};
+
 module.exports = {
   initializePaystack, verifyPaystack, paystackWebhook,
   initializeFlutterwave, verifyFlutterwave, flutterwaveWebhook,
   monnifyWebhook, getOrCreateVirtualAccount,
+  billstackWebhook, getOrCreateBillstackAccount,
 };

@@ -33,6 +33,7 @@ export const paymentAPI = {
   initializeFlutterwave: (amount) => api.post('/payment/flutterwave/initialize', { amount }),
   verifyFlutterwave: (transactionId) => api.get(`/payment/flutterwave/verify/${transactionId}`),
   getVirtualAccount: () => api.get('/payment/virtual-account'),
+  getBillstackVirtualAccount: () => api.get('/payment/billstack/virtual-account'),
 };
 
 // Data

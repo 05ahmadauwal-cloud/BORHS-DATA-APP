@@ -81,6 +81,7 @@ module.exports = {
   PAYMENT_GATEWAYS: {
     PAYSTACK: 'paystack',
     FLUTTERWAVE: 'flutterwave',
+    BILLSTACK: 'billstack',
   },
 
   VTU_PROVIDERS: {

@@ -60,7 +60,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-paystack-signature', 'verif-hash'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-paystack-signature', 'x-wiaxy-signature', 'verif-hash'],
 }));
 
 // Rate limiting (global)
@@ -103,6 +103,7 @@ app.use('/api/v1/auth/send-phone-otp', verificationDeliveryLimiter);
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
 // Raw body for payment webhooks
 app.use('/api/v1/payment/webhook/paystack', express.raw({ type: 'application/json' }));
+app.use('/api/v1/payment/webhook/billstack', express.raw({ type: 'application/json' }));
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
