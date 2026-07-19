@@ -5,6 +5,7 @@ import useAuthStore from './store/authStore';
 import useThemeStore from './store/themeStore';
 import useIdleLogout from './hooks/useIdleLogout';
 import NativeAppLifecycle from './components/common/NativeAppLifecycle';
+import usePullToRefresh from './hooks/usePullToRefresh';
 
 const PublicLayout = lazy(() => import('./components/layout/PublicLayout'));
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
@@ -50,6 +51,7 @@ export default function App() {
   const { user, isAuthenticated, refreshUser, accessToken } = useAuthStore();
   const { initTheme } = useThemeStore();
   useIdleLogout();
+  usePullToRefresh();
   const isNativeApp = Capacitor.isNativePlatform();
   const dashboardHome = ['admin', 'super_admin'].includes(user?.role)
     ? '/admin'

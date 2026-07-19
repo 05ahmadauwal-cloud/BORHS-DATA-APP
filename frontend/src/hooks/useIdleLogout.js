@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 
 const LAST_ACTIVITY_KEY = 'borhs-last-activity';
-const DEFAULT_TIMEOUT_MINUTES = 10;
+const DEFAULT_TIMEOUT_MINUTES = 24 * 60;
 const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'touchstart', 'scroll'];
 
 const configuredMinutes = Number(import.meta.env.VITE_IDLE_TIMEOUT_MINUTES);
