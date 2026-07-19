@@ -25,7 +25,9 @@ export default function NativeAppLifecycle() {
     if (!Capacitor.isNativePlatform()) return;
     // Keep system information readable while matching the active dashboard theme.
     StatusBar.setOverlaysWebView({ overlay: false });
-    StatusBar.setStyle({ style: theme === 'dark' ? Style.Light : Style.Dark });
+    // Capacitor's style names describe the intended background: DARK gives
+    // light status-bar content, while LIGHT gives dark status-bar content.
+    StatusBar.setStyle({ style: theme === 'dark' ? Style.Dark : Style.Light });
     StatusBar.setBackgroundColor({ color: theme === 'dark' ? '#020617' : '#f1f5f9' });
   }, [theme]);
 
