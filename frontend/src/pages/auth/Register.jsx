@@ -19,6 +19,7 @@ const schema = z.object({
   phone: z.string().min(10, 'Enter a valid Nigerian phone number'),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
+    .regex(/(?=.*[a-z])/, 'Must contain at least one lowercase letter')
     .regex(/(?=.*[A-Z])/, 'Must contain at least one uppercase letter')
     .regex(/(?=.*[0-9])/, 'Must contain at least one number'),
   confirmPassword: z.string(),
@@ -36,7 +37,7 @@ export default function Register() {
   const [searchParams] = useSearchParams();
   const refCode = searchParams.get('ref') || '';
 
-  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, watch, setValue, setError, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { referralCode: refCode },
   });
@@ -50,12 +51,23 @@ export default function Register() {
       toast.success(`Welcome to BORHS Data, ${result.user.firstName}!`);
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
+      const response = error.response?.data;
+      const validationErrors = Array.isArray(response?.errors) ? response.errors : [];
+
+      validationErrors.forEach(({ field, message }) => {
+        if (field) setError(field, { type: 'server', message });
+      });
+
+      const message = validationErrors.map((item) => item.message).filter(Boolean).join('. ')
+        || response?.message
+        || 'Registration failed. Please try again.';
+      toast.error(message);
     }
   };
 
   const passwordChecks = [
     { label: '8+ characters', met: password.length >= 8 },
+    { label: 'Lowercase letter', met: /[a-z]/.test(password) },
     { label: 'Uppercase letter', met: /[A-Z]/.test(password) },
     { label: 'Number', met: /[0-9]/.test(password) },
   ];
@@ -142,7 +154,7 @@ export default function Register() {
                 </button>
               </div>
               {password && (
-                <div className="flex gap-3 mt-2">
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
                   {passwordChecks.map((check) => (
                     <div key={check.label} className="flex items-center gap-1">
                       <CheckCircle size={11} className={check.met ? 'text-success-500' : 'text-dark-600'} />

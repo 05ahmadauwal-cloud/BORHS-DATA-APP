@@ -7,8 +7,8 @@ const validate = require('../../middleware/validate');
 const asyncHandler = require('express-async-handler');
 
 const registerRules = [
-  body('firstName').trim().notEmpty().withMessage('First name is required').isLength({ max: 50 }),
-  body('lastName').trim().notEmpty().withMessage('Last name is required').isLength({ max: 50 }),
+  body('firstName').trim().isLength({ min: 2, max: 50 }).withMessage('First name must be 2â€“50 characters'),
+  body('lastName').trim().isLength({ min: 2, max: 50 }).withMessage('Last name must be 2â€“50 characters'),
   body('email').isEmail().withMessage('Valid email required').normalizeEmail(),
   body('phone').notEmpty().withMessage('Phone number is required'),
   body('password')
