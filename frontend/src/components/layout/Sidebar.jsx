@@ -33,7 +33,7 @@ function NavSection({ label, children }) {
   return (
     <div className="space-y-0.5">
       <p className="px-3 pt-4 pb-1.5 text-[10px] font-black uppercase tracking-[0.12em]"
-        style={{ color: 'var(--text-faint)' }}>
+        style={{ color: 'var(--ds-text-tertiary)' }}>
         {label}
       </p>
       {children}
@@ -50,34 +50,33 @@ function SidebarLink({ to, icon: Icon, label, end = false, accent, onNavigate })
       className={({ isActive }) =>
         `group relative flex items-center gap-3 px-3 py-2.5 rounded-xl mx-1 text-sm font-medium transition-all duration-150 ${
           isActive
-            ? 'text-white'
-            : 'hover:bg-white/5'
+            ? ''
+            : 'hover:bg-[var(--ds-surface-subtle)]'
         }`
       }
       style={({ isActive }) => isActive ? {
-        background: 'linear-gradient(90deg, rgba(37,99,235,0.25) 0%, rgba(37,99,235,0.08) 100%)',
-        color: 'var(--text-primary)',
-      } : { color: 'var(--text-muted)' }}
+        background: 'var(--ds-info-soft)',
+        color: 'var(--ds-brand-700)',
+      } : { color: 'var(--ds-text-secondary)' }}
     >
       {({ isActive }) => (
         <>
           {/* Left accent bar */}
           {isActive && (
-            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary-400" />
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-[var(--ds-brand-700)]" />
           )}
           <div className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-all duration-150 ${
-            isActive ? 'bg-primary-500/20' : 'group-hover:bg-white/5'
+            isActive ? 'bg-[var(--ds-brand-700)] text-white' : 'group-hover:bg-[var(--ds-surface)]'
           }`}>
             <Icon
               size={16}
               strokeWidth={isActive ? 2.4 : 1.8}
-              className={isActive ? 'text-primary-400' : ''}
-              style={!isActive ? { color: accent || 'var(--text-muted)' } : undefined}
+              style={!isActive ? { color: accent || 'var(--ds-text-secondary)' } : undefined}
             />
           </div>
           <span className="flex-1 truncate">{label}</span>
           {isActive && (
-            <span className="w-1.5 h-1.5 rounded-full bg-primary-400 shrink-0" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--ds-brand-700)] shrink-0" />
           )}
         </>
       )}
@@ -105,23 +104,23 @@ export default function Sidebar({ isOpen, onClose }) {
         isOpen ? 'flex translate-x-0' : 'hidden -translate-x-full'
       } lg:flex lg:translate-x-0`}
       style={{
-        background: 'linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-card) 100%)',
-        borderRight: '1px solid var(--border)',
+        background: 'var(--ds-surface)',
+        borderRight: '1px solid var(--ds-stroke)',
       }}
     >
       {/* ── Brand header ── */}
-      <div className="px-4 py-5 border-b" style={{ borderColor: 'var(--border)' }}>
+      <div className="px-4 py-5 border-b" style={{ borderColor: 'var(--ds-stroke)' }}>
         <div className="flex items-center justify-between">
           <Link to="/dashboard" onClick={onClose} className="flex items-center gap-2 min-w-0">
             <img src="/logo.svg" alt="BORHS" style={{ height: 44, width: 'auto', display: 'block', maxWidth: 160 }} />
-            <span className="text-[10px] font-semibold capitalize shrink-0" style={{ color: 'var(--text-faint)' }}>
+            <span className="text-[10px] font-semibold capitalize shrink-0" style={{ color: 'var(--ds-text-tertiary)' }}>
               {user?.role?.replace('_', ' ')}
             </span>
           </Link>
           <button
             onClick={onClose}
-            className="lg:hidden p-1.5 rounded-lg transition-colors hover:bg-white/5"
-            style={{ color: 'var(--text-muted)' }}
+            className="lg:hidden p-1.5 rounded-lg transition-colors hover:bg-[var(--ds-surface-subtle)]"
+            style={{ color: 'var(--ds-text-secondary)' }}
           >
             <X size={16} />
           </button>
@@ -132,16 +131,16 @@ export default function Sidebar({ isOpen, onClose }) {
           to="/wallet"
           onClick={onClose}
           className="flex items-center justify-between mt-3.5 px-3 py-2.5 rounded-xl transition-all hover:opacity-90 active:scale-[0.98]"
-          style={{ background: 'linear-gradient(135deg, rgba(37,99,235,0.18) 0%, rgba(37,99,235,0.06) 100%)', border: '1px solid rgba(37,99,235,0.2)' }}
+          style={{ background: 'var(--ds-info-soft)', border: '1px solid var(--ds-stroke)' }}
         >
           <div>
-            <p className="text-[10px] font-semibold" style={{ color: 'var(--text-faint)' }}>Wallet Balance</p>
-            <p className="text-base font-black text-primary-300 tabular-nums leading-tight">
+            <p className="text-[10px] font-semibold" style={{ color: 'var(--ds-text-secondary)' }}>Wallet Balance</p>
+            <p className="text-base font-black text-[var(--ds-brand-700)] tabular-nums leading-tight">
               ₦{balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}
             </p>
           </div>
-          <div className="w-7 h-7 rounded-lg bg-primary-500/20 flex items-center justify-center">
-            <ArrowUpRight size={14} className="text-primary-400" />
+          <div className="w-7 h-7 rounded-lg bg-[var(--ds-brand-700)] text-white flex items-center justify-center">
+            <ArrowUpRight size={14} />
           </div>
         </Link>
       </div>
@@ -197,31 +196,31 @@ export default function Sidebar({ isOpen, onClose }) {
       </nav>
 
       {/* ── User footer ── */}
-      <div className="p-3 border-t" style={{ borderColor: 'var(--border)' }}>
+      <div className="p-3 border-t" style={{ borderColor: 'var(--ds-stroke)' }}>
         <div
           className="flex items-center gap-3 p-2.5 rounded-xl"
-          style={{ background: 'var(--bg-elevated)' }}
+          style={{ background: 'var(--ds-surface-subtle)' }}
         >
           {/* Avatar */}
           <div className="relative shrink-0">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center font-black text-sm"
               style={{
-                background: 'linear-gradient(135deg, rgba(37,99,235,0.3) 0%, rgba(16,185,129,0.3) 100%)',
-                border: '1.5px solid rgba(37,99,235,0.4)',
-                color: 'var(--text-primary)',
+                background: 'var(--ds-info-soft)',
+                border: '1.5px solid var(--ds-brand-700)',
+                color: 'var(--ds-brand-700)',
               }}
             >
               {user?.firstName?.[0]}{user?.lastName?.[0]}
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success-400 rounded-full border-2 border-dark-900" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success-400 rounded-full border-2 border-[var(--ds-surface-subtle)]" />
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+            <p className="text-xs font-bold truncate" style={{ color: 'var(--ds-text-primary)' }}>
               {user?.firstName} {user?.lastName}
             </p>
-            <p className="text-[10px] truncate" style={{ color: 'var(--text-faint)' }}>
+            <p className="text-[10px] truncate" style={{ color: 'var(--ds-text-tertiary)' }}>
               {user?.email}
             </p>
           </div>
@@ -229,7 +228,7 @@ export default function Sidebar({ isOpen, onClose }) {
           <button
             onClick={handleLogout}
             className="p-1.5 rounded-lg transition-colors hover:bg-red-500/15 hover:text-red-400 shrink-0"
-            style={{ color: 'var(--text-faint)' }}
+            style={{ color: 'var(--ds-text-tertiary)' }}
             title="Logout"
           >
             <LogOut size={15} />
