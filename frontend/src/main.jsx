@@ -33,18 +33,18 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         toastOptions={{
           duration: 4000,
           style: {
-            background: 'var(--bg-card)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border)',
-            borderRadius: '12px',
+            background: 'var(--ds-surface)',
+            color: 'var(--ds-text)',
+            border: '1px solid var(--ds-stroke)',
+            borderRadius: '16px',
             padding: '12px 16px',
             fontSize: '14px',
           },
           success: {
-            iconTheme: { primary: '#10B981', secondary: 'var(--bg-card)' },
+            iconTheme: { primary: 'var(--ds-success)', secondary: 'var(--ds-surface)' },
           },
           error: {
-            iconTheme: { primary: '#ef4444', secondary: 'var(--bg-card)' },
+            iconTheme: { primary: 'var(--ds-danger)', secondary: 'var(--ds-surface)' },
           },
         }}
       />

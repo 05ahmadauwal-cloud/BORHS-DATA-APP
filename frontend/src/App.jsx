@@ -6,6 +6,8 @@ import useThemeStore from './store/themeStore';
 import useIdleLogout from './hooks/useIdleLogout';
 import NativeAppLifecycle from './components/common/NativeAppLifecycle';
 import usePullToRefresh from './hooks/usePullToRefresh';
+import RefreshIndicator from './components/common/RefreshIndicator';
+import InteractionFeedback from './components/common/InteractionFeedback';
 
 const PublicLayout = lazy(() => import('./components/layout/PublicLayout'));
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
@@ -51,7 +53,7 @@ export default function App() {
   const { user, isAuthenticated, refreshUser, accessToken } = useAuthStore();
   const { initTheme } = useThemeStore();
   useIdleLogout();
-  usePullToRefresh();
+  const { isRefreshing, pullProgress } = usePullToRefresh();
   const isNativeApp = Capacitor.isNativePlatform();
   const dashboardHome = ['admin', 'super_admin'].includes(user?.role)
     ? '/admin'
@@ -65,12 +67,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <NativeAppLifecycle />
+      <InteractionFeedback />
+      <RefreshIndicator isRefreshing={isRefreshing} progress={pullProgress} />
       <Suspense fallback={(
-        <div className="min-h-screen flex items-center justify-center bg-dark-950">
-          <div className="flex items-center gap-3 text-sm font-semibold text-dark-300">
-            <span className="h-5 w-5 rounded-full border-2 border-primary-500/30 border-t-primary-500 animate-spin" />
-            Loading…
-          </div>
+        <div className="min-h-screen flex flex-col items-center justify-center gap-5 bg-brand-700 text-white">
+          <div className="flex h-20 w-20 items-center justify-center rounded-[1.75rem] bg-white text-2xl font-black text-brand-700 shadow-[0_20px_50px_rgba(0,0,0,0.16)]">B</div>
+          <div className="text-center"><p className="text-xl font-bold">BORHS Data</p><p className="mt-1 text-sm text-teal-100">Everyday services. One balance.</p></div>
+          <span className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" aria-label="Loading" />
         </div>
       )}>
       <Routes>

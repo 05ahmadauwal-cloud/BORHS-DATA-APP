@@ -40,23 +40,23 @@ export default function Topbar({ onMenuClick }) {
 
   return (
     <>
-      <header className="relative lg:sticky lg:top-0 z-10 bg-dark-900 lg:bg-dark-900/90 border-b border-dark-700/50 lg:backdrop-blur-md">
+      <header className="relative lg:sticky lg:top-0 z-10 bg-surface/95 border-b border-[var(--ds-stroke)] lg:backdrop-blur-md">
         <div className="flex items-center gap-3 px-3 sm:px-4 md:px-6 h-14 md:h-16">
 
           {/* Hamburger */}
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-xl text-dark-400 hover:text-dark-100 hover:bg-dark-700/60 transition-colors shrink-0"
+            className="lg:hidden p-2 rounded-xl text-[var(--ds-text-secondary)] hover:text-brand-700 hover:bg-[var(--ds-info-soft)] transition-colors shrink-0"
           >
             <Menu size={20} />
           </button>
 
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-success-500 rounded-lg flex items-center justify-center">
+            <div className="w-7 h-7 bg-brand-700 rounded-lg flex items-center justify-center">
               <span className="text-white font-black text-xs">B</span>
             </div>
-            <span className="font-black text-dark-50 text-sm">BORHS Data</span>
+            <span className="font-bold text-[var(--ds-text)] text-sm">BORHS Data</span>
           </div>
 
           <div className="flex-1" />
@@ -64,10 +64,10 @@ export default function Topbar({ onMenuClick }) {
           {/* Balance pill */}
           <Link
             to="/wallet"
-            className="hidden sm:flex items-center gap-2 bg-dark-800 border border-dark-700/50 rounded-xl px-3 py-2 hover:border-primary-500/40 transition-colors"
+            className="hidden sm:flex items-center gap-2 bg-[var(--ds-surface-subtle)] rounded-xl px-3 py-2 hover:text-brand-700 transition-colors"
           >
-            <Wallet size={14} className="text-primary-400 shrink-0" />
-            <span className="text-sm font-bold text-dark-100">
+            <Wallet size={14} className="text-brand-700 shrink-0" />
+            <span className="text-sm font-bold text-[var(--ds-text)]">
               ₦{balance.toLocaleString()}
             </span>
           </Link>
@@ -85,11 +85,11 @@ export default function Topbar({ onMenuClick }) {
           {/* Bell button */}
           <button
             onClick={openPanel}
-            className="relative p-2 rounded-xl text-dark-400 hover:text-dark-100 hover:bg-dark-700/60 transition-colors"
+            className="relative p-2 rounded-xl text-[var(--ds-text-secondary)] hover:text-brand-700 hover:bg-[var(--ds-info-soft)] transition-colors"
           >
             <Bell size={20} />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 min-w-[8px] h-2 bg-red-500 rounded-full ring-2 ring-dark-900 animate-pulse" />
+              <span className="absolute top-1.5 right-1.5 min-w-[8px] h-2 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
             )}
           </button>
 
@@ -98,8 +98,8 @@ export default function Topbar({ onMenuClick }) {
             to="/profile"
             className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-dark-700/50 transition-colors"
           >
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-500/30 to-success-500/30 border border-primary-500/40 rounded-full flex items-center justify-center shrink-0">
-              <span className="text-primary-400 font-black text-xs">
+            <div className="w-8 h-8 bg-[var(--ds-info-soft)] rounded-xl flex items-center justify-center shrink-0">
+              <span className="text-brand-700 font-bold text-xs">
                 {user?.firstName?.[0]}{user?.lastName?.[0]}
               </span>
             </div>

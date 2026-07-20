@@ -1,32 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#2563EB"/>
-      <stop offset="100%" stop-color="#10B981"/>
-    </linearGradient>
-    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="200" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Background rounded square -->
-  <rect width="200" height="200" rx="44" fill="url(#bg)"/>
-
-  <!-- Subtle top shine -->
-  <rect width="200" height="100" rx="44" fill="url(#shine)"/>
-
-  <!-- Letter B — drawn as paths for crisp cross-browser rendering -->
-  <!-- Left vertical stroke -->
-  <rect x="52" y="44" width="22" height="112" rx="4" fill="white"/>
-
-  <!-- Top bump -->
-  <path d="M74 44 H118 Q148 44 148 74 Q148 104 118 104 H74 Z" fill="white"/>
-  <!-- Top bump hole -->
-  <path d="M82 56 H114 Q132 56 132 74 Q132 92 114 92 H82 Z" fill="url(#bg)"/>
-
-  <!-- Bottom bump (wider) -->
-  <path d="M74 104 H124 Q158 104 158 136 Q158 156 124 156 H74 Z" fill="white"/>
-  <!-- Bottom bump hole -->
-  <path d="M82 116 H120 Q142 116 142 136 Q142 144 120 144 H82 Z" fill="url(#bg)"/>
+<svg width="420" height="120" viewBox="0 0 420 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>BORHS Data</title>
+  <rect x="6" y="6" width="108" height="108" rx="32" fill="#0F766E"/>
+  <path d="M38 34V86" stroke="white" stroke-width="10" stroke-linecap="round"/>
+  <path d="M43 35H67C80 35 88 42 88 52C88 61 81 67 69 67H43" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M43 67H71C85 67 93 74 93 84C93 96 84 103 69 103H43" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 -7)"/>
+  <circle cx="93" cy="29" r="7" fill="#F59E0B"/>
+  <text x="136" y="61" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="700" letter-spacing="-1.2">BORHS</text>
+  <text x="138" y="88" fill="#6B7280" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="600" letter-spacing="2.8">DATA</text>
 </svg>

@@ -1,95 +1,52 @@
 import { useQuery } from '@tanstack/react-query';
 import { agentAPI, referralAPI } from '../../api';
-import { TrendingUp, Users, DollarSign, Wallet, Copy, Link as LinkIcon } from 'lucide-react';
+import { Award, Copy, Gift, Link as LinkIcon, TrendingUp, Users, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
+import { Button, Card, CardHeader } from '../../components/ui';
+
+const money = (value) => `₦${(Number(value) || 0).toLocaleString('en-NG')}`;
 
 export default function AgentDashboard() {
   const { user } = useAuthStore();
-
-  const { data: stats } = useQuery({
-    queryKey: ['agent-stats'],
-    queryFn: () => agentAPI.getStats(),
-    select: (res) => res.data,
-  });
-
-  const { data: referralStats } = useQuery({
-    queryKey: ['referral-stats'],
-    queryFn: () => referralAPI.getStats(),
-    select: (res) => res.data,
-  });
-
+  const { data: stats } = useQuery({ queryKey: ['agent-stats'], queryFn: () => agentAPI.getStats(), select: (res) => res.data });
+  const { data: referralStats } = useQuery({ queryKey: ['referral-stats'], queryFn: () => referralAPI.getStats(), select: (res) => res.data });
   const referralLink = `${window.location.origin}/register?ref=${user?.referralCode}`;
-
+  const downlines = Number(stats?.downlineCount) || 0;
+  const earnings = Number(stats?.commissionEarned) || 0;
+  const target = Math.max(10, Math.ceil((downlines + 1) / 10) * 10);
+  const progress = Math.min(100, (downlines / target) * 100);
   const statCards = [
-    { label: 'Wallet Balance', value: `₦${(Number(stats?.walletBalance) || 0).toLocaleString()}`, icon: Wallet, color: 'text-primary-400', bg: 'bg-primary-500/10 border-primary-500/20' },
-    { label: 'Commission Earned', value: `₦${(Number(stats?.commissionEarned) || 0).toLocaleString()}`, icon: DollarSign, color: 'text-success-500', bg: 'bg-success-500/10 border-success-500/20' },
-    { label: 'Referral Earnings', value: `₦${(Number(stats?.referralEarnings) || 0).toLocaleString()}`, icon: TrendingUp, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
-    { label: 'Total Downlines', value: (Number(stats?.downlineCount) || 0).toLocaleString(), icon: Users, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+    { label: 'Available balance', value: money(stats?.walletBalance), icon: Wallet, tone: 'bg-[var(--ds-info-soft)] text-brand-700' },
+    { label: 'Total commission', value: money(earnings), icon: TrendingUp, tone: 'bg-[var(--ds-success-soft)] text-green-700 dark:text-green-400' },
+    { label: 'Referral earnings', value: money(stats?.referralEarnings), icon: Gift, tone: 'bg-[var(--ds-reward-soft)] text-amber-700 dark:text-amber-400' },
+    { label: 'Customers', value: downlines.toLocaleString(), icon: Users, tone: 'bg-[var(--ds-info-soft)] text-brand-700' },
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="page-header">
-        <h1 className="page-title flex items-center gap-3"><TrendingUp className="text-primary-400" />Agent Dashboard</h1>
-        <p className="page-subtitle">Track your earnings and downline performance</p>
+    <div className="mx-auto max-w-6xl space-y-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-sm font-semibold text-brand-700">Agent workspace</p><h1 className="mt-1 text-2xl font-bold text-[var(--ds-text)]">Grow your BORHS business</h1><p className="mt-1 text-sm text-[var(--ds-text-secondary)]">Track customers, commissions and your next milestone.</p></div><Button as={Link} to="/data" size="sm" icon={TrendingUp}>Make an agent purchase</Button></header>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">{statCards.map(({ label, value, icon: Icon, tone }) => <Card key={label} padding="sm"><span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${tone}`}><Icon size={18} /></span><p className="mt-5 text-xl font-bold tabular-nums text-[var(--ds-text)] sm:text-2xl">{value}</p><p className="mt-1 text-xs text-[var(--ds-text-secondary)] sm:text-sm">{label}</p></Card>)}</div>
+
+      <div className="grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
+        <Card>
+          <CardHeader eyebrow="Acquisition" title="Your referral network" description="Share one link and earn as your network grows." action={<span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--ds-info-soft)] text-brand-700"><LinkIcon size={19} /></span>} />
+          <div className="flex items-center gap-2 rounded-[var(--ds-radius-input)] bg-[var(--ds-surface-subtle)] p-2 pl-4"><p className="min-w-0 flex-1 truncate text-xs text-[var(--ds-text-secondary)] sm:text-sm">{referralLink}</p><Button variant="secondary" size="sm" icon={Copy} onClick={() => { navigator.clipboard.writeText(referralLink); toast.success('Referral link copied'); }}>Copy</Button></div>
+          <div className="mt-5 grid grid-cols-3 gap-3">{[
+            { level: 'Direct', count: referralStats?.counts?.level1 || 0, rate: '5%' },
+            { level: 'Level 2', count: referralStats?.counts?.level2 || 0, rate: '2%' },
+            { level: 'Level 3', count: referralStats?.counts?.level3 || 0, rate: '1%' },
+          ].map((item) => <div key={item.level} className="rounded-2xl bg-[var(--ds-surface-subtle)] p-4 text-center"><p className="text-xl font-bold text-[var(--ds-text)]">{item.count}</p><p className="mt-1 text-xs text-[var(--ds-text-secondary)]">{item.level}</p><p className="mt-2 text-xs font-bold text-green-700 dark:text-green-400">{item.rate} reward</p></div>)}</div>
+        </Card>
+
+        <Card className="bg-brand-700 text-white">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15"><Award size={22} /></span><p className="mt-6 text-sm text-teal-100">Next achievement</p><h2 className="mt-1 text-xl font-bold">{target} active customers</h2><p className="mt-2 text-sm leading-relaxed text-teal-100">You are {Math.max(0, target - downlines)} customers away from your next network milestone.</p><div className="mt-6 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-amber-400 transition-all" style={{ width: `${progress}%` }} /></div><p className="mt-2 text-right text-xs font-semibold text-teal-100">{Math.round(progress)}%</p>
+        </Card>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-5">
-        {statCards.map((stat) => (
-          <div key={stat.label} className="card p-5">
-            <div className={`w-10 h-10 ${stat.bg} border rounded-xl flex items-center justify-center mb-4`}>
-              <stat.icon size={18} className={stat.color} />
-            </div>
-            <p className="text-2xl font-black text-dark-50 mb-1">{stat.value}</p>
-            <p className="text-dark-400 text-sm">{stat.label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Referral Card */}
-      <div className="card p-6 bg-gradient-to-br from-success-500/10 to-primary-600/10 border border-success-500/20">
-        <h2 className="text-lg font-bold text-dark-100 mb-4 flex items-center gap-2"><LinkIcon size={18} className="text-success-500" />Your Referral Link</h2>
-        <div className="flex items-center gap-2 bg-dark-800 border border-dark-600 rounded-xl px-3 py-2.5 mb-3">
-          <p className="text-sm text-dark-300 truncate flex-1 font-mono">{referralLink}</p>
-          <button onClick={() => { navigator.clipboard.writeText(referralLink); toast.success('Copied!'); }} className="btn-ghost btn-sm shrink-0 gap-1">
-            <Copy size={12} /> Copy
-          </button>
-        </div>
-        <div className="grid grid-cols-3 gap-4 text-center">
-          {[
-            { level: 'L1', count: referralStats?.counts?.level1 || 0, rate: '5%' },
-            { level: 'L2', count: referralStats?.counts?.level2 || 0, rate: '2%' },
-            { level: 'L3', count: referralStats?.counts?.level3 || 0, rate: '1%' },
-          ].map((l) => (
-            <div key={l.level} className="bg-dark-800/50 rounded-xl p-3">
-              <p className="text-xl font-black text-dark-50">{l.count}</p>
-              <p className="text-xs text-dark-400">{l.level} Referrals</p>
-              <p className="text-xs text-success-500 font-bold">{l.rate}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick Links */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {[
-          { to: '/agent/downlines', label: 'View Downlines', icon: Users, color: 'text-primary-400' },
-          { to: '/agent/commissions', label: 'Commission History', icon: DollarSign, color: 'text-success-500' },
-          { to: '/data', label: 'Buy Data (Agent Rate)', icon: TrendingUp, color: 'text-yellow-400' },
-        ].map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-            className="card p-5 hover:border-primary-500/30 transition-all group flex items-center gap-3"
-          >
-            <item.icon size={20} className={item.color} />
-            <span className="text-sm font-semibold text-dark-200 group-hover:text-dark-50">{item.label}</span>
-          </Link>
-        ))}
-      </div>
+      <div className="grid gap-4 sm:grid-cols-2"><Link to="/agent/downlines" className="card flex items-center gap-4 p-5 transition hover:-translate-y-0.5"><span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--ds-info-soft)] text-brand-700"><Users size={19} /></span><div><p className="font-bold text-[var(--ds-text)]">Customer network</p><p className="text-sm text-[var(--ds-text-secondary)]">View every downline and level</p></div></Link><Link to="/agent/commissions" className="card flex items-center gap-4 p-5 transition hover:-translate-y-0.5"><span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--ds-success-soft)] text-green-700 dark:text-green-400"><TrendingUp size={19} /></span><div><p className="font-bold text-[var(--ds-text)]">Commission history</p><p className="text-sm text-[var(--ds-text-secondary)]">Review earnings and payouts</p></div></Link></div>
     </div>
   );
 }

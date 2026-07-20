@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
+import { ServiceHeader } from '../../components/ui';
 import { detectNetwork, isPhoneComplete, NETWORK_LABELS } from '../../utils/phoneNetwork';
 
 const NETWORKS = [
@@ -143,10 +144,7 @@ export default function DataPurchase() {
     <div className="max-w-2xl mx-auto space-y-6">
       <PurchaseLoader visible={purchaseMutation.isPending} type="data" />
       <Receipt data={receipt} onClose={() => setReceipt(null)} />
-      <div className="page-header">
-        <h1 className="page-title flex items-center gap-3"><Wifi className="text-primary-400" />Buy Data</h1>
-        <p className="page-subtitle">SME, Corporate, Gifting & Direct data bundles at the cheapest rates</p>
-      </div>
+      <ServiceHeader icon={Wifi} title="Buy data" description="Affordable bundles for every Nigerian network." step={step} />
 
       {step === 1 ? (
         <div className="card p-6 space-y-6">
@@ -340,10 +338,13 @@ export default function DataPurchase() {
               <div>
                 <label className="label">Transaction PIN</label>
                 <input
-                  className="input"
-                  placeholder="Enter 4-digit PIN"
+                  className="input text-center tracking-[0.4em]"
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  placeholder="••••"
                   value={pin}
-                  onChange={(e) => setPin(e.target.value)}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                   maxLength={4}
                   disabled={lockUntil && Date.now() < lockUntil}
                 />

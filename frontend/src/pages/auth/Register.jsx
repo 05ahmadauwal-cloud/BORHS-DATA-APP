@@ -73,10 +73,10 @@ export default function Register() {
   ];
 
   return (
-    <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4 py-12">
+    <div className="min-h-screen bg-canvas flex items-center justify-center p-4 py-12">
       <button
         onClick={toggleTheme}
-        className="fixed top-4 right-4 z-50 p-2.5 rounded-xl transition-colors hover:bg-dark-700/60"
+        className="fixed top-4 right-4 z-50 p-2.5 rounded-2xl transition-colors hover:bg-[var(--ds-surface-subtle)]"
         style={{ color: 'var(--text-muted)', background: 'var(--bg-card)', border: '1px solid var(--border)' }}
         title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
       >
@@ -85,13 +85,13 @@ export default function Register() {
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex flex-col items-center mb-6">
-            <img src="/logo.png" alt="BORHS Data App" style={{ height: 100, width: 'auto', display: 'block' }} />
+            <img src="/logo.svg" alt="BORHS Data" className="h-20 w-auto" />
           </Link>
-          <h1 className="text-2xl font-black text-dark-50">Create your account</h1>
-          <p className="text-dark-400 mt-2 text-sm">Join 50,000+ Nigerians saving money on data & bills</p>
+          <h1 className="text-2xl font-bold text-[var(--ds-text)]">Create your account</h1>
+          <p className="text-[var(--ds-text-secondary)] mt-2 text-sm">One balance for data, bills and everyday payments.</p>
         </div>
 
-        <div className="card p-8">
+        <div className="rounded-[var(--ds-radius-sheet)] bg-surface p-6 shadow-[var(--ds-shadow-card)] sm:p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>

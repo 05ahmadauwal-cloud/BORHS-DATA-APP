@@ -5,6 +5,7 @@ import { Tv, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
+import { ServiceHeader } from '../../components/ui';
 
 const PROVIDERS = [
   { id: 'dstv', label: 'DStv', emoji: '📡' },
@@ -80,10 +81,7 @@ export default function Cable() {
     <div className="max-w-2xl mx-auto space-y-6">
       <PurchaseLoader visible={purchaseMutation.isPending} type="cable" />
       <Receipt data={receipt} onClose={() => setReceipt(null)} />
-      <div className="page-header">
-        <h1 className="page-title flex items-center gap-3"><Tv className="text-purple-400" />Cable TV</h1>
-        <p className="page-subtitle">Subscribe to DStv, GOtv & StarTimes instantly</p>
-      </div>
+      <ServiceHeader icon={Tv} title="Cable TV" description="Renew DStv, GOtv or StarTimes in a few steps." step={step === 1 ? 1 : 2} />
 
       <div className="card p-6 space-y-6">
         <div>
@@ -94,7 +92,7 @@ export default function Cable() {
                 key={p.id}
                 onClick={() => { setProvider(p.id); setSelectedPkg(null); }}
                 className={`py-4 rounded-xl border text-sm font-bold flex flex-col items-center gap-1 transition-all ${
-                  provider === p.id ? 'border-purple-500 bg-purple-500/10 text-purple-300' : 'border-dark-600 text-dark-400 hover:border-dark-500'
+                  provider === p.id ? 'border-primary-500 bg-primary-500/10 text-primary-400' : 'border-dark-600 text-dark-400 hover:border-dark-500'
                 }`}
               >
                 <span className="text-2xl">{p.emoji}</span>
@@ -138,7 +136,7 @@ export default function Cable() {
                   key={pkg.id}
                   onClick={() => setSelectedPkg(pkg)}
                   className={`w-full flex items-center justify-between p-4 rounded-xl border text-left transition-all ${
-                    selectedPkg?.id === pkg.id ? 'border-purple-500 bg-purple-500/10' : 'border-dark-600 hover:border-dark-500 hover:bg-dark-700/30'
+                    selectedPkg?.id === pkg.id ? 'border-primary-500 bg-primary-500/10' : 'border-dark-600 hover:border-dark-500 hover:bg-dark-700/30'
                   }`}
                 >
                   <div>
@@ -158,7 +156,7 @@ export default function Cable() {
           <div className="space-y-3">
             <div>
               <label className="label">Transaction PIN</label>
-              <input className="input" placeholder="Enter 4-digit PIN" value={pin} onChange={(e) => setPin(e.target.value)} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
+              <input className="input text-center tracking-[0.4em]" type="password" inputMode="numeric" autoComplete="off" placeholder="••••" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
               {lockUntil && Date.now() < lockUntil && <p className="text-xs text-red-400 mt-1">Locked due to multiple failed attempts.</p>}
             </div>
             <button

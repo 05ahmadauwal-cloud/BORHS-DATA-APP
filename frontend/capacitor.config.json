@@ -4,7 +4,7 @@
   "webDir": "dist",
   "android": {
     "allowMixedContent": false,
-    "backgroundColor": "#020617"
+    "backgroundColor": "#0F766E"
   },
   "plugins": {
     "CapacitorHttp": {
@@ -13,12 +13,12 @@
     "SplashScreen": {
       "launchShowDuration": 1200,
       "launchAutoHide": true,
-      "backgroundColor": "#020617",
+      "backgroundColor": "#0F766E",
       "showSpinner": false
     },
     "StatusBar": {
-      "style": "DARK",
-      "backgroundColor": "#020617",
+      "style": "LIGHT",
+      "backgroundColor": "#0F766E",
       "overlaysWebView": false
     }
   }

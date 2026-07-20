@@ -5,6 +5,7 @@ import { Zap, CheckCircle, Copy, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
+import { ServiceHeader } from '../../components/ui';
 
 const PROVIDERS = [
   { id: 'ikedc', label: 'IKEDC', full: 'Ikeja Electric' },
@@ -80,10 +81,7 @@ export default function Electricity() {
     <div className="max-w-2xl mx-auto space-y-6">
       <PurchaseLoader visible={purchaseMutation.isPending} type="electricity" />
       <Receipt data={receipt} onClose={() => setReceipt(null)} />
-      <div className="page-header">
-        <h1 className="page-title flex items-center gap-3"><Zap className="text-yellow-400" />Electricity</h1>
-        <p className="page-subtitle">Pay electricity bills for all distribution companies</p>
-      </div>
+      <ServiceHeader icon={Zap} title="Electricity" description="Verify your meter and pay securely." step={step === 1 ? 1 : 2} />
 
       {step <= 3 && (
         <div className="card p-6 space-y-6">
@@ -96,7 +94,7 @@ export default function Electricity() {
                   key={p.id}
                   onClick={() => setForm({ ...form, provider: p.id })}
                   className={`p-3 rounded-xl border text-xs font-bold text-left transition-all ${
-                    form.provider === p.id ? 'border-yellow-500 bg-yellow-500/10 text-yellow-300' : 'border-dark-600 text-dark-400 hover:border-dark-500'
+                    form.provider === p.id ? 'border-primary-500 bg-primary-500/10 text-primary-400' : 'border-dark-600 text-dark-400 hover:border-dark-500'
                   }`}
                 >
                   <p className="font-bold">{p.label}</p>
@@ -114,7 +112,7 @@ export default function Electricity() {
                   key={t}
                   onClick={() => setForm({ ...form, meterType: t })}
                   className={`py-3 rounded-xl border text-sm font-semibold capitalize transition-all ${
-                    form.meterType === t ? 'border-yellow-500 bg-yellow-500/10 text-yellow-300' : 'border-dark-600 text-dark-400 hover:border-dark-500'
+                    form.meterType === t ? 'border-primary-500 bg-primary-500/10 text-primary-400' : 'border-dark-600 text-dark-400 hover:border-dark-500'
                   }`}
                 >
                   {t}
@@ -178,7 +176,7 @@ export default function Electricity() {
             <div className="space-y-3">
               <div>
                 <label className="label">Transaction PIN</label>
-                <input className="input" placeholder="Enter 4-digit PIN" value={pin} onChange={(e) => setPin(e.target.value)} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
+                <input className="input text-center tracking-[0.4em]" type="password" inputMode="numeric" autoComplete="off" placeholder="••••" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
               {lockUntil && Date.now() < lockUntil && <p className="text-xs text-red-400 mt-1">Locked due to multiple failed attempts.</p>}
               </div>
               <div className="flex gap-3">

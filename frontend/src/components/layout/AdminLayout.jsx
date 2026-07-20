@@ -35,17 +35,17 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-950 flex">
+    <div className="min-h-screen bg-canvas flex text-[var(--ds-text)]">
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 safe-fixed-y left-0 z-30 w-[min(14rem,88vw)] bg-dark-900 border-r border-dark-700/50 flex flex-col
+        fixed inset-y-0 safe-fixed-y left-0 z-30 w-[min(15rem,88vw)] bg-surface border-r border-[var(--ds-stroke)] flex flex-col
         transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
       `}>
-        <div className="flex items-center justify-between p-4 border-b border-dark-700/50">
+        <div className="flex items-center justify-between p-4 border-b border-[var(--ds-stroke)]">
           <Link to="/admin" className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
-            <img src="/logo.png" alt="BORHS" style={{ height: 38, width: 'auto', display: 'block', maxWidth: 140 }} />
+            <img src="/logo.svg" alt="BORHS" style={{ height: 38, width: 'auto', display: 'block', maxWidth: 140 }} />
             <span className="text-xs text-dark-400 capitalize truncate">{user?.role?.replace('_', ' ')}</span>
           </Link>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1.5 rounded-lg text-dark-400 hover:bg-dark-700">
@@ -66,7 +66,7 @@ export default function AdminLayout() {
               <span className="truncate">{item.label}</span>
             </NavLink>
           ))}
-          <div className="pt-3 border-t border-dark-700/50 mt-3">
+          <div className="pt-3 border-t border-[var(--ds-stroke)] mt-3">
             <NavLink to="/dashboard" onClick={() => setSidebarOpen(false)} className="sidebar-link">
               <LayoutDashboard size={17} className="shrink-0" />
               <span>Customer View</span>
@@ -74,9 +74,9 @@ export default function AdminLayout() {
           </div>
         </nav>
 
-        <div className="p-2 border-t border-dark-700/50">
-          <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-dark-800/50">
-            <div className="w-8 h-8 bg-primary-500/20 border border-primary-500/30 rounded-full flex items-center justify-center shrink-0">
+        <div className="p-2 border-t border-[var(--ds-stroke)]">
+          <div className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-[var(--ds-surface-subtle)]">
+            <div className="w-8 h-8 bg-[var(--ds-info-soft)] rounded-xl flex items-center justify-center shrink-0">
               <span className="text-primary-400 font-bold text-xs">{user?.firstName?.[0]}{user?.lastName?.[0]}</span>
             </div>
             <div className="flex-1 min-w-0">
@@ -96,13 +96,13 @@ export default function AdminLayout() {
       )}
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0 w-full lg:ml-56">
+      <div className="flex-1 flex flex-col min-w-0 w-full lg:ml-60">
         {/* Admin topbar */}
-        <header className="sticky top-0 z-10 bg-dark-900/90 border-b border-dark-700/50 backdrop-blur-md h-14 flex items-center px-4 gap-3">
+        <header className="sticky top-0 z-10 bg-surface/90 border-b border-[var(--ds-stroke)] backdrop-blur-md h-16 flex items-center px-4 sm:px-6 gap-3">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 rounded-xl text-dark-400 hover:bg-dark-700/60">
             <Menu size={20} />
           </button>
-          <span className="font-bold text-dark-200 text-sm lg:hidden">Admin Panel</span>
+          <span className="font-bold text-[var(--ds-text)] text-sm lg:hidden">Operations</span>
           <div className="flex-1" />
           <VerificationBadge user={user} />
           <Link to="/dashboard" className="text-xs text-dark-400 hover:text-dark-200 transition-colors hidden sm:block">
@@ -118,7 +118,7 @@ export default function AdminLayout() {
           </button>
         </header>
 
-        <main className="flex-1 min-w-0 w-full p-3 sm:p-5 lg:p-7 overflow-x-hidden overflow-y-auto animate-fade-in">
+        <main className="flex-1 min-w-0 w-full p-4 sm:p-6 lg:p-8 overflow-x-hidden overflow-y-auto animate-fade-in">
           <Outlet />
         </main>
       </div>

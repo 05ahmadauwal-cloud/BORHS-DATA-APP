@@ -1,11 +1,12 @@
 import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { LayoutDashboard, Wallet, Wifi, MoreHorizontal, User, Shield, Lock, KeyRound } from 'lucide-react';
+import { LayoutDashboard, Wallet, Wifi, MoreHorizontal, User, Shield, KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import WhatsAppButton from '../ui/WhatsAppButton';
+import BottomNavigation from '../ui/BottomNavigation';
 import useAuthStore from '../../store/authStore';
 import { walletAPI } from '../../api';
 
@@ -189,7 +190,7 @@ export default function DashboardLayout() {
   const showPinGate = needsPin && !isPinExemptPath && !showKycGate;
 
   return (
-    <div className="min-h-screen bg-dark-950 flex">
+    <div className="min-h-screen bg-canvas flex text-[var(--ds-text)]">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Mobile overlay */}
@@ -204,14 +205,15 @@ export default function DashboardLayout() {
       <div className="mobile-safe-shell flex-1 flex flex-col min-w-0 lg:ml-64">
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
 
-        <main className="flex-1 min-w-0 w-full p-3 sm:p-4 md:p-6 lg:p-8 pb-24 lg:pb-8 overflow-x-hidden">
+        <main className="flex-1 min-w-0 w-full px-[var(--ds-page-gutter)] py-6 sm:py-8 pb-28 lg:pb-8 overflow-x-hidden">
           <Outlet />
         </main>
 
         <WhatsAppButton />
+        <BottomNavigation />
 
         {/* Mobile bottom navigation */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 z-20 safe-bottom">
+        <nav className="hidden fixed bottom-0 inset-x-0 z-20 safe-bottom">
           {/* bar */}
           <div
             className="relative bg-dark-900 border-t border-white/[0.07] px-1"

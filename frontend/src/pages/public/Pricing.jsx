@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { dataAPI } from '../../api';
+import { publicAPI } from '../../api';
 import {
   Wifi, CheckCircle, Phone, Zap, Tv, ArrowRight,
   Hash, Smartphone, ChevronRight, Star, BadgeCheck, Info,
@@ -119,11 +119,24 @@ export default function Pricing() {
 
   const networkMeta = NETWORKS.find((n) => n.id === selectedNetwork) || NETWORKS[0];
 
-  const { data: plans, isLoading } = useQuery({
-    queryKey: ['data-plans', selectedNetwork, selectedType],
-    queryFn: () => dataAPI.getPlans({ network: selectedNetwork, dataType: selectedType }),
-    select: (res) => res.data.plans,
+  const { data: allPlans = [], isLoading, isError } = useQuery({
+    queryKey: ['public-featured-plans'],
+    queryFn: publicAPI.getFeaturedPlans,
+    select: (res) => Array.isArray(res.data?.data) ? res.data.data : [],
+    staleTime: 60_000,
   });
+
+  const availableTypes = new Set(
+    allPlans
+      .filter((plan) => plan.network?.toLowerCase() === selectedNetwork)
+      .map((plan) => plan.dataType?.toLowerCase())
+      .filter(Boolean)
+  );
+
+  const plans = allPlans.filter((plan) => (
+    plan.network?.toLowerCase() === selectedNetwork
+    && plan.dataType?.toLowerCase() === selectedType
+  ));
 
   return (
     <div style={{ overflowX: 'hidden' }}>
@@ -156,7 +169,13 @@ export default function Pricing() {
           {NETWORKS.map((n) => (
             <button
               key={n.id}
-              onClick={() => setSelectedNetwork(n.id)}
+              onClick={() => {
+                setSelectedNetwork(n.id);
+                const networkTypes = allPlans
+                  .filter((plan) => plan.network?.toLowerCase() === n.id)
+                  .map((plan) => plan.dataType?.toLowerCase());
+                if (!networkTypes.includes(selectedType) && networkTypes[0]) setSelectedType(networkTypes[0]);
+              }}
               className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-150 ${
                 selectedNetwork === n.id
                   ? `${n.activeBg} ${n.activeBorder} ${n.activeText}`
@@ -176,6 +195,7 @@ export default function Pricing() {
             <button
               key={t.id}
               onClick={() => setSelectedType(t.id)}
+              disabled={!isLoading && !availableTypes.has(t.id)}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
                 selectedType === t.id
                   ? 'bg-primary-500/15 border-primary-500/35 text-primary-400'
@@ -202,7 +222,13 @@ export default function Pricing() {
               </div>
             ))}
           </div>
-        ) : plans?.length > 0 ? (
+        ) : isError ? (
+          <div className="rounded-[1.75rem] bg-[#fff1ed] px-6 py-12 text-center">
+            <Wifi size={30} className="mx-auto text-red-500" />
+            <p className="mt-4 text-sm font-bold text-[#7f1d1d]">Pricing is temporarily unavailable.</p>
+            <p className="mt-1 text-xs text-[#9f3a2c]">Please refresh the page or try again shortly.</p>
+          </div>
+        ) : plans.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">
             {plans.map((plan) => (
               <PlanCard key={plan._id} plan={plan} networkMeta={networkMeta} />

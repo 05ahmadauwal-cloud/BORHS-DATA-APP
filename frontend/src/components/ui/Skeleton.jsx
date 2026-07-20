@@ -1,0 +1,4 @@
+import clsx from 'clsx';
+export default function Skeleton({ className }) { return <span aria-hidden="true" className={clsx('ds-skeleton block rounded-xl bg-[var(--ds-surface-subtle)]', className)} />; }
+export function CardSkeleton() { return <div className="rounded-[var(--ds-radius-card)] bg-surface p-5 shadow-[var(--ds-shadow-card)]"><Skeleton className="h-4 w-24" /><Skeleton className="mt-4 h-8 w-2/3" /><Skeleton className="mt-5 h-12 w-full" /></div>; }
+export function TransactionSkeleton({ rows = 4 }) { return <div className="space-y-3">{Array.from({ length: rows }, (_, index) => <div key={index} className="flex items-center gap-3 rounded-2xl bg-surface p-3"><Skeleton className="h-11 w-11 shrink-0 rounded-2xl" /><div className="flex-1"><Skeleton className="h-3.5 w-1/2" /><Skeleton className="mt-2 h-3 w-1/3" /></div><Skeleton className="h-4 w-16" /></div>)}</div>; }

@@ -9,7 +9,7 @@
     "build:mobile": "npm run build && cap sync android",
     "android:open": "cap open android",
     "android:apk": "npm run build:mobile && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1",
-    "android:assets": "capacitor-assets generate --android --iconBackgroundColor \"#2563EB\" --iconBackgroundColorDark \"#020617\" --splashBackgroundColor \"#020617\" --splashBackgroundColorDark \"#020617\"",
+    "android:assets": "capacitor-assets generate --android --iconBackgroundColor \"#0F766E\" --iconBackgroundColorDark \"#0F766E\" --splashBackgroundColor \"#0F766E\" --splashBackgroundColorDark \"#0F766E\"",
     "preview": "vite preview",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0"
   },

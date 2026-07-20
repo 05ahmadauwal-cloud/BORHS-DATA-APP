@@ -5,6 +5,7 @@ import { GraduationCap, Copy, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
+import { ServiceHeader } from '../../components/ui';
 
 const EXAMS = [
   { id: 'waec', label: 'WAEC', desc: 'West African Examinations Council' },
@@ -76,10 +77,7 @@ export default function Education() {
     <div className="max-w-2xl mx-auto space-y-6">
       <PurchaseLoader visible={mutation.isPending} type="education" />
       <Receipt data={receipt} onClose={() => setReceipt(null)} />
-      <div className="page-header">
-        <h1 className="page-title flex items-center gap-3"><GraduationCap className="text-red-400" />Exam PINs</h1>
-        <p className="page-subtitle">Purchase WAEC, NECO, NABTEB, and JAMB e-PINs</p>
-      </div>
+      <ServiceHeader icon={GraduationCap} title="Exam PINs" description="Purchase WAEC, NECO, NABTEB and JAMB PINs." step={result ? 2 : 1} />
 
       {!result ? (
         <div className="card p-6 space-y-6">
@@ -91,10 +89,10 @@ export default function Education() {
                   key={exam.id}
                   onClick={() => setExamType(exam.id)}
                   className={`p-4 rounded-xl border text-left transition-all ${
-                    examType === exam.id ? 'border-red-500 bg-red-500/10' : 'border-dark-600 hover:border-dark-500'
+                    examType === exam.id ? 'border-primary-500 bg-primary-500/10' : 'border-dark-600 hover:border-dark-500'
                   }`}
                 >
-                  <p className={`font-bold text-sm ${examType === exam.id ? 'text-red-300' : 'text-dark-100'}`}>{exam.label}</p>
+                  <p className={`font-bold text-sm ${examType === exam.id ? 'text-primary-400' : 'text-dark-100'}`}>{exam.label}</p>
                   <p className="text-xs text-dark-400 mt-0.5">{exam.desc}</p>
                   {prices?.[exam.id] && (
                     <p className="text-sm font-black text-primary-400 mt-1">₦{prices[exam.id].toLocaleString()}/pin</p>
@@ -132,7 +130,7 @@ export default function Education() {
           <div className="space-y-3">
             <div>
               <label className="label">Transaction PIN</label>
-              <input className="input" placeholder="Enter 4-digit PIN" value={pin} onChange={(e) => setPin(e.target.value)} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
+              <input className="input text-center tracking-[0.4em]" type="password" inputMode="numeric" autoComplete="off" placeholder="••••" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
               {lockUntil && Date.now() < lockUntil && <p className="text-xs text-red-400 mt-1">Locked due to multiple failed attempts.</p>}
             </div>
             <button

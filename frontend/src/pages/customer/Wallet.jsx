@@ -380,8 +380,9 @@ export default function Wallet() {
   return (
     <div className="max-w-2xl mx-auto space-y-5">
       <div>
-        <h1 className="text-xl md:text-2xl font-black" style={{ color: 'var(--text-primary)' }}>Wallet</h1>
-        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Fund, transfer and track your balance</p>
+        <p className="text-sm font-semibold text-brand-700">Your money</p>
+        <h1 className="mt-1 text-2xl font-bold text-[var(--ds-text)]">Wallet</h1>
+        <p className="mt-1 text-sm text-[var(--ds-text-secondary)]">Fund, transfer and track every movement.</p>
       </div>
 
       {/* Verification banners */}
@@ -401,7 +402,7 @@ export default function Wallet() {
       )}
 
       {/* Balance card */}
-      <div className="relative rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary-600 to-primary-900 p-5 sm:p-7 overflow-hidden shadow-2xl shadow-primary-900/40">
+      <div className="relative rounded-[2rem] bg-brand-700 p-6 sm:p-8 overflow-hidden shadow-[0_20px_45px_rgba(15,118,110,0.22)]">
         <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-24 translate-x-24" />
         <div className="relative">
           <p className="text-primary-200 text-xs sm:text-sm mb-1">Available Balance</p>

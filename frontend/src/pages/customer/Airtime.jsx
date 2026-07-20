@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
+import { ServiceHeader } from '../../components/ui';
 import { detectNetwork, isPhoneComplete, NETWORK_LABELS } from '../../utils/phoneNetwork';
 
 const NETWORKS = [
@@ -89,10 +90,7 @@ export default function Airtime() {
     <div className="max-w-2xl mx-auto space-y-6">
       <PurchaseLoader visible={mutation.isPending} type="airtime" />
       <Receipt data={receipt} onClose={() => setReceipt(null)} />
-      <div className="page-header">
-        <h1 className="page-title flex items-center gap-3"><Phone className="text-green-400" />Buy Airtime</h1>
-        <p className="page-subtitle">Top up any Nigerian network instantly</p>
-      </div>
+      <ServiceHeader icon={Phone} title="Buy airtime" description="Top up any Nigerian network instantly." step={step} />
 
       {step === 1 ? (
         <div className="card p-6 space-y-6">
@@ -235,7 +233,7 @@ export default function Airtime() {
             <div className="space-y-3">
               <div>
                 <label className="label">Transaction PIN</label>
-                <input className="input" placeholder="Enter 4-digit PIN" value={pin} onChange={(e) => setPin(e.target.value)} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
+                <input className="input text-center tracking-[0.4em]" type="password" inputMode="numeric" autoComplete="off" placeholder="••••" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
                 {lockUntil && Date.now() < lockUntil && <p className="text-xs text-red-400 mt-1">Locked due to multiple failed attempts.</p>}
               </div>
               <div className="flex gap-3">
