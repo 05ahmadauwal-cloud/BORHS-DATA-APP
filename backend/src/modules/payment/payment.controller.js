@@ -152,17 +152,20 @@ const getOrCreateVirtualAccount = async (req, res) => {
   if (enabled === false) return ApiResponse.error(res, 'Bank transfer is currently disabled', 403);
   const User = require('../../models/User');
   let user = await User.findById(req.user._id);
+  if (!['tier2', 'tier3'].includes(user?.kycStatus)) {
+    return ApiResponse.error(res, 'Complete Tier 2 KYC to access a dedicated account number', 403);
+  }
 
-  if (!user.monnifyVirtualAccount?.reference) {
-    // Create on demand if missing
+  if (!user.monnifyVirtualAccount?.reference || user.monnifyVirtualAccount?.kycSyncStatus !== 'synced') {
     if (process.env.MONNIFY_API_KEY && process.env.MONNIFY_CONTRACT_CODE) {
       try {
-        const { createReservedAccount } = require('../../services/monnify');
-        const va = await createReservedAccount(user);
-        user = await User.findByIdAndUpdate(req.user._id, { monnifyVirtualAccount: va }, { new: true });
+        const { syncMonnifyKYC } = require('../kyc/kyc.service');
+        const result = await syncMonnifyKYC(req.user._id);
+        if (result.skipped) return ApiResponse.error(res, 'Complete Tier 2 KYC with BVN or NIN to activate your account', 403);
+        user = await User.findById(req.user._id);
       } catch (e) {
-        logger.error('Monnify on-demand account creation failed:', e.response?.data || e.message);
-        return ApiResponse.error(res, 'Virtual account not available yet. Please try again later.', 503);
+        logger.error('Monnify on-demand KYC sync failed:', e.response?.data || e.message);
+        return ApiResponse.error(res, 'Virtual account KYC could not be activated yet. Please try again later.', 503);
       }
     } else {
       return ApiResponse.error(res, 'Bank transfer not configured', 503);

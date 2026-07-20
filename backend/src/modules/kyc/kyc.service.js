@@ -1,6 +1,41 @@
 const KYC = require('../../models/KYC');
 const User = require('../../models/User');
 const { KYC_STATUS, KYC_APPROVAL_STATUS } = require('../../config/constants');
+const logger = require('../../utils/logger');
+
+const getApprovedIdentity = async (userId) => {
+  const record = await KYC.findOne({ user: userId, tier: 2, status: KYC_APPROVAL_STATUS.APPROVED }).lean();
+  if (!record) return null;
+  return { bvn: record.bvn || undefined, nin: record.idType === 'nin' ? record.idNumber : undefined };
+};
+
+const syncMonnifyKYC = async (userId) => {
+  const [user, identity] = await Promise.all([User.findById(userId), getApprovedIdentity(userId)]);
+  if (!user || (!identity?.bvn && !identity?.nin)) return { skipped: true };
+  try {
+    const { createReservedAccount, updateReservedAccountKYC } = require('../../services/monnify');
+    let virtualAccount = user.monnifyVirtualAccount?.toObject?.() || user.monnifyVirtualAccount;
+    if (virtualAccount?.reference) {
+      await updateReservedAccountKYC(virtualAccount.reference, identity);
+      virtualAccount.kycSyncStatus = 'synced';
+      virtualAccount.kycSyncedAt = new Date();
+      virtualAccount.kycSyncError = undefined;
+    } else {
+      const created = await createReservedAccount(user, identity);
+      virtualAccount = { ...created, kycSyncStatus: 'synced', kycSyncedAt: new Date() };
+    }
+    await User.findByIdAndUpdate(userId, { monnifyVirtualAccount: virtualAccount });
+    return { synced: true };
+  } catch (error) {
+    const message = error.response?.data?.responseMessage || error.response?.data?.message || error.message;
+    logger.error(`Monnify KYC sync failed for user ${userId}: ${message}`);
+    await User.findByIdAndUpdate(userId, {
+      'monnifyVirtualAccount.kycSyncStatus': 'failed',
+      'monnifyVirtualAccount.kycSyncError': message,
+    });
+    throw error;
+  }
+};
 
 const submitTier1 = async (userId) => {
   // Auto-approve: user already supplied their name and phone at registration
@@ -91,6 +126,7 @@ const reviewKYC = async (adminId, kycId, action, rejectionReason) => {
   if (action === 'approve') {
     const tierMap = { 1: KYC_STATUS.TIER1, 2: KYC_STATUS.TIER2, 3: KYC_STATUS.TIER3 };
     await User.findByIdAndUpdate(kyc.user._id, { kycStatus: tierMap[kyc.tier] });
+    if (kyc.tier === 2) await syncMonnifyKYC(kyc.user._id).catch(() => {});
   }
 
   return kyc;
@@ -138,4 +174,4 @@ const getKYCCounts = async () => {
   return { pending, approved, rejected, all: pending + approved + rejected };
 };
 
-module.exports = { submitTier1, submitTier2, submitTier3, getKYCStatus, reviewKYC, getPendingKYC, getKYCSubmissions, getKYCById, getKYCCounts };
+module.exports = { submitTier1, submitTier2, submitTier3, getKYCStatus, reviewKYC, getPendingKYC, getKYCSubmissions, getKYCById, getKYCCounts, getApprovedIdentity, syncMonnifyKYC };

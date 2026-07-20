@@ -118,6 +118,13 @@ const userSchema = new mongoose.Schema(
     monnifyVirtualAccount: {
       reference: String,
       accountName: String,
+      kycSyncStatus: {
+        type: String,
+        enum: ['pending', 'synced', 'failed'],
+        default: 'pending',
+      },
+      kycSyncedAt: Date,
+      kycSyncError: String,
       accounts: [
         {
           accountNumber: String,

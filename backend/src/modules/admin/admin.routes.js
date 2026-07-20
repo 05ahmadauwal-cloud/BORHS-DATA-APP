@@ -140,12 +140,13 @@ router.get('/test/email', asyncHandler(async (req, res) => {
 // ─── Monnify Health Check ─────────────────────────────────────────────────────
 router.get('/test/monnify', asyncHandler(async (req, res) => {
   try {
-    const { createReservedAccount } = require('../../services/monnify');
+    const { syncMonnifyKYC } = require('../kyc/kyc.service');
     const User = require('../../models/User');
     const user = await User.findById(req.user._id);
-    const va = await createReservedAccount(user);
-    // Also save to this admin user as a test
-    await User.findByIdAndUpdate(req.user._id, { monnifyVirtualAccount: va });
+    const result = await syncMonnifyKYC(user._id);
+    if (result.skipped) return ApiResponse.error(res, 'Approved BVN or NIN is required', 400);
+    const updated = await User.findById(user._id);
+    const va = updated.monnifyVirtualAccount;
     return ApiResponse.success(res, { virtualAccount: va }, 'Monnify connected ✓ Virtual account created');
   } catch (err) {
     const detail = err.response?.data || err.message;
@@ -156,12 +157,14 @@ router.get('/test/monnify', asyncHandler(async (req, res) => {
 // Force-create virtual account for a specific user (admin tool)
 router.post('/users/:id/create-virtual-account', asyncHandler(async (req, res) => {
   const User = require('../../models/User');
-  const { createReservedAccount } = require('../../services/monnify');
+  const { syncMonnifyKYC } = require('../kyc/kyc.service');
   try {
     const user = await User.findById(req.params.id);
     if (!user) return ApiResponse.error(res, 'User not found', 404);
-    const va = await createReservedAccount(user);
-    await User.findByIdAndUpdate(req.params.id, { monnifyVirtualAccount: va });
+    const result = await syncMonnifyKYC(user._id);
+    if (result.skipped) return ApiResponse.error(res, 'User needs approved BVN or NIN', 400);
+    const updated = await User.findById(user._id);
+    const va = updated.monnifyVirtualAccount;
     return ApiResponse.success(res, { virtualAccount: va }, 'Virtual account created');
   } catch (err) {
     const detail = err.response?.data || err.message;

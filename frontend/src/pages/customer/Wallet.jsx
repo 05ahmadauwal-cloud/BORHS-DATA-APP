@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import useAuthStore from '../../store/authStore';
 
 const ALL_TABS = ['Bank Transfer', 'Billstack', 'Online Payment', 'Promo Code', 'Send Money', 'History'];
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
@@ -216,6 +217,7 @@ function BankTransferTab({ chargeType, chargeValue, provider = 'monnify' }) {
 }
 
 export default function Wallet() {
+  const user = useAuthStore((state) => state.user);
   const [activeTab, setActiveTab] = useState('Bank Transfer');
   const [fundAmount, setFundAmount] = useState('');
   const [gateway, setGateway] = useState('paystack');
@@ -276,9 +278,10 @@ export default function Wallet() {
   });
 
   const fm = fundingMethods || { bankTransfer: true, billstack: false, paystack: true, flutterwave: true };
+  const hasDedicatedAccountKYC = ['tier2', 'tier3'].includes(user?.kycStatus);
   const hasAnyOnline = fm.paystack || fm.flutterwave;
   const TABS = ALL_TABS.filter((t) => {
-    if (t === 'Bank Transfer' && !fm.bankTransfer) return false;
+    if (t === 'Bank Transfer' && (!fm.bankTransfer || !hasDedicatedAccountKYC)) return false;
     if (t === 'Billstack' && !fm.billstack) return false;
     if (t === 'Online Payment' && !hasAnyOnline) return false;
     return true;
@@ -288,7 +291,7 @@ export default function Wallet() {
   useEffect(() => {
     if (!fundingMethods) return;
     if (!TABS.includes(activeTab)) setActiveTab(TABS[0] || 'History');
-  }, [fundingMethods]);
+  }, [fundingMethods, hasDedicatedAccountKYC]);
 
   // Auto-switch gateway if currently selected one is disabled
   useEffect(() => {
@@ -406,7 +409,7 @@ export default function Wallet() {
             ₦{Number.isFinite(walletBalance) ? walletBalance.toLocaleString('en-NG', { minimumFractionDigits: 2 }) : '0.00'}
           </h2>
           <div className="flex gap-2 sm:gap-3">
-            {fm.bankTransfer && (
+            {fm.bankTransfer && hasDedicatedAccountKYC && (
               <button onClick={() => setActiveTab('Bank Transfer')} className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors">
                 <Building2 size={14} /> Bank Transfer
               </button>
@@ -435,7 +438,7 @@ export default function Wallet() {
       </div>
 
       {/* Bank Transfer Tab */}
-      {activeTab === 'Bank Transfer' && fm.bankTransfer && (
+      {activeTab === 'Bank Transfer' && fm.bankTransfer && hasDedicatedAccountKYC && (
         <BankTransferTab chargeType={chargeInfo?.type} chargeValue={chargeInfo?.value} />
       )}
 

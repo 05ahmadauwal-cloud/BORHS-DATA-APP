@@ -54,7 +54,7 @@ const getReservedAccount = async (accountReference) => {
   return parseAccountResponse(res.data.responseBody, accountReference);
 };
 
-const createReservedAccount = async (user) => {
+const createReservedAccount = async (user, identity = {}) => {
   const headers = await authHeaders();
   const accountReference = `BORHS-${user._id}`;
   const accountName = `${user.firstName} ${user.lastName}`;
@@ -69,6 +69,8 @@ const createReservedAccount = async (user) => {
         contractCode: process.env.MONNIFY_CONTRACT_CODE,
         customerEmail: user.email,
         customerName: accountName,
+        ...(identity.bvn ? { bvn: identity.bvn } : {}),
+        ...(identity.nin ? { nin: identity.nin } : {}),
         getAllAvailableBanks: true,
       },
       { headers }
@@ -85,6 +87,20 @@ const createReservedAccount = async (user) => {
   }
 };
 
+const updateReservedAccountKYC = async (accountReference, identity) => {
+  if (!identity?.bvn && !identity?.nin) throw new Error('Customer BVN or NIN is required');
+  const headers = await authHeaders();
+  const res = await axios.put(
+    `${BASE_URL}/api/v1/bank-transfer/reserved-accounts/${encodeURIComponent(accountReference)}/kyc-info`,
+    {
+      ...(identity.bvn ? { bvn: identity.bvn } : {}),
+      ...(identity.nin ? { nin: identity.nin } : {}),
+    },
+    { headers }
+  );
+  return res.data.responseBody;
+};
+
 /**
  * Verify a Monnify webhook signature.
  * Monnify computes: SHA512(secretKey + rawBody)
@@ -97,4 +113,4 @@ const verifyWebhookSignature = (rawBody, signature) => {
   return hash === signature;
 };
 
-module.exports = { createReservedAccount, getReservedAccount, verifyWebhookSignature };
+module.exports = { createReservedAccount, getReservedAccount, updateReservedAccountKYC, verifyWebhookSignature };
