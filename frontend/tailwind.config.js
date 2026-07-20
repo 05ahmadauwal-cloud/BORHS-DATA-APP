@@ -5,6 +5,21 @@ export default {
   theme: {
     extend: {
       colors: {
+        brand: {
+          50: 'var(--ds-brand-50)',
+          100: 'var(--ds-brand-100)',
+          200: 'var(--ds-brand-200)',
+          300: 'var(--ds-brand-300)',
+          400: 'var(--ds-brand-400)',
+          500: 'var(--ds-brand-500)',
+          600: 'var(--ds-brand-600)',
+          700: 'var(--ds-brand-700)',
+          800: 'var(--ds-brand-800)',
+          900: 'var(--ds-brand-900)',
+        },
+        canvas: 'var(--ds-canvas)',
+        surface: 'var(--ds-surface)',
+        reward: 'var(--ds-reward)',
         primary: {
           50: 'rgb(var(--color-primary-50) / <alpha-value>)',
           100: 'rgb(var(--color-primary-100) / <alpha-value>)',
