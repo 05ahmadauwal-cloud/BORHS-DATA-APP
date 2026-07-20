@@ -10,7 +10,7 @@ import {
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
-const ALL_TABS = ['Bank Transfer', 'Paystack Account', 'Billstack', 'Online Payment', 'Promo Code', 'Send Money', 'History'];
+const ALL_TABS = ['Bank Transfer', 'Billstack', 'Online Payment', 'Promo Code', 'Send Money', 'History'];
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 const isCredit = (type) => [
   'wallet_fund', 'commission_earned', 'referral_bonus', 'refund',
@@ -215,118 +215,6 @@ function BankTransferTab({ chargeType, chargeValue, provider = 'monnify' }) {
   );
 }
 
-function PaystackAccountTab() {
-  const [consent, setConsent] = useState(false);
-  const [identification, setIdentification] = useState({ bvn: '', accountNumber: '', bankCode: '' });
-  const { data: account, isLoading, refetch } = useQuery({
-    queryKey: ['paystack-dedicated-account'],
-    queryFn: () => paymentAPI.getPaystackDedicatedAccount(),
-    select: (response) => response.data.virtualAccount,
-    refetchInterval: (query) => query.state.data?.data?.virtualAccount?.assignmentStatus === 'pending' ? 10000 : false,
-  });
-  const accountMutation = useMutation({
-    mutationFn: () => paymentAPI.createPaystackDedicatedAccount({
-      consent: true,
-      bvn: identification.bvn || undefined,
-      accountNumber: identification.accountNumber || undefined,
-      bankCode: identification.bankCode || undefined,
-    }),
-    onSuccess: async ({ data }) => {
-      await refetch();
-      toast.success(data.virtualAccount?.assignmentStatus === 'active'
-        ? 'Paystack account is ready'
-        : 'Account assignment is being processed');
-    },
-    onError: (error) => toast.error(error.response?.data?.message || 'Could not create Paystack account'),
-  });
-  const { data: banks = [] } = useQuery({
-    queryKey: ['paystack-banks'],
-    queryFn: () => paymentAPI.getPaystackBanks(),
-    select: (response) => response.data.banks,
-    staleTime: 24 * 60 * 60 * 1000,
-  });
-  const pending = account?.assignmentStatus === 'pending';
-  const isActive = account?.assignmentStatus === 'active' && account?.accountNumber;
-
-  return (
-    <div className="space-y-4">
-      <div className="flex gap-3 p-4 rounded-2xl border"
-        style={{ background: 'rgba(37,99,235,0.06)', borderColor: 'rgba(37,99,235,0.2)' }}>
-        <Banknote size={18} className="text-primary-400 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Your Paystack Account Number</p>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            Transfer from any Nigerian bank and your BORHS wallet will be credited automatically.
-          </p>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="h-36 rounded-2xl animate-pulse" style={{ background: 'var(--bg-elevated)' }} />
-      ) : isActive ? (
-        <div className="card p-5 space-y-4" style={{ borderColor: 'rgba(37,99,235,0.35)' }}>
-          <span className="inline-block text-[10px] font-black px-2 py-0.5 rounded-full bg-success-500/15 text-success-400">Active</span>
-          <div>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Bank Name</p>
-            <p className="font-bold" style={{ color: 'var(--text-primary)' }}>{account.bankName}</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="p-3 rounded-xl" style={{ background: 'var(--bg-elevated)' }}>
-              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Account Number</p>
-              <p className="text-xl font-black tracking-wider" style={{ color: 'var(--text-primary)' }}>{account.accountNumber}</p>
-            </div>
-            <div className="p-3 rounded-xl" style={{ background: 'var(--bg-elevated)' }}>
-              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Account Name</p>
-              <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{account.accountName}</p>
-            </div>
-          </div>
-          <CopyButton text={account.accountNumber} />
-        </div>
-      ) : (
-        <div className="card p-5 space-y-4">
-          {pending && (
-            <div className="flex gap-2 rounded-xl bg-yellow-500/10 p-3 text-xs text-yellow-400">
-              <Clock size={15} className="shrink-0" /> Paystack is processing your account. Check again shortly.
-            </div>
-          )}
-          {!pending && (
-            <div className="space-y-3">
-              <p className="text-xs font-bold" style={{ color: 'var(--text-secondary)' }}>Identity verification</p>
-              <p className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
-                These details are required when Paystack classifies the merchant under Financial or General Services. The bank account must belong to the BVN owner.
-              </p>
-              <input type="password" inputMode="numeric" maxLength={11} className="input" placeholder="11-digit BVN"
-                value={identification.bvn}
-                onChange={(event) => setIdentification({ ...identification, bvn: event.target.value.replace(/\D/g, '').slice(0, 11) })} />
-              <input inputMode="numeric" maxLength={10} className="input" placeholder="Your 10-digit bank account number"
-                value={identification.accountNumber}
-                onChange={(event) => setIdentification({ ...identification, accountNumber: event.target.value.replace(/\D/g, '').slice(0, 10) })} />
-              <select className="input" value={identification.bankCode}
-                onChange={(event) => setIdentification({ ...identification, bankCode: event.target.value })}>
-                <option value="">Select your bank</option>
-                {banks.map((bank) => <option key={bank.code} value={bank.code}>{bank.name}</option>)}
-              </select>
-            </div>
-          )}
-          <label className="flex items-start gap-3 text-xs cursor-pointer" style={{ color: 'var(--text-muted)' }}>
-            <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} className="mt-0.5" />
-            <span>I consent to BORHS securely sharing my name, email, and phone number with Paystack to create my dedicated bank account.</span>
-          </label>
-          <button onClick={() => accountMutation.mutate()} disabled={!consent || accountMutation.isPending} className="btn-primary w-full gap-2">
-            {accountMutation.isPending
-              ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              : <Building2 size={16} />}
-            {accountMutation.isPending ? 'Checking accountâ€¦' : pending ? 'Check account status' : 'Create Paystack account'}
-          </button>
-          <p className="text-[10px]" style={{ color: 'var(--text-faint)' }}>
-            Paystack may require additional identity or bank verification depending on the merchant category.
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function Wallet() {
   const [activeTab, setActiveTab] = useState('Bank Transfer');
   const [fundAmount, setFundAmount] = useState('');
@@ -391,7 +279,6 @@ export default function Wallet() {
   const hasAnyOnline = fm.paystack || fm.flutterwave;
   const TABS = ALL_TABS.filter((t) => {
     if (t === 'Bank Transfer' && !fm.bankTransfer) return false;
-    if (t === 'Paystack Account' && !fm.paystack) return false;
     if (t === 'Billstack' && !fm.billstack) return false;
     if (t === 'Online Payment' && !hasAnyOnline) return false;
     return true;
@@ -551,8 +438,6 @@ export default function Wallet() {
       {activeTab === 'Bank Transfer' && fm.bankTransfer && (
         <BankTransferTab chargeType={chargeInfo?.type} chargeValue={chargeInfo?.value} />
       )}
-
-      {activeTab === 'Paystack Account' && fm.paystack && <PaystackAccountTab />}
 
       {activeTab === 'Billstack' && fm.billstack && (
         <BankTransferTab provider="billstack" chargeType={chargeInfo?.type} chargeValue={chargeInfo?.value} />

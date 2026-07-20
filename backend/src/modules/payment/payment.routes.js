@@ -21,14 +21,6 @@ router.post(
 router.use(authenticate);
 router.post('/paystack/initialize', [body('amount').isNumeric().toFloat()], validate, asyncHandler(ctrl.initializePaystack));
 router.get('/paystack/verify/:reference', asyncHandler(ctrl.verifyPaystack));
-router.get('/paystack/dedicated-account', asyncHandler(ctrl.getPaystackAccount));
-router.get('/paystack/banks', asyncHandler(ctrl.getPaystackBanks));
-router.post('/paystack/dedicated-account', [
-  body('consent').equals('true').withMessage('Consent is required to create a dedicated account'),
-  body('bvn').optional({ checkFalsy: true }).isLength({ min: 11, max: 11 }).isNumeric(),
-  body('accountNumber').optional({ checkFalsy: true }).isLength({ min: 10, max: 10 }).isNumeric(),
-  body('bankCode').optional({ checkFalsy: true }).isString(),
-], validate, asyncHandler(ctrl.getOrCreatePaystackAccount));
 router.post('/flutterwave/initialize', [body('amount').isNumeric().toFloat()], validate, asyncHandler(ctrl.initializeFlutterwave));
 router.get('/flutterwave/verify/:transaction_id', asyncHandler(ctrl.verifyFlutterwave));
 router.get('/virtual-account', asyncHandler(ctrl.getOrCreateVirtualAccount));
