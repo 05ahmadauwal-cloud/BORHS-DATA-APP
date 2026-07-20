@@ -135,6 +135,22 @@ const userSchema = new mongoose.Schema(
         bankCode: String,
       }],
     },
+    paystackVirtualAccount: {
+      assignmentStatus: {
+        type: String,
+        enum: ['none', 'pending', 'active', 'failed'],
+        default: 'none',
+      },
+      customerCode: String,
+      dedicatedAccountId: String,
+      accountName: String,
+      accountNumber: String,
+      bankName: String,
+      bankSlug: String,
+      currency: { type: String, default: 'NGN' },
+      consentedAt: Date,
+      failureReason: String,
+    },
     agentLevel: {
       type: Number,
       default: 0,

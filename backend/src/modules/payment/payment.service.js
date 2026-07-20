@@ -45,23 +45,71 @@ const paystackVerify = async (reference) => {
   return response.data.data;
 };
 
-const verifyPaystackWebhook = (signature, body) => {
+const verifyPaystackWebhook = (signature, rawBody) => {
+  if (!signature || !process.env.PAYSTACK_SECRET_KEY) return false;
   const hash = crypto
-    .createHmac('sha512', process.env.PAYSTACK_WEBHOOK_SECRET)
-    .update(JSON.stringify(body))
+    .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
+    .update(rawBody)
     .digest('hex');
-  return hash === signature;
+  const expected = Buffer.from(hash, 'utf8');
+  const received = Buffer.from(signature, 'utf8');
+  return expected.length === received.length && crypto.timingSafeEqual(expected, received);
 };
 
 const handlePaystackWebhook = async (event, data) => {
+  if (event === 'dedicatedaccount.assign.success') {
+    const account = data.dedicated_account || data;
+    const customer = data.customer || account.customer || {};
+    const email = customer.email || data.email;
+    const customerCode = customer.customer_code || data.customer_code;
+    const user = await User.findOne(email
+      ? { email: email.toLowerCase() }
+      : { 'paystackVirtualAccount.customerCode': customerCode });
+    if (!user) return logger.warn('Paystack DVA assignment: user not found');
+
+    await User.findByIdAndUpdate(user._id, {
+      paystackVirtualAccount: {
+        assignmentStatus: 'active',
+        customerCode,
+        dedicatedAccountId: String(account.id || data.dedicated_account_id || ''),
+        accountName: account.account_name,
+        accountNumber: account.account_number,
+        bankName: account.bank?.name || account.bank_name,
+        bankSlug: account.bank?.slug || account.bank_slug,
+        currency: account.currency || 'NGN',
+        consentedAt: user.paystackVirtualAccount?.consentedAt || new Date(),
+      },
+    });
+    return;
+  }
+
+  if (event === 'dedicatedaccount.assign.failed') {
+    const email = data.customer?.email || data.email;
+    if (email) await User.findOneAndUpdate({ email: email.toLowerCase() }, {
+      'paystackVirtualAccount.assignmentStatus': 'failed',
+      'paystackVirtualAccount.failureReason': data.reason || data.message || 'Account assignment failed',
+    });
+    return;
+  }
+
   if (event === 'charge.success') {
     const { reference, amount, metadata, customer } = data;
     const amountNGN = amount / 100;
-    const userId = metadata?.userId;
+    let userId = metadata?.userId;
+    if (!userId) {
+      const receiverAccount = data.authorization?.receiver_bank_account_number;
+      const customerCode = customer?.customer_code;
+      const user = await User.findOne(receiverAccount
+        ? { 'paystackVirtualAccount.accountNumber': receiverAccount }
+        : { 'paystackVirtualAccount.customerCode': customerCode });
+      userId = user?._id;
+    }
     if (!userId) {
       logger.warn(`Paystack webhook: no userId in metadata for ref ${reference}`);
       return;
     }
+    const existing = await Transaction.findOne({ externalReference: reference });
+    if (existing) return;
     await fundWallet(userId, amountNGN, 'paystack', reference, { email: customer?.email });
     logger.info(`Wallet funded via Paystack: userId=${userId}, amount=${amountNGN}, ref=${reference}`);
   }

@@ -60,21 +60,71 @@ const verifyPaystack = async (req, res) => {
 
 const paystackWebhook = async (req, res) => {
   const signature = req.headers['x-paystack-signature'];
+  const rawBody = Buffer.isBuffer(req.body) ? req.body.toString('utf8') : JSON.stringify(req.body);
 
-  // In dev mode without a real webhook secret, allow through for testing
-  if (process.env.PAYSTACK_WEBHOOK_SECRET &&
-      process.env.PAYSTACK_WEBHOOK_SECRET !== 'borhs_paystack_webhook_secret' &&
-      !paymentService.verifyPaystackWebhook(signature, req.body)) {
+  if (!paymentService.verifyPaystackWebhook(signature, rawBody)) {
     logger.warn('Invalid Paystack webhook signature');
     return res.status(400).json({ success: false });
   }
 
   res.status(200).json({ success: true });
 
-  const { event, data } = req.body;
+  const { event, data } = JSON.parse(rawBody);
   await paymentService.handlePaystackWebhook(event, data).catch((e) =>
     logger.error('Paystack webhook handler error:', e)
   );
+};
+
+const getOrCreatePaystackAccount = async (req, res) => {
+  const Settings = require('../../models/Settings');
+  const enabled = await Settings.get('funding_paystack', true);
+  if (enabled === false) return ApiResponse.error(res, 'Paystack payments are currently disabled', 403);
+  if (!process.env.PAYSTACK_SECRET_KEY) return ApiResponse.error(res, 'Paystack is not configured', 503);
+
+  const User = require('../../models/User');
+  let user = await User.findById(req.user._id);
+  if (user.paystackVirtualAccount?.assignmentStatus === 'active') {
+    return ApiResponse.success(res, { virtualAccount: user.paystackVirtualAccount });
+  }
+  if (user.paystackVirtualAccount?.assignmentStatus === 'pending') {
+    return ApiResponse.success(res, { virtualAccount: user.paystackVirtualAccount, pending: true }, 'Paystack account assignment is in progress');
+  }
+
+  try {
+    const { assignDedicatedAccount } = require('../../services/paystack');
+    const result = await assignDedicatedAccount(user, req.body);
+    user = await User.findByIdAndUpdate(req.user._id, {
+      'paystackVirtualAccount.assignmentStatus': 'pending',
+      'paystackVirtualAccount.consentedAt': new Date(),
+      'paystackVirtualAccount.failureReason': null,
+    }, { new: true });
+    return ApiResponse.success(res, {
+      virtualAccount: user.paystackVirtualAccount,
+      pending: true,
+      providerMessage: result.message,
+    }, 'Paystack account assignment is in progress');
+  } catch (error) {
+    const reason = error.response?.data?.message || error.message;
+    logger.error('Paystack DVA assignment failed:', error.response?.data || error.message);
+    await User.findByIdAndUpdate(req.user._id, {
+      'paystackVirtualAccount.assignmentStatus': 'failed',
+      'paystackVirtualAccount.failureReason': reason,
+      'paystackVirtualAccount.consentedAt': new Date(),
+    });
+    return ApiResponse.error(res, reason || 'Paystack account is not available yet', error.response?.status || 503);
+  }
+};
+
+const getPaystackAccount = async (req, res) => {
+  const User = require('../../models/User');
+  const user = await User.findById(req.user._id).select('paystackVirtualAccount');
+  return ApiResponse.success(res, { virtualAccount: user?.paystackVirtualAccount || null });
+};
+
+const getPaystackBanks = async (_req, res) => {
+  const { listBanks } = require('../../services/paystack');
+  const banks = await listBanks();
+  return ApiResponse.success(res, { banks });
 };
 
 const initializeFlutterwave = async (req, res) => {
@@ -206,7 +256,7 @@ const billstackWebhook = async (req, res) => {
 };
 
 module.exports = {
-  initializePaystack, verifyPaystack, paystackWebhook,
+  initializePaystack, verifyPaystack, paystackWebhook, getOrCreatePaystackAccount, getPaystackAccount, getPaystackBanks,
   initializeFlutterwave, verifyFlutterwave, flutterwaveWebhook,
   monnifyWebhook, getOrCreateVirtualAccount,
   billstackWebhook, getOrCreateBillstackAccount,
