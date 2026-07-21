@@ -100,7 +100,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
   return (
     <aside
-      className={`fixed inset-y-0 safe-fixed-y left-0 z-30 w-[min(16rem,88vw)] flex-col transform transition-all duration-300 ease-in-out ${
+      className={`fixed inset-y-0 safe-fixed-y left-0 z-40 w-[min(16rem,88vw)] flex-col transform transition-all duration-300 ease-in-out ${
         isOpen ? 'flex translate-x-0' : 'hidden -translate-x-full'
       } lg:flex lg:translate-x-0`}
       style={{

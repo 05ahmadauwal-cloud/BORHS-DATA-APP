@@ -1,5 +1,5 @@
 import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { LayoutDashboard, Wallet, Wifi, MoreHorizontal, User, Shield, KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -180,6 +180,12 @@ export default function DashboardLayout() {
   const { user } = useAuthStore();
   const location = useLocation();
 
+  // Any route change closes the mobile drawer, including navigation triggered
+  // by the floating bottom bar or browser history.
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
   const isAdmin = ADMIN_ROLES.includes(user?.role);
   const needsKYC = !isAdmin && user?.kycStatus === 'none';
   const isKycExemptPath = KYC_EXEMPT_PATHS.some(p => location.pathname.startsWith(p));
@@ -210,7 +216,10 @@ export default function DashboardLayout() {
         </main>
 
         <WhatsAppButton />
-        <BottomNavigation />
+        <BottomNavigation
+          isHidden={sidebarOpen}
+          onNavigate={() => setSidebarOpen(false)}
+        />
 
         {/* Mobile bottom navigation */}
         <nav className="hidden fixed bottom-0 inset-x-0 z-20 safe-bottom">
