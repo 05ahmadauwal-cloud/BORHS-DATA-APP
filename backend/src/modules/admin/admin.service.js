@@ -177,6 +177,16 @@ const getAnalytics = async (period = '30d') => {
   const now = new Date();
   const startDate = new Date(now.getTime() - periodMs);
   const previousStartDate = new Date(startDate.getTime() - periodMs);
+  const revenueTypes = [
+    'data_purchase', 'airtime_purchase', 'electricity_purchase',
+    'cable_purchase', 'education_purchase', 'agent_fee',
+  ];
+  const currentRevenueMatch = {
+    status: 'success', type: { $in: revenueTypes }, createdAt: { $gte: startDate, $lt: now },
+  };
+  const previousRevenueMatch = {
+    status: 'success', type: { $in: revenueTypes }, createdAt: { $gte: previousStartDate, $lt: startDate },
+  };
 
   const [
     totalRevenue, totalUsers, periodTransactions,
@@ -185,26 +195,26 @@ const getAnalytics = async (period = '30d') => {
     revenueByType, dailyRevenue, userGrowth,
   ] = await Promise.all([
     Transaction.aggregate([
-      { $match: { status: 'success', createdAt: { $gte: startDate } } },
+      { $match: currentRevenueMatch },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]),
-    User.countDocuments({ createdAt: { $gte: startDate } }),
-    Transaction.countDocuments({ createdAt: { $gte: startDate }, status: 'success' }),
-    Transaction.countDocuments({ createdAt: { $gte: startDate } }),
+    User.countDocuments({ createdAt: { $gte: startDate, $lt: now } }),
+    Transaction.countDocuments(currentRevenueMatch),
+    Transaction.countDocuments({ createdAt: { $gte: startDate, $lt: now } }),
     Transaction.aggregate([
-      { $match: { status: 'success', createdAt: { $gte: previousStartDate, $lt: startDate } } },
+      { $match: previousRevenueMatch },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]),
     User.countDocuments({ createdAt: { $gte: previousStartDate, $lt: startDate } }),
     Transaction.countDocuments({ createdAt: { $gte: previousStartDate, $lt: startDate } }),
-    Transaction.countDocuments({ status: 'success', createdAt: { $gte: previousStartDate, $lt: startDate } }),
+    Transaction.countDocuments(previousRevenueMatch),
     Transaction.aggregate([
-      { $match: { status: 'success', createdAt: { $gte: startDate } } },
+      { $match: currentRevenueMatch },
       { $group: { _id: '$type', total: { $sum: '$amount' }, count: { $sum: 1 } } },
       { $sort: { total: -1 } },
     ]),
     Transaction.aggregate([
-      { $match: { status: 'success', createdAt: { $gte: startDate } } },
+      { $match: currentRevenueMatch },
       { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, revenue: { $sum: '$amount' }, count: { $sum: 1 } } },
       { $sort: { _id: 1 } },
     ]),
@@ -220,7 +230,7 @@ const getAnalytics = async (period = '30d') => {
   const averageOrder = periodTransactions ? revenue / periodTransactions : 0;
   const previousAverageOrder = previousSuccessfulTransactions ? oldRevenue / previousSuccessfulTransactions : 0;
   const percentageChange = (current, previous) => {
-    if (previous === 0) return current === 0 ? 0 : 100;
+    if (previous === 0) return current === 0 ? 0 : null;
     return Math.round(((current - previous) / Math.abs(previous)) * 1000) / 10;
   };
 

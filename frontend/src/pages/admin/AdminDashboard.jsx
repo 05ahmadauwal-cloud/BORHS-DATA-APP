@@ -34,10 +34,10 @@ export default function AdminDashboard() {
   const trends = analytics?.trends || {};
 
   const statCards = [
-    { label: 'Total Revenue', value: `₦${(summary.revenue || 0).toLocaleString()}`, icon: DollarSign, color: 'text-success-500', bg: 'bg-success-500/10 border-success-500/20', trend: trends.revenue ?? 0 },
-    { label: 'New Users', value: (summary.users || 0).toLocaleString(), icon: Users, color: 'text-primary-400', bg: 'bg-primary-500/10 border-primary-500/20', trend: trends.users ?? 0 },
-    { label: 'Transactions', value: (summary.transactions || 0).toLocaleString(), icon: Activity, color: 'text-primary-400', bg: 'bg-primary-500/10 border-primary-500/20', trend: trends.transactions ?? 0 },
-    { label: 'Avg. Order', value: summary.periodTransactions ? formatK(Math.round((summary.revenue || 0) / summary.periodTransactions)) : '₦0', icon: TrendingUp, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20', trend: trends.averageOrder ?? 0 },
+    { label: 'Gross Sales', value: `₦${(summary.revenue || 0).toLocaleString()}`, icon: DollarSign, color: 'text-success-500', bg: 'bg-success-500/10 border-success-500/20', trend: trends.revenue },
+    { label: 'New Users', value: (summary.users || 0).toLocaleString(), icon: Users, color: 'text-primary-400', bg: 'bg-primary-500/10 border-primary-500/20', trend: trends.users },
+    { label: 'Transactions', value: (summary.transactions || 0).toLocaleString(), icon: Activity, color: 'text-primary-400', bg: 'bg-primary-500/10 border-primary-500/20', trend: trends.transactions },
+    { label: 'Avg. Sale', value: summary.periodTransactions ? formatK(Math.round((summary.revenue || 0) / summary.periodTransactions)) : '₦0', icon: TrendingUp, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20', trend: trends.averageOrder },
   ];
 
   return (
@@ -74,10 +74,10 @@ export default function AdminDashboard() {
                 <stat.icon size={16} className={stat.color} />
               </div>
               <span className={`flex items-center gap-0.5 text-xs font-semibold ${
-                stat.trend > 0 ? 'text-success-500' : stat.trend < 0 ? 'text-red-400' : 'text-dark-400'
-              }`} title="Compared with the previous equivalent period">
-                {stat.trend > 0 ? <ArrowUpRight size={11} /> : stat.trend < 0 ? <ArrowDownRight size={11} /> : <Minus size={11} />}
-                {stat.trend > 0 ? '+' : ''}{stat.trend}%
+                stat.trend == null ? 'text-dark-400' : stat.trend > 0 ? 'text-success-500' : stat.trend < 0 ? 'text-red-400' : 'text-dark-400'
+              }`} title={stat.trend == null ? 'No activity in the previous equivalent period' : 'Compared with the previous equivalent period'}>
+                {stat.trend == null ? <Minus size={11} /> : stat.trend > 0 ? <ArrowUpRight size={11} /> : stat.trend < 0 ? <ArrowDownRight size={11} /> : <Minus size={11} />}
+                {stat.trend == null ? 'New' : <>{stat.trend > 0 ? '+' : ''}{stat.trend}%</>}
               </span>
             </div>
             <p className="text-lg md:text-2xl font-black text-dark-50 mb-0.5 tabular-nums leading-tight">
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
 
       {/* Revenue Chart */}
       <div className="card p-4 md:p-6">
-        <h2 className="text-sm md:text-base font-bold text-dark-100 mb-4">Daily Revenue</h2>
+        <h2 className="text-sm md:text-base font-bold text-dark-100 mb-4">Daily Gross Sales</h2>
         <div className="h-48 md:h-64">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={analytics?.dailyRevenue || []} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
@@ -113,7 +113,7 @@ export default function AdminDashboard() {
       {/* Bottom charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="card p-4 md:p-6">
-          <h2 className="text-sm md:text-base font-bold text-dark-100 mb-4">Revenue by Service</h2>
+          <h2 className="text-sm md:text-base font-bold text-dark-100 mb-4">Sales by Service</h2>
           <div className="h-44 md:h-52">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={(analytics?.revenueByType || []).slice(0, 5)} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
