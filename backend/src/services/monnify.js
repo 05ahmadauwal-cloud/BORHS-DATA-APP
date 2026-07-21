@@ -77,9 +77,13 @@ const createReservedAccount = async (user, identity = {}) => {
     );
     return parseAccountResponse(res.data.responseBody, accountReference);
   } catch (err) {
-    // Monnify returns 400/409 with responseCode "99" if account reference already exists
-    const code = err.response?.data?.responseCode;
-    if (code === '99' || err.response?.status === 409) {
+    // Response code "99" is generic and is also used for validation errors.
+    // Only fetch an existing account when the response specifically indicates
+    // an account-reference conflict.
+    const message = err.response?.data?.responseMessage || err.response?.data?.message || '';
+    const referenceExists = err.response?.status === 409
+      || /account reference.*(already exists|duplicate)|reserved account.*already exists/i.test(message);
+    if (referenceExists) {
       logger.info(`Monnify: account ${accountReference} already exists, fetching instead`);
       return getReservedAccount(accountReference);
     }

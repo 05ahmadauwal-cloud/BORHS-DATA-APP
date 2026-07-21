@@ -16,10 +16,21 @@ const syncMonnifyKYC = async (userId) => {
     const { createReservedAccount, updateReservedAccountKYC } = require('../../services/monnify');
     let virtualAccount = user.monnifyVirtualAccount?.toObject?.() || user.monnifyVirtualAccount;
     if (virtualAccount?.reference) {
-      await updateReservedAccountKYC(virtualAccount.reference, identity);
-      virtualAccount.kycSyncStatus = 'synced';
-      virtualAccount.kycSyncedAt = new Date();
-      virtualAccount.kycSyncError = undefined;
+      try {
+        await updateReservedAccountKYC(virtualAccount.reference, identity);
+        virtualAccount.kycSyncStatus = 'synced';
+        virtualAccount.kycSyncedAt = new Date();
+        virtualAccount.kycSyncError = undefined;
+      } catch (error) {
+        const message = error.response?.data?.responseMessage || error.response?.data?.message || error.message;
+        const accountMissing = /cannot find reserved account|reserved account.*not found/i.test(message);
+        if (!accountMissing) throw error;
+
+        // A reference created in Monnify sandbox is not present after switching
+        // to live. Recreate the deterministic reference in the live environment.
+        const created = await createReservedAccount(user, identity);
+        virtualAccount = { ...created, kycSyncStatus: 'synced', kycSyncedAt: new Date() };
+      }
     } else {
       const created = await createReservedAccount(user, identity);
       virtualAccount = { ...created, kycSyncStatus: 'synced', kycSyncedAt: new Date() };
