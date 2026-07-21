@@ -129,17 +129,24 @@ const handleMonnifyWebhook = async (rawBody, signature) => {
   if (eventType !== 'SUCCESSFUL_TRANSACTION') return;
   if (eventData?.paymentStatus !== 'PAID') return;
 
-  const { transactionReference, amountPaid, customer, paymentSourceInformation } = eventData;
+  const { transactionReference, amountPaid, customer } = eventData;
 
-  // Find user by the accountReference we set during account creation
-  const accountRef = paymentSourceInformation?.[0]?.accountName
-    ? undefined
-    : eventData.accountReference || eventData.reservedAccountDetails?.accountReference;
+  // Reserved-account webhooks identify our reference through product.reference.
+  // Some payload variants expose it directly or under reservedAccountDetails.
+  const accountRef = eventData.product?.reference
+    || eventData.accountReference
+    || eventData.reservedAccountDetails?.accountReference;
+  const destinationAccountNumber = eventData.destinationAccountInformation?.accountNumber;
 
-  // Try finding by customer email first, then by accountReference
+  // Resolve by our deterministic reference, destination account, then customer email.
   let user = null;
   if (accountRef) {
     user = await User.findOne({ 'monnifyVirtualAccount.reference': accountRef });
+  }
+  if (!user && destinationAccountNumber) {
+    user = await User.findOne({
+      'monnifyVirtualAccount.accounts.accountNumber': destinationAccountNumber,
+    });
   }
   if (!user && customer?.email) {
     user = await User.findOne({ email: customer.email.toLowerCase() });

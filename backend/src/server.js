@@ -104,6 +104,7 @@ app.use('/api/v1/auth/send-phone-otp', verificationDeliveryLimiter);
 // Raw body for payment webhooks
 app.use('/api/v1/payment/webhook/paystack', express.raw({ type: 'application/json' }));
 app.use('/api/v1/payment/webhook/billstack', express.raw({ type: 'application/json' }));
+app.use('/api/v1/payment/webhook/monnify', express.raw({ type: 'application/json' }));
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
