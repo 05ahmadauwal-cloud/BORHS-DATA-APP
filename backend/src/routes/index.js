@@ -94,11 +94,19 @@ router.get('/funding-methods', cachePublicResponse(30), async (req, res) => {
 // Public deposit charge info — no auth needed (so frontend can show fee preview before login)
 router.get('/deposit-charge', cachePublicResponse(30), async (req, res) => {
   const Settings = require('../models/Settings');
-  const [type, value] = await Promise.all([
+  const [type, value, monnifyPercent] = await Promise.all([
     Settings.get('deposit_charge_type', 'none'),
     Settings.get('deposit_charge_value', 0),
+    Settings.get('monnify_deposit_charge_percent', 2),
   ]);
-  res.json({ success: true, data: { type: type || 'none', value: parseFloat(value) || 0 } });
+  res.json({
+    success: true,
+    data: {
+      type: type || 'none',
+      value: parseFloat(value) || 0,
+      monnify: { type: 'percentage', value: parseFloat(monnifyPercent) || 0 },
+    },
+  });
 });
 
 router.get('/health', (req, res) => {

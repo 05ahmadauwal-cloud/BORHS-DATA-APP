@@ -440,7 +440,10 @@ export default function Wallet() {
 
       {/* Bank Transfer Tab */}
       {activeTab === 'Bank Transfer' && fm.bankTransfer && hasDedicatedAccountKYC && (
-        <BankTransferTab chargeType={chargeInfo?.type} chargeValue={chargeInfo?.value} />
+        <BankTransferTab
+          chargeType={chargeInfo?.monnify?.type || 'percentage'}
+          chargeValue={chargeInfo?.monnify?.value ?? 2}
+        />
       )}
 
       {activeTab === 'Billstack' && fm.billstack && (

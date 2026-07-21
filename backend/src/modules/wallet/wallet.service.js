@@ -10,6 +10,11 @@ const CHARGEABLE_GATEWAYS = ['paystack', 'monnify', 'flutterwave', 'billstack'];
 
 const computeDepositCharge = async (amount, gateway) => {
   if (!CHARGEABLE_GATEWAYS.includes(gateway)) return { fee: 0, creditAmount: amount };
+  if (gateway === 'monnify') {
+    const percent = parseFloat(await Settings.get('monnify_deposit_charge_percent', 2)) || 0;
+    const fee = Math.round((amount * percent) / 100 * 100) / 100;
+    return { fee: Math.min(fee, amount), creditAmount: Math.max(0, amount - fee) };
+  }
   const [chargeType, chargeValue] = await Promise.all([
     Settings.get('deposit_charge_type', 'none'),
     Settings.get('deposit_charge_value', 0),
@@ -39,6 +44,7 @@ const fundWallet = async (userId, amount, gateway, externalReference, metadata =
       user: userId,
       type: TRANSACTION_TYPES.WALLET_FUND,
       amount: creditAmount,
+      fee,
       balanceBefore,
       balanceAfter,
       status: TRANSACTION_STATUS.SUCCESS,
@@ -259,4 +265,4 @@ const resetTransactionPin = async (userId, loginPassword, newPin) => {
   return true;
 };
 
-module.exports = { fundWallet, debitWallet, transferWallet, getWalletBalance, getTransactionHistory, setTransactionPin, resetTransactionPin };
+module.exports = { computeDepositCharge, fundWallet, debitWallet, transferWallet, getWalletBalance, getTransactionHistory, setTransactionPin, resetTransactionPin };
