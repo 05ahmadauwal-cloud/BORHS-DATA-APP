@@ -135,15 +135,19 @@ const flutterwaveWebhook = async (req, res) => {
 // ─── Monnify ─────────────────────────────────────────────────────────────────
 const monnifyWebhook = async (req, res) => {
   // Acknowledge immediately — process async
-  res.status(200).json({ success: true });
-
   const signature = req.headers['monnify-signature'];
   // rawBody is the raw buffer set by express.raw()
-  const rawBody = req.rawBody || JSON.stringify(req.body);
+  const rawBody = Buffer.isBuffer(req.body)
+    ? req.body.toString('utf8')
+    : req.rawBody || JSON.stringify(req.body);
 
-  await paymentService.handleMonnifyWebhook(rawBody, signature).catch((e) =>
-    logger.error('Monnify webhook error:', e.message)
-  );
+  try {
+    await paymentService.handleMonnifyWebhook(rawBody, signature);
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    logger.error('Monnify webhook error:', error.message);
+    return res.status(error.statusCode || 500).json({ success: false });
+  }
 };
 
 const getOrCreateVirtualAccount = async (req, res) => {

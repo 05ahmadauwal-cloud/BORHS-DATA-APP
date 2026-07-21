@@ -6,6 +6,7 @@ const logger = require('../../utils/logger');
 const User = require('../../models/User');
 const Transaction = require('../../models/Transaction');
 const { TRANSACTION_STATUS } = require('../../config/constants');
+const monnifyReconciliation = new Map();
 
 // ─── Paystack ────────────────────────────────────────────────────────────────
 const paystackInitialize = async (userId, email, amount, metadata = {}) => {
@@ -172,6 +173,54 @@ const handleMonnifyWebhook = async (rawBody, signature) => {
   logger.info(`Monnify wallet funded: userId=${user._id}, amount=${amountPaid}, ref=${transactionReference}`);
 };
 
+// Webhooks are the instant path. This authenticated provider check recovers
+// payments whose notifications were missed during downtime or deployment.
+const reconcileMonnifyUser = async (userId) => {
+  const key = String(userId);
+  const active = monnifyReconciliation.get(key);
+  if (active && Date.now() - active.startedAt < 15_000) return active.promise;
+
+  const promise = (async () => {
+    const user = await User.findById(userId).select('monnifyVirtualAccount');
+    const accountReference = user?.monnifyVirtualAccount?.reference;
+    if (!accountReference || user.monnifyVirtualAccount?.kycSyncStatus !== 'synced') {
+      return { checked: false, credited: 0 };
+    }
+
+    const { getReservedAccountTransactions } = require('../../services/monnify');
+    const payments = await getReservedAccountTransactions(accountReference, 20);
+    const paid = payments
+      .filter((payment) => payment.paymentStatus === 'PAID')
+      .sort((a, b) => new Date(a.paidOn || 0) - new Date(b.paidOn || 0));
+    let credited = 0;
+
+    for (const payment of paid) {
+      const reference = payment.transactionReference;
+      const amount = Number(payment.amountPaid);
+      if (!reference || !Number.isFinite(amount) || amount <= 0) continue;
+      if (await Transaction.exists({ externalReference: reference })) continue;
+
+      await fundWallet(userId, amount, 'monnify', reference, {
+        paymentReference: payment.paymentReference,
+        paidOn: payment.paidOn,
+        reconciled: true,
+      });
+      credited += 1;
+      logger.info(`Monnify reconciliation credited userId=${userId}, amount=${amount}, ref=${reference}`);
+    }
+
+    return { checked: true, credited };
+  })().finally(() => {
+    setTimeout(() => {
+      const current = monnifyReconciliation.get(key);
+      if (current?.promise === promise) monnifyReconciliation.delete(key);
+    }, 15_000).unref?.();
+  });
+
+  monnifyReconciliation.set(key, { startedAt: Date.now(), promise });
+  return promise;
+};
+
 // Billstack reserved-account payment notifications
 const handleBillstackWebhook = async (rawBody, signature) => {
   const { verifyWebhookSignature } = require('../../services/billstack');
@@ -214,5 +263,6 @@ module.exports = {
   verifyFlutterwaveWebhook,
   handleFlutterwaveWebhook,
   handleMonnifyWebhook,
+  reconcileMonnifyUser,
   handleBillstackWebhook,
 };

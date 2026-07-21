@@ -2,7 +2,8 @@ const axios = require('axios');
 const crypto = require('crypto');
 const logger = require('../utils/logger');
 
-const BASE_URL = process.env.MONNIFY_BASE_URL || 'https://sandbox.monnify.com';
+const BASE_URL = process.env.MONNIFY_BASE_URL
+  || (process.env.NODE_ENV === 'production' ? 'https://api.monnify.com' : 'https://sandbox.monnify.com');
 
 let _token = null;
 let _tokenExpiry = 0;
@@ -105,6 +106,21 @@ const updateReservedAccountKYC = async (accountReference, identity) => {
   return res.data.responseBody;
 };
 
+const getReservedAccountTransactions = async (accountReference, size = 20) => {
+  const headers = await authHeaders();
+  const res = await axios.get(
+    `${BASE_URL}/api/v1/bank-transfer/reserved-accounts/transactions`,
+    {
+      headers,
+      params: { accountReference, page: 0, size },
+      timeout: 15_000,
+    }
+  );
+  const body = res.data.responseBody;
+  if (Array.isArray(body)) return body;
+  return body?.content || body?.transactions || [];
+};
+
 /**
  * Verify a Monnify webhook signature.
  * Monnify computes: SHA512(secretKey + rawBody)
@@ -117,4 +133,10 @@ const verifyWebhookSignature = (rawBody, signature) => {
   return hash === signature;
 };
 
-module.exports = { createReservedAccount, getReservedAccount, updateReservedAccountKYC, verifyWebhookSignature };
+module.exports = {
+  createReservedAccount,
+  getReservedAccount,
+  updateReservedAccountKYC,
+  getReservedAccountTransactions,
+  verifyWebhookSignature,
+};

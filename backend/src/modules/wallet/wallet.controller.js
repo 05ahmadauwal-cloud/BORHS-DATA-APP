@@ -1,8 +1,16 @@
 const walletService = require('./wallet.service');
 const ApiResponse = require('../../utils/apiResponse');
+const logger = require('../../utils/logger');
 
 
 const getBalance = async (req, res) => {
+  try {
+    const paymentService = require('../payment/payment.service');
+    await paymentService.reconcileMonnifyUser(req.user._id);
+  } catch (error) {
+    // Provider downtime must not prevent the user seeing their existing balance.
+    logger.warn(`Monnify balance reconciliation skipped for user ${req.user._id}: ${error.message}`);
+  }
   const data = await walletService.getWalletBalance(req.user._id);
   return ApiResponse.success(res, data);
 };

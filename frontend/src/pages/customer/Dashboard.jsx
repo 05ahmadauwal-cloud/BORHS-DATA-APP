@@ -25,7 +25,7 @@ export default function Dashboard() {
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   const [couponCode, setCouponCode] = useState('');
-  const { data: balanceData } = useQuery({ queryKey: ['wallet-balance'], queryFn: walletAPI.getBalance, select: (response) => response.data, refetchInterval: 30000 });
+  const { data: balanceData } = useQuery({ queryKey: ['wallet-balance'], queryFn: walletAPI.getBalance, select: (response) => response.data, refetchInterval: 10000 });
   const { data: transactionsData } = useQuery({ queryKey: ['recent-transactions'], queryFn: () => walletAPI.getTransactions({ limit: 5 }), select: (response) => response.data });
   const { data: banner } = useQuery({ queryKey: ['banner'], queryFn: bannerAPI.get, select: (response) => response.data.data, refetchInterval: 60000, staleTime: 30000 });
   const couponMutation = useMutation({

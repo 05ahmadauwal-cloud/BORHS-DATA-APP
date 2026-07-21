@@ -76,6 +76,7 @@ const transactionSchema = new mongoose.Schema(
 
 transactionSchema.index({ user: 1, createdAt: -1 });
 // reference already indexed via unique:true
+transactionSchema.index({ externalReference: 1 }, { unique: true, sparse: true });
 transactionSchema.index({ status: 1 });
 transactionSchema.index({ type: 1 });
 transactionSchema.index({ createdAt: -1 });

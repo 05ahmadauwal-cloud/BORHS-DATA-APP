@@ -304,7 +304,7 @@ export default function Wallet() {
     queryKey: ['wallet-balance'],
     queryFn: () => walletAPI.getBalance(),
     select: (res) => res.data,
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
   });
 
   const { data: txns, isLoading: txLoading } = useQuery({
