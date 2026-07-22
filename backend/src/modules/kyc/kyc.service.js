@@ -44,7 +44,9 @@ const syncMonnifyKYC = async (userId) => {
       'monnifyVirtualAccount.kycSyncStatus': 'failed',
       'monnifyVirtualAccount.kycSyncError': message,
     });
-    throw error;
+    throw Object.assign(new Error(message || 'Monnify could not verify this identity'), {
+      statusCode: error.response?.status >= 400 && error.response?.status < 500 ? error.response.status : 502,
+    });
   }
 };
 
@@ -90,12 +92,15 @@ const submitNinForAccount = async (userId, nin) => {
     const updated = await User.findById(userId).select('kycStatus monnifyVirtualAccount');
     return { kycStatus: updated.kycStatus, virtualAccount: updated.monnifyVirtualAccount };
   } catch (error) {
+    const message = error.response?.data?.responseMessage || error.response?.data?.message || error.message;
     await KYC.findOneAndUpdate(
       { user: userId, tier: 2 },
-      { status: KYC_APPROVAL_STATUS.PENDING, rejectionReason: error.message }
+      { status: KYC_APPROVAL_STATUS.PENDING, rejectionReason: message }
     );
     await User.findByIdAndUpdate(userId, { kycStatus: KYC_STATUS.TIER1 });
-    throw error;
+    throw Object.assign(new Error(message || 'NIN verification was not accepted'), {
+      statusCode: error.statusCode || (error.response?.status >= 400 && error.response?.status < 500 ? error.response.status : 502),
+    });
   }
 };
 

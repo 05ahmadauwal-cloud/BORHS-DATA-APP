@@ -61,7 +61,7 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ['monnify-virtual-account'] });
       queryClient.invalidateQueries({ queryKey: ['kyc-status'] });
     },
-    onError: (error) => toast.error(error.response?.data?.message || 'NIN verification could not be completed'),
+    onError: (error) => toast.error(error.response?.data?.errors?.[0]?.message || error.response?.data?.message || error.message || 'NIN verification could not be completed'),
   });
 
   const balance = Number(balanceData?.walletBalance ?? user?.walletBalance ?? 0) || 0;

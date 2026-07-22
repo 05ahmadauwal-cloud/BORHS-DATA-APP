@@ -83,10 +83,16 @@ const createReservedAccount = async (user, identity = {}) => {
     // an account-reference conflict.
     const message = err.response?.data?.responseMessage || err.response?.data?.message || '';
     const referenceExists = err.response?.status === 409
-      || /account reference.*(already exists|duplicate)|reserved account.*already exists/i.test(message);
+      || /account reference.*(already exists|duplicate)|reserved account.*already exists|cannot reserve more than 1 account|\bR42\b/i.test(message);
     if (referenceExists) {
       logger.info(`Monnify: account ${accountReference} already exists, fetching instead`);
-      return getReservedAccount(accountReference);
+      try {
+        return await getReservedAccount(accountReference);
+      } catch {
+        // Keep the original provider response because it contains the useful
+        // customer/account conflict reason.
+        throw err;
+      }
     }
     throw err;
   }
