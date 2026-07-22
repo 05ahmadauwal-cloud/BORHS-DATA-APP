@@ -1,4 +1,4 @@
-import { Menu, Bell, Wallet, Sun, Moon, X, CheckCheck } from 'lucide-react';
+import { Menu, Bell, Wallet, Sun, Moon, X, CheckCheck, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationAPI } from '../../api';
@@ -52,12 +52,11 @@ export default function Topbar({ onMenuClick }) {
           </button>
 
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-2">
-            <div className="w-7 h-7 bg-brand-700 rounded-lg flex items-center justify-center">
-              <span className="text-white font-black text-xs">B</span>
-            </div>
-            <span className="font-bold text-[var(--ds-text)] text-sm">BORHS Data</span>
-          </div>
+          <Link to="/dashboard" className="lg:hidden flex items-center" aria-label="BORHS Data home">
+            <span className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-white p-1.5 shadow-sm ring-1 ring-[var(--ds-stroke)]">
+              <img src="/logo-mark.png" alt="" className="h-full w-full object-contain" />
+            </span>
+          </Link>
 
           <div className="flex-1" />
 
@@ -96,12 +95,16 @@ export default function Topbar({ onMenuClick }) {
           {/* Avatar */}
           <Link
             to="/profile"
-            className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-dark-700/50 transition-colors"
+            className="group flex items-center gap-2 rounded-2xl p-1 transition-colors hover:bg-[var(--ds-surface-subtle)]"
+            aria-label="Open profile"
           >
-            <div className="w-8 h-8 bg-[var(--ds-info-soft)] rounded-xl flex items-center justify-center shrink-0">
-              <span className="text-brand-700 font-bold text-xs">
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
-              </span>
+            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-gradient-to-br from-[#0b3b78] via-[#0f766e] to-[#4aae28] shadow-[0_6px_16px_rgba(15,118,110,0.22)] ring-2 ring-white transition-transform duration-200 group-hover:-translate-y-0.5">
+              {user?.avatar ? (
+                <img src={user.avatar} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <UserRound size={19} strokeWidth={2} className="text-white" />
+              )}
+              <span className="absolute inset-x-1 bottom-0 h-px bg-white/35" />
             </div>
             <div className="hidden md:block">
               <div className="flex items-center gap-1.5">
