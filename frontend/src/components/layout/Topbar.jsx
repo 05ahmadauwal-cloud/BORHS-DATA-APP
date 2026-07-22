@@ -6,7 +6,6 @@ import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import VerificationBadge from '../common/VerificationBadge';
 import { Button, Input, Modal } from '../ui';
 import toast from 'react-hot-toast';
 
@@ -133,10 +132,7 @@ export default function Topbar({ onMenuClick }) {
               <span className="absolute inset-x-1 bottom-0 h-px bg-white/35" />
             </div>
             <div className="hidden md:block">
-              <div className="flex items-center gap-1.5">
-                <p className="text-xs font-bold text-dark-200 leading-none">{user?.firstName}</p>
-                <VerificationBadge user={user} compact />
-              </div>
+              <p className="text-xs font-bold text-dark-200 leading-none">{user?.firstName}</p>
               <p className="text-[10px] text-dark-500 mt-1 capitalize">{user?.role?.replace('_', ' ')}</p>
             </div>
           </Link>

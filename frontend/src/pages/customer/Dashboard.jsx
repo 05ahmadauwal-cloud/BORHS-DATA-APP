@@ -69,12 +69,11 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-8 pb-3">
-      <header className="flex items-center justify-between gap-4">
+      <header>
         <div className="min-w-0">
           <p className="text-sm text-[var(--ds-text-secondary)]">{greeting},</p>
           <h1 className="truncate text-2xl font-bold text-[var(--ds-text)]">{user?.firstName || 'Welcome'} <span aria-hidden="true">👋</span></h1>
         </div>
-        <Link to="/profile" aria-label="Open profile" className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--ds-info-soft)] font-bold text-brand-700">{user?.firstName?.[0]}{user?.lastName?.[0]}</Link>
       </header>
 
       <section className="relative overflow-hidden rounded-[2rem] bg-brand-700 p-6 text-white shadow-[0_20px_45px_rgba(15,118,110,0.22)] sm:p-8">
