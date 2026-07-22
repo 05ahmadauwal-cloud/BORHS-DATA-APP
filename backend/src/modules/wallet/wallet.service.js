@@ -214,7 +214,26 @@ const transferWallet = async (senderId, recipientIdentifier, amount, pin) => {
 const getWalletBalance = async (userId) => {
   const user = await User.findById(userId).select('walletBalance bonusBalance');
   if (!user) throw new Error('User not found');
-  return { walletBalance: user.walletBalance, bonusBalance: user.bonusBalance };
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const [summary] = await Transaction.aggregate([
+    { $match: { user: user._id, status: TRANSACTION_STATUS.SUCCESS } },
+    { $group: {
+      _id: null,
+      commission: { $sum: { $cond: [{ $in: ['$type', [TRANSACTION_TYPES.COMMISSION_EARNED, TRANSACTION_TYPES.REFERRAL_BONUS]] }, '$amount', 0] } },
+      todaySpending: { $sum: { $cond: [{ $and: [
+        { $gte: ['$createdAt', startOfToday] },
+        { $in: ['$type', [TRANSACTION_TYPES.WALLET_TRANSFER, TRANSACTION_TYPES.DATA_PURCHASE, TRANSACTION_TYPES.AIRTIME_PURCHASE, TRANSACTION_TYPES.ELECTRICITY_PURCHASE, TRANSACTION_TYPES.CABLE_PURCHASE, TRANSACTION_TYPES.EDUCATION_PURCHASE, TRANSACTION_TYPES.AGENT_FEE]] },
+      ] }, '$amount', 0] } },
+    } },
+  ]);
+  return {
+    walletBalance: user.walletBalance,
+    bonusBalance: user.bonusBalance,
+    cashback: user.bonusBalance || 0,
+    commission: summary?.commission || 0,
+    todaySpending: summary?.todaySpending || 0,
+  };
 };
 
 const getTransactionHistory = async (userId, query = {}) => {

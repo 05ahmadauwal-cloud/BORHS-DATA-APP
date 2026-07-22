@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import useAuthStore from '../../store/authStore';
 
-const ALL_TABS = ['Bank Transfer', 'Billstack', 'Online Payment', 'Promo Code', 'Send Money', 'History'];
+const ALL_TABS = ['Bank Transfer', 'Billstack', 'Online Payment', 'Promo Code', 'History'];
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 const isCredit = (type) => [
   'wallet_fund', 'commission_earned', 'referral_bonus', 'refund',
@@ -382,7 +382,7 @@ export default function Wallet() {
       <div>
         <p className="text-sm font-semibold text-brand-700">Your money</p>
         <h1 className="mt-1 text-2xl font-bold text-[var(--ds-text)]">Wallet</h1>
-        <p className="mt-1 text-sm text-[var(--ds-text-secondary)]">Fund, transfer and track every movement.</p>
+        <p className="mt-1 text-sm text-[var(--ds-text-secondary)]">Fund your balance and track every movement.</p>
       </div>
 
       {/* Verification banners */}
@@ -415,9 +415,6 @@ export default function Wallet() {
                 <Building2 size={14} /> Bank Transfer
               </button>
             )}
-            <button onClick={() => setActiveTab('Send Money')} className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors">
-              <Send size={14} /> Send
-            </button>
           </div>
         </div>
       </div>

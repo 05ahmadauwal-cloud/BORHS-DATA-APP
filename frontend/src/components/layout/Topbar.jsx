@@ -1,17 +1,21 @@
-import { Menu, Bell, Wallet, Sun, Moon, X, CheckCheck, UserRound } from 'lucide-react';
+import { Menu, Bell, Wallet, Sun, Moon, X, CheckCheck, UserRound, TicketPercent } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { notificationAPI } from '../../api';
+import { couponAPI, notificationAPI } from '../../api';
 import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import VerificationBadge from '../common/VerificationBadge';
+import { Button, Input, Modal } from '../ui';
+import toast from 'react-hot-toast';
 
 export default function Topbar({ onMenuClick }) {
   const { user } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const [open, setOpen] = useState(false);
+  const [couponOpen, setCouponOpen] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
   const queryClient = useQueryClient();
 
   const { data: notifications } = useQuery({
@@ -37,6 +41,18 @@ export default function Topbar({ onMenuClick }) {
   };
 
   const closePanel = () => setOpen(false);
+  const couponMutation = useMutation({
+    mutationFn: () => couponAPI.redeem(couponCode.trim().toUpperCase()),
+    onSuccess: (response) => {
+      toast.success(response.data?.message || 'Coupon redeemed successfully');
+      setCouponCode('');
+      setCouponOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      queryClient.invalidateQueries({ queryKey: ['recent-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Coupon redemption failed'),
+  });
 
   return (
     <>
@@ -70,6 +86,16 @@ export default function Topbar({ onMenuClick }) {
               ₦{balance.toLocaleString()}
             </span>
           </Link>
+
+          {/* Theme toggle */}
+          <button
+            onClick={() => setCouponOpen(true)}
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200/80 transition hover:-translate-y-0.5 hover:bg-amber-100 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20"
+            title="Redeem coupon"
+            aria-label="Redeem coupon"
+          >
+            <TicketPercent size={18} />
+          </button>
 
           {/* Theme toggle */}
           <button
@@ -116,6 +142,13 @@ export default function Topbar({ onMenuClick }) {
           </Link>
         </div>
       </header>
+
+      <Modal open={couponOpen} onClose={() => setCouponOpen(false)} title="Redeem a coupon" description="Enter your BORHS reward code to claim it instantly." size="sm">
+        <div className="space-y-5">
+          <Input label="Coupon code" value={couponCode} onChange={(event) => setCouponCode(event.target.value.toUpperCase())} onKeyDown={(event) => event.key === 'Enter' && couponCode.trim() && couponMutation.mutate()} placeholder="e.g. BORHS100" autoFocus />
+          <Button className="w-full" icon={TicketPercent} loading={couponMutation.isPending} disabled={!couponCode.trim()} onClick={() => couponMutation.mutate()}>Redeem coupon</Button>
+        </div>
+      </Modal>
 
       {/* Notification panel — backdrop + drawer */}
       {open && (
