@@ -112,7 +112,7 @@ export default function Sidebar({ isOpen, onClose }) {
       <div className="px-4 py-5 border-b" style={{ borderColor: 'var(--ds-stroke)' }}>
         <div className="flex items-center justify-between">
           <Link to="/dashboard" onClick={onClose} className="flex items-center gap-2 min-w-0">
-            <img src="/logo.svg" alt="BORHS" style={{ height: 44, width: 'auto', display: 'block', maxWidth: 160 }} />
+            <img src="/logo.png" alt="BORHS Data" style={{ height: 44, width: 'auto', display: 'block', maxWidth: 160 }} />
             <span className="text-[10px] font-semibold capitalize shrink-0" style={{ color: 'var(--ds-text-tertiary)' }}>
               {user?.role?.replace('_', ' ')}
             </span>

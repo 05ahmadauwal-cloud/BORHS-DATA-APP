@@ -45,7 +45,7 @@ export default function AdminLayout() {
       `}>
         <div className="flex items-center justify-between p-4 border-b border-[var(--ds-stroke)]">
           <Link to="/admin" className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
-            <img src="/logo.svg" alt="BORHS" style={{ height: 38, width: 'auto', display: 'block', maxWidth: 140 }} />
+            <img src="/logo.png" alt="BORHS Data" style={{ height: 38, width: 'auto', display: 'block', maxWidth: 140 }} />
             <span className="text-xs text-dark-400 capitalize truncate">{user?.role?.replace('_', ' ')}</span>
           </Link>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1.5 rounded-lg text-dark-400 hover:bg-dark-700">

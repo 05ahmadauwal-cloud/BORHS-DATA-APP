@@ -153,7 +153,7 @@ export default function Login() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex flex-col items-center mb-6">
-            <img src="/logo.svg" alt="BORHS Data" className="h-20 w-auto" />
+            <img src="/logo.png" alt="BORHS Data" className="h-20 w-auto max-w-full object-contain" />
           </Link>
           <h1 className="text-2xl font-bold text-[var(--ds-text)]">Welcome back</h1>
           <p className="text-[var(--ds-text-secondary)] mt-2 text-sm">Your everyday services are waiting.</p>
