@@ -8,6 +8,7 @@ import NativeAppLifecycle from './components/common/NativeAppLifecycle';
 import usePullToRefresh from './hooks/usePullToRefresh';
 import RefreshIndicator from './components/common/RefreshIndicator';
 import InteractionFeedback from './components/common/InteractionFeedback';
+import BrandedLoader from './components/ui/BrandedLoader';
 
 const PublicLayout = lazy(() => import('./components/layout/PublicLayout'));
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
@@ -69,13 +70,7 @@ export default function App() {
       <NativeAppLifecycle />
       <InteractionFeedback />
       <RefreshIndicator isRefreshing={isRefreshing} progress={pullProgress} />
-      <Suspense fallback={(
-        <div className="min-h-screen flex flex-col items-center justify-center gap-5 bg-brand-700 text-white">
-          <div className="flex h-20 w-20 items-center justify-center rounded-[1.75rem] bg-white text-2xl font-black text-brand-700 shadow-[0_20px_50px_rgba(0,0,0,0.16)]">B</div>
-          <div className="text-center"><p className="text-xl font-bold">BORHS Data</p><p className="mt-1 text-sm text-teal-100">Everyday services. One balance.</p></div>
-          <span className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" aria-label="Loading" />
-        </div>
-      )}>
+      <Suspense fallback={<BrandedLoader />}>
       <Routes>
         {/* Public */}
         {isNativeApp ? (

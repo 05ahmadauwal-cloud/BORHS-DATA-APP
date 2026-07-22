@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom';
 import { X, Printer, Copy, CheckCircle, XCircle, Clock, Wifi, Phone, Zap, Tv, GraduationCap } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import BrandedLoader from './BrandedLoader';
 
 const SERVICE = {
   data:        { label: 'Data Purchase',    Icon: Wifi,          color: '#60a5fa',  bg: 'rgba(96,165,250,0.12)'  },
@@ -291,6 +292,21 @@ export default function Receipt({ data, onClose }) {
 }
 
 export function PurchaseLoader({ visible, type = 'data' }) {
+  if (!visible) return null;
+  const svc = SERVICE[type] || SERVICE.data;
+  return createPortal(
+    <BrandedLoader
+      overlay
+      title={`Processing ${svc.label}`}
+      message="Confirming your request securely. Please keep this screen open."
+      icon={svc.Icon}
+      iconColor={svc.color}
+    />,
+    document.body
+  );
+}
+
+export function LegacyPurchaseLoader({ visible, type = 'data' }) {
   if (!visible) return null;
   const svc = SERVICE[type] || SERVICE.data;
   const { Icon } = svc;
