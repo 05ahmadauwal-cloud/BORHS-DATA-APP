@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowDownLeft, ArrowUpRight, Building2, Check, Copy, GraduationCap, Gift, Phone, Send, ShieldCheck, Tv, UserPlus, Wallet, Wifi, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { bannerAPI, paymentAPI, walletAPI } from '../../api';
+import { bannerAPI, kycAPI, paymentAPI, walletAPI } from '../../api';
 import useAuthStore from '../../store/authStore';
 import { Button, Card, EmptyState, Input, Modal, TransactionRow } from '../../components/ui';
 
@@ -22,11 +22,13 @@ const quickActions = [
 const creditTypes = ['wallet_fund', 'commission_earned', 'referral_bonus', 'coupon'];
 
 export default function Dashboard() {
-  const user = useAuthStore((state) => state.user);
+  const { user, updateUser } = useAuthStore();
   const queryClient = useQueryClient();
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferForm, setTransferForm] = useState({ recipient: '', amount: '', pin: '' });
   const [copied, setCopied] = useState(false);
+  const [ninOpen, setNinOpen] = useState(false);
+  const [nin, setNin] = useState('');
   const { data: balanceData } = useQuery({ queryKey: ['wallet-balance'], queryFn: walletAPI.getBalance, select: (response) => response.data, refetchInterval: 10000 });
   const { data: transactionsData } = useQuery({ queryKey: ['recent-transactions'], queryFn: () => walletAPI.getTransactions({ limit: 5 }), select: (response) => response.data });
   const { data: banner } = useQuery({ queryKey: ['banner'], queryFn: bannerAPI.get, select: (response) => response.data.data, refetchInterval: 60000, staleTime: 30000 });
@@ -48,6 +50,18 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ['recent-transactions'] });
     },
     onError: (error) => toast.error(error.response?.data?.message || 'Transfer failed'),
+  });
+  const ninMutation = useMutation({
+    mutationFn: () => kycAPI.submitNinForAccount(nin),
+    onSuccess: (response) => {
+      toast.success(response.data?.message || 'Dedicated account created');
+      updateUser({ kycStatus: 'tier2' });
+      setNin('');
+      setNinOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['monnify-virtual-account'] });
+      queryClient.invalidateQueries({ queryKey: ['kyc-status'] });
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'NIN verification could not be completed'),
   });
 
   const balance = Number(balanceData?.walletBalance ?? user?.walletBalance ?? 0) || 0;
@@ -102,6 +116,12 @@ export default function Dashboard() {
         </section>
       )}
 
+      {!hasDedicatedAccountKYC && (
+        <section className="rounded-[var(--ds-radius-card)] border border-dashed border-teal-300 bg-teal-50/70 p-5 dark:border-teal-400/25 dark:bg-teal-400/[0.06]">
+          <div className="flex items-start gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-teal-800 shadow-sm ring-1 ring-teal-200 dark:bg-teal-400/10 dark:text-teal-300 dark:ring-teal-400/20"><Building2 size={20} /></span><div className="min-w-0 flex-1"><p className="font-bold text-[var(--ds-text)]">Get your funding account</p><p className="mt-1 text-sm leading-6 text-[var(--ds-text-secondary)]">Verify your NIN to receive a dedicated Moniepoint account for automatic wallet funding.</p><Button size="sm" className="mt-4" icon={ShieldCheck} onClick={() => setNinOpen(true)}>Verify NIN</Button></div></div>
+        </section>
+      )}
+
       <section>
         <div className="mb-4 flex items-center justify-between"><div><p className="text-lg font-bold text-[var(--ds-text)]">What would you like to do?</p><p className="mt-1 text-sm text-[var(--ds-text-secondary)]">Everyday services, in one place.</p></div></div>
         <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:gap-4">
@@ -123,6 +143,9 @@ export default function Dashboard() {
 
       <Modal open={transferOpen} onClose={() => setTransferOpen(false)} title="Send money" description="Transfer from your BORHS wallet to another user." size="sm">
         <div className="space-y-4"><Input label="Recipient" hint="Email, phone number or referral code" value={transferForm.recipient} onChange={(event) => setTransferForm({ ...transferForm, recipient: event.target.value })} placeholder="Enter recipient" /><Input label="Amount (₦)" type="number" hint={`Available: ₦${balance.toLocaleString()}`} value={transferForm.amount} onChange={(event) => setTransferForm({ ...transferForm, amount: event.target.value })} placeholder="Minimum ₦100" /><Input label="Transaction PIN" type="password" inputMode="numeric" maxLength={4} value={transferForm.pin} onChange={(event) => setTransferForm({ ...transferForm, pin: event.target.value.replace(/\D/g, '') })} placeholder="••••" /><Button className="w-full" icon={Send} loading={transferMutation.isPending} disabled={!transferForm.recipient.trim() || Number(transferForm.amount) < 100 || (user?.isPinSet && transferForm.pin.length !== 4)} onClick={() => transferMutation.mutate()}>Send money</Button></div>
+      </Modal>
+      <Modal open={ninOpen} onClose={() => setNinOpen(false)} title="Verify your NIN" description="Verify your identity to activate automatic bank-transfer funding." size="sm">
+        <div className="space-y-4"><Input label="National Identification Number" type="password" inputMode="numeric" maxLength={11} value={nin} onChange={(event) => setNin(event.target.value.replace(/\D/g, '').slice(0, 11))} hint="Enter the 11-digit NIN registered in your name." placeholder="11-digit NIN" autoFocus /><div className="rounded-2xl bg-[var(--ds-surface-subtle)] p-4 text-xs leading-5 text-[var(--ds-text-secondary)]"><ShieldCheck size={16} className="mb-2 text-brand-700" />Your account number appears only after the identity provider accepts your details.</div><Button className="w-full" icon={Building2} loading={ninMutation.isPending} disabled={nin.length !== 11} onClick={() => ninMutation.mutate()}>Verify and create account</Button></div>
       </Modal>
     </div>
   );

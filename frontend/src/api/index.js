@@ -92,6 +92,7 @@ export const referralAPI = {
 export const kycAPI = {
   getStatus: () => api.get('/kyc/status'),
   submitTier1: () => api.post('/kyc/tier1'),
+  submitNinForAccount: (nin) => api.post('/kyc/nin-account', { nin }),
   submitTier2: (formData) => api.post('/kyc/tier2', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   submitTier3: (formData) => api.post('/kyc/tier3', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };

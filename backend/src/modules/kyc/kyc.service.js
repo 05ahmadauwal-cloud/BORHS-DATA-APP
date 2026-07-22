@@ -59,6 +59,46 @@ const submitTier1 = async (userId) => {
   return { tier: 1, status: 'approved' };
 };
 
+const submitNinForAccount = async (userId, nin) => {
+  const normalizedNin = String(nin || '').replace(/\D/g, '');
+  if (!/^\d{11}$/.test(normalizedNin)) {
+    throw Object.assign(new Error('NIN must be exactly 11 digits'), { statusCode: 400 });
+  }
+
+  const user = await User.findById(userId);
+  if (!user) throw Object.assign(new Error('User not found'), { statusCode: 404 });
+  if (user.kycStatus === KYC_STATUS.NONE) await submitTier1(userId);
+
+  await KYC.findOneAndUpdate(
+    { user: userId, tier: 2 },
+    {
+      user: userId,
+      tier: 2,
+      status: KYC_APPROVAL_STATUS.APPROVED,
+      idType: 'nin',
+      idNumber: normalizedNin,
+      submittedAt: new Date(),
+      reviewedAt: new Date(),
+      rejectionReason: null,
+    },
+    { upsert: true, new: true }
+  );
+  await User.findByIdAndUpdate(userId, { kycStatus: KYC_STATUS.TIER2 });
+
+  try {
+    await syncMonnifyKYC(userId);
+    const updated = await User.findById(userId).select('kycStatus monnifyVirtualAccount');
+    return { kycStatus: updated.kycStatus, virtualAccount: updated.monnifyVirtualAccount };
+  } catch (error) {
+    await KYC.findOneAndUpdate(
+      { user: userId, tier: 2 },
+      { status: KYC_APPROVAL_STATUS.PENDING, rejectionReason: error.message }
+    );
+    await User.findByIdAndUpdate(userId, { kycStatus: KYC_STATUS.TIER1 });
+    throw error;
+  }
+};
+
 const submitTier2 = async (userId, body, images = {}) => {
   const { idType, idNumber, bvn } = body;
   const user = await User.findById(userId);
@@ -185,4 +225,4 @@ const getKYCCounts = async () => {
   return { pending, approved, rejected, all: pending + approved + rejected };
 };
 
-module.exports = { submitTier1, submitTier2, submitTier3, getKYCStatus, reviewKYC, getPendingKYC, getKYCSubmissions, getKYCById, getKYCCounts, getApprovedIdentity, syncMonnifyKYC };
+module.exports = { submitTier1, submitTier2, submitTier3, submitNinForAccount, getKYCStatus, reviewKYC, getPendingKYC, getKYCSubmissions, getKYCById, getKYCCounts, getApprovedIdentity, syncMonnifyKYC };

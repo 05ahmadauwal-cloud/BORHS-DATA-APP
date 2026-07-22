@@ -37,12 +37,13 @@ export default function PublicLayout() {
       </div>
 
       <main><Outlet /></main>
-      <footer className="mx-4 mb-4 mt-20 rounded-[2rem] bg-[#073b2a] px-6 py-12 text-white sm:mx-6 sm:px-10 lg:mx-auto lg:max-w-7xl">
-        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]"><div><img src="/logo.png" alt="BORHS Data" className="h-12 w-auto rounded-xl bg-white p-1" /><p className="mt-5 max-w-xs text-sm leading-6 text-white/65">One dependable balance for data, airtime, bills and everyday Nigerian payments.</p></div>{[
+      <footer className="mx-3 mb-3 mt-12 rounded-[1.5rem] bg-[#073b2a] px-5 py-7 text-white sm:mx-6 sm:mt-20 sm:rounded-[2rem] sm:px-10 sm:py-10 lg:mx-auto lg:max-w-7xl">
+        <div className="mb-6 flex items-center justify-between gap-3 border-b border-white/15 pb-5 sm:mb-8"><div className="flex min-w-0 items-center gap-3"><img src="/logo-mark.png" alt="" className="h-10 w-10 shrink-0 rounded-xl bg-white p-1.5" /><div><p className="text-sm font-bold">BORHS Data</p><p className="text-[10px] text-white/55">Everyday payments, simplified.</p></div></div><Link to={isAuthenticated ? '/dashboard' : '/register'} className="shrink-0 rounded-full bg-amber-400 px-3 py-2 text-[11px] font-bold text-[#073b2a]">{isAuthenticated ? 'Dashboard' : 'Get started'}</Link></div>
+        <div className="grid grid-cols-3 gap-x-3 gap-y-7 sm:grid-cols-[1.4fr_1fr_1fr_1fr] sm:gap-10"><div className="col-span-3 sm:col-span-1"><p className="max-w-xs text-xs leading-5 text-white/60 sm:text-sm sm:leading-6">One dependable balance for data, airtime, bills and everyday Nigerian payments.</p></div>{[
           ['Services', [['Data', '/data'], ['Airtime', '/airtime'], ['Electricity', '/electricity'], ['Cable TV', '/cable']]],
           ['Company', [['About', '/about'], ['Pricing', '/pricing'], ['Contact', '/contact'], ['Agents', '/become-agent']]],
           ['Account', [['Create account', '/register'], ['Sign in', '/login'], ['Dashboard', '/dashboard'], ['Support', '/contact']]],
-        ].map(([title, items]) => <div key={title}><p className="text-xs font-bold uppercase tracking-widest text-amber-400">{title}</p><ul className="mt-4 space-y-3">{items.map(([label, to]) => <li key={label}><Link to={to} className="text-sm text-white/70 transition hover:text-white">{label}</Link></li>)}</ul></div>)}</div>
+        ].map(([title, items]) => <div key={title}><p className="text-[10px] font-bold uppercase tracking-wider text-amber-400 sm:text-xs sm:tracking-widest">{title}</p><ul className="mt-3 space-y-2 sm:mt-4 sm:space-y-3">{items.map(([label, to]) => <li key={label}><Link to={to} className="text-[11px] text-white/65 transition hover:text-white sm:text-sm">{label}</Link></li>)}</ul></div>)}</div>
         <div className="mt-12 flex flex-col gap-2 border-t border-white/15 pt-6 text-xs text-white/50 sm:flex-row sm:justify-between"><p>© {new Date().getFullYear()} BORHS Data. All rights reserved.</p><p>Everyday services. One dependable balance.</p></div>
       </footer>
       <WhatsAppButton />

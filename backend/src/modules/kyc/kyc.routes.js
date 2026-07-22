@@ -40,6 +40,11 @@ router.post('/tier1', asyncHandler(async (req, res) => {
   return ApiResponse.success(res, data, 'Tier 1 KYC completed');
 }));
 
+router.post('/nin-account', asyncHandler(async (req, res) => {
+  const data = await kycService.submitNinForAccount(req.user._id, req.body.nin);
+  return ApiResponse.success(res, data, 'Identity verified and dedicated account created');
+}));
+
 router.post('/tier2',
   upload.fields([{ name: 'idFront', maxCount: 1 }, { name: 'idBack', maxCount: 1 }]),
   asyncHandler(async (req, res) => {

@@ -203,3 +203,14 @@
 .public-site .text-dark-200 { color: #073b2a; }
 .public-site .text-dark-300,
 .public-site .text-dark-400 { color: #557266; }
+
+@media (max-width: 639px) {
+  .public-site { overflow-x: clip; }
+  .public-site main { width: 100%; overflow-x: clip; }
+  .public-site main section { scroll-margin-top: 4.5rem; }
+  .public-site h1 { text-wrap: balance; }
+  .public-site h2 { text-wrap: balance; }
+  .public-site p { overflow-wrap: anywhere; }
+  .public-site .public-btn-primary,
+  .public-site .public-btn-outline { min-height: 3rem; }
+}
