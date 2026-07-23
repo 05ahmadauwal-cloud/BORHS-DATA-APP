@@ -47,21 +47,25 @@ const paystackVerify = async (reference) => {
 };
 
 const verifyPaystackWebhook = (signature, body) => {
+  if (!signature || !process.env.PAYSTACK_SECRET_KEY) return false;
   const hash = crypto
-    .createHmac('sha512', process.env.PAYSTACK_WEBHOOK_SECRET)
-    .update(JSON.stringify(body))
+    .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
+    .update(Buffer.isBuffer(body) ? body : JSON.stringify(body))
     .digest('hex');
-  return hash === signature;
+  const expected = Buffer.from(hash, 'hex');
+  const received = Buffer.from(String(signature), 'hex');
+  return expected.length === received.length && crypto.timingSafeEqual(expected, received);
 };
 
 const handlePaystackWebhook = async (event, data) => {
   if (event === 'charge.success') {
     const { reference, amount, metadata, customer } = data;
-    const amountNGN = amount / 100;
+    const amountNGN = Number(amount) / 100;
     const userId = metadata?.userId;
-    if (!userId) {
-      logger.warn(`Paystack webhook: no userId in metadata for ref ${reference}`);
-      return;
+    if (!reference) throw new Error('Paystack webhook has no reference');
+    if (!userId) throw new Error(`Paystack webhook has no userId for ref ${reference}`);
+    if (!Number.isFinite(amountNGN) || amountNGN <= 0) {
+      throw new Error(`Paystack webhook has an invalid amount for ref ${reference}`);
     }
     await fundWallet(userId, amountNGN, 'paystack', reference, { email: customer?.email });
     logger.info(`Wallet funded via Paystack: userId=${userId}, amount=${amountNGN}, ref=${reference}`);

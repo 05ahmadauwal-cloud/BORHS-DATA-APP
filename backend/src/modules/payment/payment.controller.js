@@ -60,21 +60,28 @@ const verifyPaystack = async (req, res) => {
 
 const paystackWebhook = async (req, res) => {
   const signature = req.headers['x-paystack-signature'];
+  const rawBody = Buffer.isBuffer(req.rawBody)
+    ? req.rawBody
+    : Buffer.from(JSON.stringify(req.body));
 
-  // In dev mode without a real webhook secret, allow through for testing
-  if (process.env.PAYSTACK_WEBHOOK_SECRET &&
-      process.env.PAYSTACK_WEBHOOK_SECRET !== 'borhs_paystack_webhook_secret' &&
-      !paymentService.verifyPaystackWebhook(signature, req.body)) {
+  if (!paymentService.verifyPaystackWebhook(signature, rawBody)) {
     logger.warn('Invalid Paystack webhook signature');
     return res.status(400).json({ success: false });
   }
 
-  res.status(200).json({ success: true });
+  let payload;
+  try {
+    payload = Buffer.isBuffer(req.body)
+      ? JSON.parse(req.body.toString('utf8'))
+      : req.body;
+  } catch (_error) {
+    return res.status(400).json({ success: false });
+  }
 
-  const { event, data } = req.body;
-  await paymentService.handlePaystackWebhook(event, data).catch((e) =>
-    logger.error('Paystack webhook handler error:', e)
-  );
+  // Acknowledge only after the wallet transaction commits so Paystack retries
+  // the event if the database is temporarily unavailable.
+  await paymentService.handlePaystackWebhook(payload.event, payload.data);
+  return res.status(200).json({ success: true });
 };
 
 const initializeFlutterwave = async (req, res) => {

@@ -7,7 +7,7 @@ const validate = require('../../middleware/validate');
 const asyncHandler = require('express-async-handler');
 
 // Webhooks (no auth) — Monnify needs raw body for HMAC verification
-router.post('/webhook/paystack', express.raw({ type: 'application/json' }), asyncHandler(ctrl.paystackWebhook));
+router.post('/webhook/paystack', asyncHandler(ctrl.paystackWebhook));
 router.post('/webhook/flutterwave', asyncHandler(ctrl.flutterwaveWebhook));
 router.post('/webhook/billstack', asyncHandler(ctrl.billstackWebhook));
 router.post(

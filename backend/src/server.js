@@ -71,7 +71,7 @@ const limiter = rateLimit({
   message: { success: false, message: 'Too many requests. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => req.method === 'OPTIONS',
+  skip: (req) => req.method === 'OPTIONS' || req.path.startsWith('/v1/payment/webhook/'),
 });
 
 // Stricter limiter for auth endpoints
@@ -102,11 +102,17 @@ app.use('/api/v1/auth/send-phone-otp', verificationDeliveryLimiter);
 
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
 // Raw body for payment webhooks
-app.use('/api/v1/payment/webhook/paystack', express.raw({ type: 'application/json' }));
 app.use('/api/v1/payment/webhook/billstack', express.raw({ type: 'application/json' }));
 app.use('/api/v1/payment/webhook/monnify', express.raw({ type: 'application/json' }));
 
-app.use(express.json({ limit: '10kb' }));
+app.use(express.json({
+  limit: '10kb',
+  verify: (req, _res, buffer) => {
+    if (req.path === '/api/v1/payment/webhook/paystack') {
+      req.rawBody = Buffer.from(buffer);
+    }
+  },
+}));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 

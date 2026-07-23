@@ -26,6 +26,19 @@ const computeDepositCharge = async (amount, gateway) => {
 };
 
 const fundWallet = async (userId, amount, gateway, externalReference, metadata = {}) => {
+  if (!externalReference) throw new Error('External payment reference is required');
+
+  const existing = await Transaction.findOne({ externalReference });
+  if (existing) {
+    return {
+      transaction: existing,
+      newBalance: existing.balanceAfter,
+      fee: existing.fee,
+      creditAmount: existing.amount,
+      alreadyProcessed: true,
+    };
+  }
+
   const { fee, creditAmount } = await computeDepositCharge(amount, gateway);
 
   const session = await mongoose.startSession();
@@ -64,6 +77,22 @@ const fundWallet = async (userId, amount, gateway, externalReference, metadata =
     return { transaction: transaction[0], newBalance: balanceAfter, fee, creditAmount };
   } catch (error) {
     await session.abortTransaction();
+
+    // The Paystack callback and webhook commonly arrive together. The unique
+    // index elects one winner; treat the other delivery as a successful replay.
+    if (error?.code === 11000) {
+      const duplicate = await Transaction.findOne({ externalReference });
+      if (duplicate) {
+        return {
+          transaction: duplicate,
+          newBalance: duplicate.balanceAfter,
+          fee: duplicate.fee,
+          creditAmount: duplicate.amount,
+          alreadyProcessed: true,
+        };
+      }
+    }
+
     throw error;
   } finally {
     session.endSession();
