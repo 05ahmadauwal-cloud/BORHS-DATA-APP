@@ -20,6 +20,7 @@ export const authAPI = {
 // Wallet
 export const walletAPI = {
   getBalance: () => api.get('/wallet/balance'),
+  getDashboard: () => api.get('/wallet/dashboard'),
   getTransactions: (params) => api.get('/wallet/transactions', { params }),
   transfer: (data) => api.post('/wallet/transfer', data),
   setPin: (pin) => api.post('/wallet/set-pin', { pin }),

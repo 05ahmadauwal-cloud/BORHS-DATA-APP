@@ -1,13 +1,48 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, BadgeCheck, GraduationCap, Phone, ShieldCheck, Sparkles, Tv, Wallet, Wifi, Zap } from 'lucide-react';
+import { Link } from "react-router-dom";
+import {
+  ArrowRight,
+  BadgeCheck,
+  GraduationCap,
+  Phone,
+  ShieldCheck,
+  Sparkles,
+  Tv,
+  Wallet,
+  Wifi,
+  Zap,
+} from "lucide-react";
 
 const services = [
-  { icon: Wifi, title: 'Data bundles', text: 'Flexible plans across every Nigerian network.' },
-  { icon: Phone, title: 'Airtime', text: 'Instant top-ups for yourself or someone else.' },
-  { icon: Zap, title: 'Electricity', text: 'Verify meters and pay every major DISCO.' },
-  { icon: Tv, title: 'Cable TV', text: 'Renew DStv, GOtv and StarTimes in moments.' },
-  { icon: GraduationCap, title: 'Exam PINs', text: 'WAEC, NECO, NABTEB and JAMB PINs.' },
-  { icon: Wallet, title: 'One wallet', text: 'Fund once and pay for everything from one balance.' },
+  {
+    icon: Wifi,
+    title: "Data bundles",
+    text: "Flexible plans across every Nigerian network.",
+  },
+  {
+    icon: Phone,
+    title: "Airtime",
+    text: "Instant top-ups for yourself or someone else.",
+  },
+  {
+    icon: Zap,
+    title: "Electricity",
+    text: "Verify meters and pay every major DISCO.",
+  },
+  {
+    icon: Tv,
+    title: "Cable TV",
+    text: "Renew DStv, GOtv and StarTimes in moments.",
+  },
+  {
+    icon: GraduationCap,
+    title: "Exam PINs",
+    text: "WAEC, NECO, NABTEB and JAMB PINs.",
+  },
+  {
+    icon: Wallet,
+    title: "One wallet",
+    text: "Fund once and pay for everything from one balance.",
+  },
 ];
 
 export default function Home() {
@@ -15,17 +50,183 @@ export default function Home() {
     <div>
       <section className="mx-4 mt-4 overflow-hidden rounded-[2rem] bg-[#eef1e9] px-5 py-10 sm:mx-6 sm:px-10 sm:py-14 lg:mx-auto lg:max-w-7xl lg:px-16">
         <div className="grid items-center gap-10 lg:grid-cols-[1.02fr_0.98fr]">
-          <div className="text-center lg:text-left"><p className="public-kicker">Built for everyday Nigeria</p><h1 className="mt-4 text-[clamp(2.7rem,7vw,5.8rem)] font-bold leading-[0.92] tracking-[-0.055em] text-[#073b2a]">Everything you pay for, in one calm place.</h1><p className="mx-auto mt-6 max-w-xl text-base leading-7 text-[#315c4d] lg:mx-0 lg:text-lg">Buy data, recharge airtime, settle bills and grow your earnings without jumping between apps or wondering if a transaction went through.</p><div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start"><Link to="/register" className="public-btn-primary justify-center">Create free account <ArrowRight size={16} /></Link><Link to="/pricing" className="public-btn-outline justify-center">View live pricing</Link></div><p className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-[#315c4d] lg:justify-start"><ShieldCheck size={15} className="text-[#0f766e]" /> Secure wallet · instant confirmation · real support</p></div>
-          <div className="relative"><img src="/borhs-hero-lifestyle.png" alt="A Nigerian customer using BORHS Data from her phone" className="aspect-[4/3] w-full object-cover [border-radius:2rem_2rem_5rem_2rem]" /><div className="absolute -bottom-5 left-5 rounded-2xl bg-white p-4 shadow-xl sm:left-[-1.5rem]"><p className="text-xs font-semibold text-[#557266]">Available balance</p><p className="mt-1 text-xl font-bold text-[#073b2a]">₦52,000.00</p><p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-[#0f766e]"><BadgeCheck size={13} /> Ready for every service</p></div></div>
+          <div className="text-center lg:text-left">
+            <p className="public-kicker">Built for everyday Nigeria</p>
+            <h1 className="mt-4 text-[clamp(2.7rem,7vw,5.8rem)] font-bold leading-[0.92] tracking-[-0.055em] text-[#073b2a]">
+              Everything you pay for, in one calm place.
+            </h1>
+            <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-[#315c4d] lg:mx-0 lg:text-lg">
+              Buy data, recharge airtime, settle bills and grow your earnings
+              without jumping between apps or wondering if a transaction went
+              through.
+            </p>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+              <Link
+                to="/register"
+                className="public-btn-primary justify-center"
+              >
+                Create free account <ArrowRight size={16} />
+              </Link>
+              <Link to="/pricing" className="public-btn-outline justify-center">
+                View live pricing
+              </Link>
+            </div>
+            <p className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-[#315c4d] lg:justify-start">
+              <ShieldCheck size={15} className="text-[#0f766e]" /> Secure wallet
+              · instant confirmation · real support
+            </p>
+          </div>
+          <div className="relative">
+            <img
+              src="/borhs-hero-lifestyle.jpg"
+              alt="A Nigerian customer using BORHS Data from her phone"
+              width="1200"
+              height="800"
+              fetchPriority="high"
+              decoding="async"
+              className="aspect-[4/3] w-full object-cover [border-radius:2rem_2rem_5rem_2rem]"
+            />
+            <div className="absolute -bottom-5 left-5 rounded-2xl bg-white p-4 shadow-xl sm:left-[-1.5rem]">
+              <p className="text-xs font-semibold text-[#557266]">
+                Available balance
+              </p>
+              <p className="mt-1 text-xl font-bold text-[#073b2a]">
+                ₦52,000.00
+              </p>
+              <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-[#0f766e]">
+                <BadgeCheck size={13} /> Ready for every service
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="mt-16 rounded-[1.5rem] bg-[#073b2a] px-5 py-7 text-white sm:px-8"><p className="text-center text-xs font-bold uppercase tracking-[0.18em] text-amber-400">One wallet, many everyday needs</p><div className="mt-6 grid grid-cols-3 gap-5 text-center sm:grid-cols-6">{['MTN', 'Airtel', 'Glo', '9mobile', 'DStv', 'AEDC'].map((name) => <p key={name} className="text-sm font-bold text-white/75">{name}</p>)}</div></div>
+        <div className="mt-16 rounded-[1.5rem] bg-[#073b2a] px-5 py-7 text-white sm:px-8">
+          <p className="text-center text-xs font-bold uppercase tracking-[0.18em] text-amber-400">
+            One wallet, many everyday needs
+          </p>
+          <div className="mt-6 grid grid-cols-3 gap-5 text-center sm:grid-cols-6">
+            {["MTN", "Airtel", "Glo", "9mobile", "DStv", "AEDC"].map((name) => (
+              <p key={name} className="text-sm font-bold text-white/75">
+                {name}
+              </p>
+            ))}
+          </div>
+        </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-12 px-5 py-24 lg:grid-cols-[0.8fr_1.2fr] lg:px-8"><div><p className="public-kicker">Designed around real life</p><h2 className="mt-4 text-4xl font-bold leading-tight tracking-[-0.04em] text-[#073b2a] sm:text-5xl">The useful parts of a wallet, without the banking noise.</h2><p className="mt-5 text-base leading-7 text-[#557266]">BORHS keeps the things you do most close at hand—and makes every step obvious.</p><Link to="/about" className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[#0f766e]">Why we built BORHS <ArrowRight size={15} /></Link></div><div className="grid gap-4 sm:grid-cols-2">{services.map(({ icon: Icon, title, text }) => <article key={title} className="rounded-[1.75rem] bg-[#f1f3ed] p-6 transition duration-300 hover:-translate-y-1"><span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#0f766e]"><Icon size={21} /></span><h3 className="mt-6 text-xl font-bold text-[#073b2a]">{title}</h3><p className="mt-2 text-sm leading-6 text-[#557266]">{text}</p></article>)}</div></section>
+      <section className="mx-auto grid max-w-6xl gap-12 px-5 py-24 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
+        <div>
+          <p className="public-kicker">Designed around real life</p>
+          <h2 className="mt-4 text-4xl font-bold leading-tight tracking-[-0.04em] text-[#073b2a] sm:text-5xl">
+            The useful parts of a wallet, without the banking noise.
+          </h2>
+          <p className="mt-5 text-base leading-7 text-[#557266]">
+            BORHS keeps the things you do most close at hand—and makes every
+            step obvious.
+          </p>
+          <Link
+            to="/about"
+            className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[#0f766e]"
+          >
+            Why we built BORHS <ArrowRight size={15} />
+          </Link>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {services.map(({ icon: Icon, title, text }) => (
+            <article
+              key={title}
+              className="rounded-[1.75rem] bg-[#f1f3ed] p-6 transition duration-300 hover:-translate-y-1"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#0f766e]">
+                <Icon size={21} />
+              </span>
+              <h3 className="mt-6 text-xl font-bold text-[#073b2a]">{title}</h3>
+              <p className="mt-2 text-sm leading-6 text-[#557266]">{text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
-      <section className="mx-4 rounded-[2rem] bg-[#dce9df] px-6 py-14 sm:mx-6 sm:px-12 lg:mx-auto lg:max-w-7xl"><div className="grid items-center gap-10 lg:grid-cols-2"><div className="order-2 lg:order-1"><div className="mx-auto max-w-sm rounded-[2rem] bg-white p-5 shadow-[0_25px_70px_rgba(7,59,42,0.12)]"><div className="rounded-[1.5rem] bg-[#0f766e] p-6 text-white"><p className="text-xs text-teal-100">Wallet balance</p><p className="mt-2 text-3xl font-bold">₦52,000.00</p><div className="mt-6 grid grid-cols-3 gap-2 text-center text-[10px]"><span className="rounded-xl bg-white/10 p-3">Fund</span><span className="rounded-xl bg-white/10 p-3">Transfer</span><span className="rounded-xl bg-white/10 p-3">History</span></div></div><div className="mt-4 space-y-3">{['Data purchase · MTN', 'Wallet funding', 'Electricity · AEDC'].map((item, i) => <div key={item} className="flex items-center justify-between rounded-2xl bg-[#f5f6f2] p-4"><div><p className="text-xs font-bold text-[#073b2a]">{item}</p><p className="mt-1 text-[10px] text-[#789084]">Successful</p></div><p className="text-xs font-bold text-[#073b2a]">{i === 1 ? '+' : '-'}₦{[1200, 10000, 5000][i].toLocaleString()}</p></div>)}</div></div></div><div className="order-1 lg:order-2"><p className="public-kicker">Clear at every step</p><h2 className="mt-4 text-4xl font-bold leading-tight tracking-[-0.04em] text-[#073b2a] sm:text-5xl">Know what happened to your money.</h2><p className="mt-5 text-base leading-7 text-[#315c4d]">Every purchase has a status, reference and receipt. Your wallet history tells the full story—without support jargon.</p><ul className="mt-7 space-y-4">{['Automatic transaction confirmation', 'Downloadable service receipts', 'Protected transaction PIN', 'Human support when you need it'].map((item) => <li key={item} className="flex items-center gap-3 text-sm font-semibold text-[#315c4d]"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#0f766e]"><BadgeCheck size={15} /></span>{item}</li>)}</ul></div></div></section>
+      <section className="mx-4 rounded-[2rem] bg-[#dce9df] px-6 py-14 sm:mx-6 sm:px-12 lg:mx-auto lg:max-w-7xl">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <div className="order-2 lg:order-1">
+            <div className="mx-auto max-w-sm rounded-[2rem] bg-white p-5 shadow-[0_25px_70px_rgba(7,59,42,0.12)]">
+              <div className="rounded-[1.5rem] bg-[#0f766e] p-6 text-white">
+                <p className="text-xs text-teal-100">Wallet balance</p>
+                <p className="mt-2 text-3xl font-bold">₦52,000.00</p>
+                <div className="mt-6 grid grid-cols-3 gap-2 text-center text-[10px]">
+                  <span className="rounded-xl bg-white/10 p-3">Fund</span>
+                  <span className="rounded-xl bg-white/10 p-3">Transfer</span>
+                  <span className="rounded-xl bg-white/10 p-3">History</span>
+                </div>
+              </div>
+              <div className="mt-4 space-y-3">
+                {[
+                  "Data purchase · MTN",
+                  "Wallet funding",
+                  "Electricity · AEDC",
+                ].map((item, i) => (
+                  <div
+                    key={item}
+                    className="flex items-center justify-between rounded-2xl bg-[#f5f6f2] p-4"
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-[#073b2a]">{item}</p>
+                      <p className="mt-1 text-[10px] text-[#789084]">
+                        Successful
+                      </p>
+                    </div>
+                    <p className="text-xs font-bold text-[#073b2a]">
+                      {i === 1 ? "+" : "-"}₦
+                      {[1200, 10000, 5000][i].toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="order-1 lg:order-2">
+            <p className="public-kicker">Clear at every step</p>
+            <h2 className="mt-4 text-4xl font-bold leading-tight tracking-[-0.04em] text-[#073b2a] sm:text-5xl">
+              Know what happened to your money.
+            </h2>
+            <p className="mt-5 text-base leading-7 text-[#315c4d]">
+              Every purchase has a status, reference and receipt. Your wallet
+              history tells the full story—without support jargon.
+            </p>
+            <ul className="mt-7 space-y-4">
+              {[
+                "Automatic transaction confirmation",
+                "Downloadable service receipts",
+                "Protected transaction PIN",
+                "Human support when you need it",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex items-center gap-3 text-sm font-semibold text-[#315c4d]"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#0f766e]">
+                    <BadgeCheck size={15} />
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
 
-      <section className="mx-auto max-w-5xl px-5 py-24 text-center"><Sparkles className="mx-auto text-amber-500" /><h2 className="mx-auto mt-5 max-w-3xl text-4xl font-bold tracking-[-0.04em] text-[#073b2a] sm:text-6xl">Ready for a simpler way to pay?</h2><p className="mx-auto mt-5 max-w-xl text-base leading-7 text-[#557266]">Create your wallet and make your first everyday payment in minutes.</p><Link to="/register" className="public-btn-primary mt-8">Get started <ArrowRight size={16} /></Link></section>
+      <section className="mx-auto max-w-5xl px-5 py-24 text-center">
+        <Sparkles className="mx-auto text-amber-500" />
+        <h2 className="mx-auto mt-5 max-w-3xl text-4xl font-bold tracking-[-0.04em] text-[#073b2a] sm:text-6xl">
+          Ready for a simpler way to pay?
+        </h2>
+        <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-[#557266]">
+          Create your wallet and make your first everyday payment in minutes.
+        </p>
+        <Link to="/register" className="public-btn-primary mt-8">
+          Get started <ArrowRight size={16} />
+        </Link>
+      </section>
     </div>
   );
 }

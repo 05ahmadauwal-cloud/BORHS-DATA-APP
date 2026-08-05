@@ -63,16 +63,22 @@ const register = async (data) => {
     );
   }
 
+  // Create Monnify virtual account (non-blocking — doesn't fail registration)
+  if (process.env.MONNIFY_API_KEY && process.env.MONNIFY_CONTRACT_CODE) {
+    const { createReservedAccount } = require('../../services/monnify');
+    createReservedAccount(user)
+      .then((va) => User.findByIdAndUpdate(user._id, { monnifyVirtualAccount: va }))
+      .catch((e) => logger.error('Monnify reserved account creation failed:', e.response?.data || e.message));
+  }
+
   const clientUrl = process.env.NODE_ENV === 'production'
     ? (process.env.PRODUCTION_URL || process.env.CLIENT_URL)
     : process.env.CLIENT_URL;
   const verificationLink = `${clientUrl}/verify-email/${verificationToken}`;
-  // The account is already committed at this point. Email delivery must not
-  // delay the registration response or turn a successful signup into an error.
-  sendEmail(user.email, 'welcome', {
+  await sendEmail(user.email, 'welcome', {
     firstName: user.firstName,
     verificationLink,
-  }).catch((e) => logger.error('Welcome email failed:', e.message || e));
+  });
 
   const { accessToken, refreshToken } = generateTokens(user._id);
   return { user: user.toPublicJSON(), accessToken, refreshToken };
@@ -130,26 +136,6 @@ const verifyEmail = async (token) => {
   });
 
   return user;
-};
-
-const resendEmailVerification = async (userId) => {
-  const user = await User.findById(userId);
-  if (!user) throw Object.assign(new Error('User not found'), { statusCode: 404 });
-  if (user.isEmailVerified) return { alreadyVerified: true };
-
-  const verificationToken = crypto.randomBytes(32).toString('hex');
-  user.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
-  user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
-  await user.save({ validateBeforeSave: false });
-
-  const clientUrl = process.env.NODE_ENV === 'production'
-    ? (process.env.PRODUCTION_URL || process.env.CLIENT_URL)
-    : process.env.CLIENT_URL;
-  await sendEmail(user.email, 'welcome', {
-    firstName: user.firstName,
-    verificationLink: `${clientUrl}/verify-email/${verificationToken}`,
-  });
-  return { alreadyVerified: false };
 };
 
 const sendPhoneOTP = async (userId) => {
@@ -243,25 +229,6 @@ const changePassword = async (userId, currentPassword, newPassword) => {
   return true;
 };
 
-const updateUsername = async (userId, username) => {
-  const normalizedUsername = username.trim().toLowerCase();
-  const existingUser = await User.findOne({
-    username: normalizedUsername,
-    _id: { $ne: userId },
-  }).select('_id').lean();
-  if (existingUser) {
-    throw Object.assign(new Error('Username is already taken'), { statusCode: 409 });
-  }
-
-  const user = await User.findByIdAndUpdate(
-    userId,
-    { username: normalizedUsername },
-    { new: true, runValidators: true }
-  );
-  if (!user) throw Object.assign(new Error('User not found'), { statusCode: 404 });
-  return user;
-};
-
 const refreshAccessToken = async (refreshToken) => {
   const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
   const user = await User.findById(decoded.id);
@@ -276,13 +243,11 @@ module.exports = {
   register,
   login,
   verifyEmail,
-  resendEmailVerification,
   sendPhoneOTP,
   verifyPhoneOTP,
   forgotPassword,
   resetPassword,
   changePassword,
-  updateUsername,
   refreshAccessToken,
   generateTokens,
 };

@@ -25,6 +25,25 @@ const applyCommission = (costPrice, commissionRates) => {
 /**
  * Fetch all data plans from smeapi (public endpoint — no auth needed)
  */
+const normalizeValidity = (plan = {}) => {
+  const raw = plan.days ?? plan.validity ?? plan.duration;
+  if (raw === undefined || raw === null || String(raw).trim() === '') return '30 Days';
+
+  const value = String(raw).trim();
+  const dayMatch = value.match(/^(\d+)\s*days?$/i);
+  if (dayMatch) {
+    const count = Number(dayMatch[1]);
+    return `${count} ${count === 1 ? 'Day' : 'Days'}`;
+  }
+
+  if (/^\d+$/.test(value)) {
+    const count = Number(value);
+    return `${count} ${count === 1 ? 'Day' : 'Days'}`;
+  }
+
+  return value;
+};
+
 const fetchAllPlans = async () => {
   try {
     const { data } = await axios.get(DATAPLANS_URL, {
@@ -77,6 +96,8 @@ const syncDataPlans = async (commissionRates = {}) => {
     const { sellingPrice, agentPrice, resellerPrice } = applyCommission(costPrice, commissionRates);
 
     const planId = `${network}-${plan.id}`; // e.g. "mtn-1"
+    const validity = normalizeValidity(plan);
+    const planName = String(plan.name || '').trim();
 
     try {
       await DataPlan.findOneAndUpdate(
@@ -84,9 +105,9 @@ const syncDataPlans = async (commissionRates = {}) => {
         {
           planId,
           network,
-          name: `${plan.name} ${plan.days || ''}`.trim(),
-          dataSize: plan.name,
-          validity: plan.days || '30 Days',
+          name: `${planName} ${validity}`.trim(),
+          dataSize: planName,
+          validity,
           dataType: normalizeType(plan.type),
           costPrice,
           sellingPrice,
@@ -133,4 +154,4 @@ const updateAllCommissions = async (commissionRates) => {
   return { updated };
 };
 
-module.exports = { syncDataPlans, updateAllCommissions, applyCommission };
+module.exports = { syncDataPlans, updateAllCommissions, applyCommission, normalizeValidity };

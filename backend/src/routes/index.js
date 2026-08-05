@@ -1,25 +1,6 @@
 const express = require('express');
 const router = express.Router();
 
-// Small per-instance cache for high-traffic public reads. CDN/browser caching
-// and this server cache prevent every homepage visit from querying MongoDB.
-const publicResponseCache = new Map();
-const cachePublicResponse = (ttlSeconds) => (req, res, next) => {
-  const key = req.originalUrl;
-  const cached = publicResponseCache.get(key);
-  res.set('Cache-Control', `public, max-age=${ttlSeconds}, stale-while-revalidate=${ttlSeconds * 2}`);
-  if (cached && cached.expiresAt > Date.now()) return res.json(cached.body);
-
-  const sendJson = res.json.bind(res);
-  res.json = (body) => {
-    if (res.statusCode < 400) {
-      publicResponseCache.set(key, { body, expiresAt: Date.now() + ttlSeconds * 1000 });
-    }
-    return sendJson(body);
-  };
-  return next();
-};
-
 router.use('/auth', require('../modules/auth/auth.routes'));
 router.use('/wallet', require('../modules/wallet/wallet.routes'));
 router.use('/payment', require('../modules/payment/payment.routes'));
@@ -36,7 +17,7 @@ router.use('/admin', require('../modules/admin/admin.routes'));
 router.use('/coupons', require('../modules/coupon/coupon.routes'));
 
 // Public featured data plans — for homepage price display (no auth)
-router.get('/featured-plans', cachePublicResponse(60), async (req, res) => {
+router.get('/featured-plans', async (req, res) => {
   const DataPlan = require('../models/DataPlan');
   const plans = await DataPlan.find({ isActive: true })
     .sort({ network: 1, sellingPrice: 1 })
@@ -46,7 +27,7 @@ router.get('/featured-plans', cachePublicResponse(60), async (req, res) => {
 });
 
 // Public platform stats — user count, transaction volume (no auth)
-router.get('/public-stats', cachePublicResponse(60), async (req, res) => {
+router.get('/public-stats', async (req, res) => {
   const User = require('../models/User');
   const Transaction = require('../models/Transaction');
   const [userCount, txResult] = await Promise.all([
@@ -61,7 +42,7 @@ router.get('/public-stats', cachePublicResponse(60), async (req, res) => {
 });
 
 // Public banner — no auth needed
-router.get('/banner', cachePublicResponse(30), async (req, res) => {
+router.get('/banner', async (req, res) => {
   const Settings = require('../models/Settings');
   const [text, active, color] = await Promise.all([
     Settings.get('banner_text', ''),
@@ -72,13 +53,12 @@ router.get('/banner', cachePublicResponse(30), async (req, res) => {
 });
 
 // Public funding methods — which payment channels are enabled
-router.get('/funding-methods', cachePublicResponse(30), async (req, res) => {
+router.get('/funding-methods', async (req, res) => {
   const Settings = require('../models/Settings');
-  const [bankTransfer, paystack, flutterwave, billstack] = await Promise.all([
+  const [bankTransfer, paystack, flutterwave] = await Promise.all([
     Settings.get('funding_bank_transfer', true),
     Settings.get('funding_paystack', true),
     Settings.get('funding_flutterwave', true),
-    Settings.get('funding_billstack', false),
   ]);
   res.json({
     success: true,
@@ -86,27 +66,18 @@ router.get('/funding-methods', cachePublicResponse(30), async (req, res) => {
       bankTransfer: bankTransfer !== false,
       paystack: paystack !== false,
       flutterwave: flutterwave !== false,
-      billstack: billstack !== false,
     },
   });
 });
 
 // Public deposit charge info — no auth needed (so frontend can show fee preview before login)
-router.get('/deposit-charge', cachePublicResponse(30), async (req, res) => {
+router.get('/deposit-charge', async (req, res) => {
   const Settings = require('../models/Settings');
-  const [type, value, monnifyPercent] = await Promise.all([
+  const [type, value] = await Promise.all([
     Settings.get('deposit_charge_type', 'none'),
     Settings.get('deposit_charge_value', 0),
-    Settings.get('monnify_deposit_charge_percent', 2),
   ]);
-  res.json({
-    success: true,
-    data: {
-      type: type || 'none',
-      value: parseFloat(value) || 0,
-      monnify: { type: 'percentage', value: parseFloat(monnifyPercent) || 0 },
-    },
-  });
+  res.json({ success: true, data: { type: type || 'none', value: parseFloat(value) || 0 } });
 });
 
 router.get('/health', (req, res) => {

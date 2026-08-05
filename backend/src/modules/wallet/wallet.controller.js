@@ -4,15 +4,32 @@ const logger = require('../../utils/logger');
 
 
 const getBalance = async (req, res) => {
-  try {
-    const paymentService = require('../payment/payment.service');
-    await paymentService.reconcileMonnifyUser(req.user._id);
-  } catch (error) {
-    // Provider downtime must not prevent the user seeing their existing balance.
-    logger.warn(`Monnify balance reconciliation skipped for user ${req.user._id}: ${error.message}`);
-  }
   const data = await walletService.getWalletBalance(req.user._id);
+  reconcileMonnifyInBackground(req.user._id);
   return ApiResponse.success(res, data);
+};
+
+// Provider reconciliation is useful as a webhook fallback, but it must never
+// hold up the dashboard's first paint.
+const reconcileMonnifyInBackground = (userId) => {
+  const paymentService = require('../payment/payment.service');
+  paymentService.reconcileMonnifyUser(userId).catch((error) => {
+    logger.warn(`Monnify balance reconciliation skipped for user ${userId}: ${error.message}`);
+  });
+};
+
+const getDashboard = async (req, res) => {
+  const [balance, transactions] = await Promise.all([
+    walletService.getWalletBalance(req.user._id),
+    walletService.getTransactionHistory(req.user._id, { limit: 5 }),
+  ]);
+
+  reconcileMonnifyInBackground(req.user._id);
+  return ApiResponse.success(res, {
+    balance,
+    transactions,
+    virtualAccount: req.user.monnifyVirtualAccount || null,
+  });
 };
 
 const getTransactions = async (req, res) => {
@@ -36,4 +53,4 @@ const resetPin = async (req, res) => {
   return ApiResponse.success(res, {}, 'Transaction PIN reset successfully');
 };
 
-module.exports = { getBalance, getTransactions, transfer, setPin, resetPin };
+module.exports = { getBalance, getDashboard, getTransactions, transfer, setPin, resetPin };

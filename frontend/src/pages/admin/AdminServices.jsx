@@ -266,6 +266,7 @@ export default function AdminServices() {
                   <th>Plan</th>
                   <th>Network</th>
                   <th>Size</th>
+                  <th>Validity</th>
                   <th>SMEAPI Cost</th>
                   <th>Customer Price</th>
                   <th>Agent Price</th>
@@ -277,7 +278,7 @@ export default function AdminServices() {
               <tbody>
                 {plansLoading
                   ? Array.from({ length: 8 }).map((_, i) => (
-                      <tr key={i}>{Array.from({ length: 9 }).map((_, j) => <td key={j}><div className="h-4 bg-dark-700 rounded animate-pulse" /></td>)}</tr>
+                      <tr key={i}>{Array.from({ length: 10 }).map((_, j) => <td key={j}><div className="h-4 bg-dark-700 rounded animate-pulse" /></td>)}</tr>
                     ))
                   : plans?.map((plan) => (
                       <tr key={plan._id}>
@@ -290,6 +291,7 @@ export default function AdminServices() {
                           {plan.dataType && <span className="ml-1 text-[10px] text-dark-500 capitalize">{plan.dataType}</span>}
                         </td>
                         <td className="font-bold text-dark-100">{plan.dataSize}</td>
+                        <td className="text-dark-300">{plan.validity || '—'}</td>
                         <td className="text-dark-400">₦{plan.costPrice?.toLocaleString()}</td>
                         <td className="font-bold text-primary-400">₦{plan.sellingPrice?.toLocaleString()}</td>
                         <td className="text-success-500">₦{plan.agentPrice?.toLocaleString() || '-'}</td>
@@ -327,6 +329,7 @@ export default function AdminServices() {
                       <div>
                         <NetworkLogo network={plan.network} size="sm" />
                         <p className="font-bold text-dark-100 text-sm mt-1">{plan.name}</p>
+                        <p className="text-xs text-dark-400">{plan.dataSize} · {plan.validity || 'Validity unavailable'}</p>
                         <p className="text-xs text-dark-500 font-mono">{plan.planId}</p>
                       </div>
                       <button onClick={() => toggleMutation.mutate({ id: plan._id, isActive: !plan.isActive })}>

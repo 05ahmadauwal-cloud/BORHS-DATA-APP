@@ -10,6 +10,7 @@ const asyncHandler = require('express-async-handler');
 router.use(authenticate);
 
 router.get('/balance', asyncHandler(ctrl.getBalance));
+router.get('/dashboard', asyncHandler(ctrl.getDashboard));
 router.get('/transactions', asyncHandler(ctrl.getTransactions));
 
 router.post('/transfer', requireKYC, [

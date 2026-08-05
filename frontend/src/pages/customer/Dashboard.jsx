@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowDownLeft, ArrowUpRight, Building2, Check, Copy, GraduationCap, Gift, Phone, Send, ShieldCheck, Tv, UserPlus, Wallet, Wifi, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { bannerAPI, kycAPI, paymentAPI, walletAPI } from '../../api';
+import { bannerAPI, kycAPI, walletAPI } from '../../api';
 import useAuthStore from '../../store/authStore';
 import { Button, Card, EmptyState, Input, Modal, TransactionRow } from '../../components/ui';
 
@@ -29,17 +29,18 @@ export default function Dashboard() {
   const [copied, setCopied] = useState(false);
   const [ninOpen, setNinOpen] = useState(false);
   const [nin, setNin] = useState('');
-  const { data: balanceData } = useQuery({ queryKey: ['wallet-balance'], queryFn: walletAPI.getBalance, select: (response) => response.data, refetchInterval: 10000 });
-  const { data: transactionsData } = useQuery({ queryKey: ['recent-transactions'], queryFn: () => walletAPI.getTransactions({ limit: 5 }), select: (response) => response.data });
-  const { data: banner } = useQuery({ queryKey: ['banner'], queryFn: bannerAPI.get, select: (response) => response.data.data, refetchInterval: 60000, staleTime: 30000 });
-  const hasDedicatedAccountKYC = ['tier2', 'tier3'].includes(user?.kycStatus);
-  const { data: virtualAccount } = useQuery({
-    queryKey: ['monnify-virtual-account'],
-    queryFn: paymentAPI.getVirtualAccount,
-    select: (response) => response.data?.virtualAccount || response.data?.data?.virtualAccount,
-    enabled: hasDedicatedAccountKYC,
-    staleTime: 5 * 60 * 1000,
+  const { data: dashboardData } = useQuery({
+    queryKey: ['dashboard-summary'],
+    queryFn: walletAPI.getDashboard,
+    select: (response) => response.data,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
   });
+  const balanceData = dashboardData?.balance;
+  const transactionsData = dashboardData?.transactions;
+  const { data: banner } = useQuery({ queryKey: ['banner'], queryFn: bannerAPI.get, select: (response) => response.data.data, enabled: Boolean(dashboardData), refetchInterval: 300000, staleTime: 300000 });
+  const hasDedicatedAccountKYC = ['tier2', 'tier3'].includes(user?.kycStatus);
+  const virtualAccount = dashboardData?.virtualAccount;
   const transferMutation = useMutation({
     mutationFn: () => walletAPI.transfer({ recipient: transferForm.recipient.trim(), amount: Number(transferForm.amount), pin: transferForm.pin }),
     onSuccess: () => {
@@ -48,6 +49,7 @@ export default function Dashboard() {
       setTransferOpen(false);
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       queryClient.invalidateQueries({ queryKey: ['recent-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
     },
     onError: (error) => toast.error(error.response?.data?.message || 'Transfer failed'),
   });
@@ -59,6 +61,7 @@ export default function Dashboard() {
       setNin('');
       setNinOpen(false);
       queryClient.invalidateQueries({ queryKey: ['monnify-virtual-account'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
       queryClient.invalidateQueries({ queryKey: ['kyc-status'] });
     },
     onError: (error) => toast.error(error.response?.data?.errors?.[0]?.message || error.response?.data?.message || error.message || 'NIN verification could not be completed'),

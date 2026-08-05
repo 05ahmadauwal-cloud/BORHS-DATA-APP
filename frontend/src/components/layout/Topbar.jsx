@@ -1,5 +1,5 @@
 import { Menu, Bell, Wallet, Sun, Moon, X, CheckCheck, UserRound, TicketPercent } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { couponAPI, notificationAPI } from '../../api';
 import useAuthStore from '../../store/authStore';
@@ -15,12 +15,19 @@ export default function Topbar({ onMenuClick }) {
   const [open, setOpen] = useState(false);
   const [couponOpen, setCouponOpen] = useState(false);
   const [couponCode, setCouponCode] = useState('');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setNotificationsEnabled(true), 800);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const { data: notifications } = useQuery({
     queryKey: ['notifications', 'unread'],
     queryFn: () => notificationAPI.getAll({ unreadOnly: 'false', limit: 20 }),
     select: (res) => res.data,
+    enabled: notificationsEnabled,
     refetchInterval: 60000,
   });
 
