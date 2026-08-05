@@ -40,8 +40,39 @@ const get = async (path, auth = true) => {
 };
 
 const isSuccess = (data) => {
-  const s = String(data?.Status || data?.status || '').toLowerCase();
-  return s === 'success' || s === 'successful' || s === '00' || s === '200';
+  if (!data || typeof data !== 'object') return false;
+
+  // SMEAPI responses are not consistent across products/versions. In
+  // particular, successful data purchases can be reported through
+  // `api_response` (or a boolean `success`) without a `status` field.
+  const values = [
+    data.Status,
+    data.status,
+    data.success,
+    data.code,
+    data.response_code,
+    data.api_response,
+    data.message,
+    data.Message,
+    data.data?.Status,
+    data.data?.status,
+    data.data?.success,
+    data.data?.code,
+    data.data?.response_code,
+    data.data?.api_response,
+    data.data?.message,
+  ];
+
+  return values.some((value) => {
+    if (value === true || value === 200) return true;
+    if (typeof value !== 'string') return false;
+
+    const normalized = value.trim().toLowerCase();
+    return normalized === '00'
+      || normalized === '200'
+      || normalized === 'true'
+      || /\bsuccess(?:ful|fully)?\b/.test(normalized);
+  });
 };
 
 const getError = (data) =>

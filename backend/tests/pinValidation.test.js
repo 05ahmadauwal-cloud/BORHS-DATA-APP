@@ -1,12 +1,14 @@
 jest.mock('../src/models/User');
 jest.mock('../src/models/DataPlan');
 jest.mock('../src/models/DataPurchase');
+jest.mock('../src/models/Transaction');
 jest.mock('../src/modules/wallet/wallet.service', () => ({ debitWallet: jest.fn() }));
 jest.mock('../src/services/providers', () => ({ withFallback: jest.fn() }));
 
 const User = require('../src/models/User');
 const DataPlan = require('../src/models/DataPlan');
 const DataPurchase = require('../src/models/DataPurchase');
+const Transaction = require('../src/models/Transaction');
 const walletService = require('../src/modules/wallet/wallet.service');
 const providers = require('../src/services/providers');
 
@@ -45,9 +47,13 @@ describe('PIN validation for data purchases', () => {
     DataPurchase.create = jest.fn().mockResolvedValue({ save: jest.fn(), _id: 'purchase1' });
     walletService.debitWallet.mockResolvedValue({ transaction: { _id: 'tx1' } });
     providers.withFallback.mockResolvedValue({ provider: 'mock', providerReference: 'ref1', response: {} });
+    Transaction.findByIdAndUpdate.mockResolvedValue({});
 
     const result = await dataService.purchaseData('u1', { network: 'mtn', planId: 'p1', phone: '08012345678', pin: '1234' });
     expect(walletService.debitWallet).toHaveBeenCalled();
+    expect(Transaction.findByIdAndUpdate).toHaveBeenCalledWith('tx1', expect.objectContaining({
+      serviceData: expect.objectContaining({ providerReference: 'ref1' }),
+    }));
     expect(result).toBeDefined();
   });
 });

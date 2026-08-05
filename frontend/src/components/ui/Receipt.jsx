@@ -1,11 +1,14 @@
 import { createPortal } from 'react-dom';
-import { X, Printer, Copy, CheckCircle, XCircle, Clock, Wifi, Phone, Zap, Tv, GraduationCap } from 'lucide-react';
+import { X, Printer, Download, Copy, CheckCircle, XCircle, Clock, Wifi, Phone, Zap, Tv, GraduationCap } from 'lucide-react';
 import { format } from 'date-fns';
+import { Capacitor } from '@capacitor/core';
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import toast from 'react-hot-toast';
 import BrandedLoader from './BrandedLoader';
 
 const SERVICE = {
-  data:        { label: 'Data Purchase',    Icon: Wifi,          color: '#60a5fa',  bg: 'rgba(96,165,250,0.12)'  },
+  data:        { label: 'Data Purchase',    Icon: Wifi,          color: '#14b8a6',  bg: 'rgba(20,184,166,0.12)'  },
   airtime:     { label: 'Airtime Purchase', Icon: Phone,         color: '#34d399',  bg: 'rgba(52,211,153,0.12)'  },
   electricity: { label: 'Electricity Bill', Icon: Zap,           color: '#fbbf24',  bg: 'rgba(251,191,36,0.12)'  },
   cable:       { label: 'Cable TV',         Icon: Tv,            color: '#a78bfa',  bg: 'rgba(167,139,250,0.12)' },
@@ -13,50 +16,75 @@ const SERVICE = {
 };
 
 function buildRows(data) {
+  const customerRows = [
+    data.customer && ['Customer', data.customer],
+    data.customerEmail && ['Customer Email', data.customerEmail],
+  ].filter(Boolean);
+  const providerRows = [
+    data.transactionProvider && ['Processed By', data.transactionProvider],
+    data.providerReference && ['Provider Reference', data.providerReference],
+    data.providerStatus && ['Provider Status', data.providerStatus],
+    data.providerMessage && ['Provider Message', data.providerMessage],
+  ].filter(Boolean);
+
   if (data.type === 'data') {
     return [
+      ...customerRows,
       data.network     && ['Network',   data.network],
       data.phone       && ['Phone',     data.phone],
       data.dataSize    && ['Data Size', data.dataSize],
       data.planName    && ['Plan',      data.planName],
       data.validity    && ['Validity',  data.validity],
       data.dataType    && ['Type',      data.dataType],
+      ...providerRows,
     ].filter(Boolean);
   }
   if (data.type === 'airtime') {
     return [
+      ...customerRows,
       data.network && ['Network', data.network],
       data.phone   && ['Phone',   data.phone],
+      ...providerRows,
     ].filter(Boolean);
   }
   if (data.type === 'electricity') {
     return [
+      ...customerRows,
       data.provider     && ['Provider',    data.provider],
       data.meterNumber  && ['Meter No.',   data.meterNumber],
       data.meterType    && ['Meter Type',  data.meterType.charAt(0).toUpperCase() + data.meterType.slice(1)],
       data.customerName && ['Customer',    data.customerName],
       data.units        && ['Units',       data.units],
+      ...providerRows,
     ].filter(Boolean);
   }
   if (data.type === 'cable') {
     return [
+      ...customerRows,
       data.provider       && ['Provider',   data.provider],
       data.smartCardNumber && ['Smart Card', data.smartCardNumber],
       data.customerName   && ['Customer',   data.customerName],
       data.packageName    && ['Package',    data.packageName],
+      ...providerRows,
     ].filter(Boolean);
   }
   if (data.type === 'education') {
     return [
+      ...customerRows,
       data.examType && ['Exam Type', data.examType],
       data.quantity && ['Quantity',  `${data.quantity} PIN${data.quantity > 1 ? 's' : ''}`],
+      ...providerRows,
     ].filter(Boolean);
   }
-  return data.description ? [['Details', data.description]] : [];
+  return [
+    ...customerRows,
+    data.description && ['Details', data.description],
+    ...providerRows,
+  ].filter(Boolean);
 }
 
 function printReceipt(data) {
-  const svc = SERVICE[data.type] || { label: (data.type || 'Transaction').replace(/_/g, ' '), color: '#2563eb' };
+  const svc = SERVICE[data.type] || { label: (data.type || 'Transaction').replace(/_/g, ' '), color: '#0f766e' };
   const dateStr = data.date ? format(new Date(data.date), 'MMM dd, yyyy · h:mm a') : '—';
   const rows = buildRows(data);
 
@@ -101,8 +129,9 @@ function printReceipt(data) {
 <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;display:flex;justify-content:center;padding:32px 16px;min-height:100vh}@media print{body{background:white;padding:0}.receipt{box-shadow:none!important}}</style>
 </head><body>
 <div class="receipt" style="background:white;border-radius:16px;box-shadow:0 4px 32px rgba(0,0,0,0.12);width:100%;max-width:400px;overflow:hidden">
-  <div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);padding:22px 24px;text-align:center">
-    <p style="font-size:22px;font-weight:900;color:white;letter-spacing:-0.02em;margin-bottom:2px">BORHS DATA</p>
+  <div style="background:linear-gradient(135deg,#0f766e,#0d9488);padding:22px 24px;text-align:center">
+    <img src="/logo-mark.png" alt="" style="display:block;width:42px;height:42px;object-fit:contain;margin:0 auto 8px;background:white;border-radius:12px;padding:5px" />
+    <p style="font-size:22px;font-weight:900;color:white;letter-spacing:-0.02em;margin-bottom:2px">BORHS</p>
     <p style="font-size:10px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:0.12em">Official Receipt</p>
   </div>
   <div style="padding:22px 24px;text-align:center;border-bottom:1px solid #f3f4f6">
@@ -127,7 +156,7 @@ function printReceipt(data) {
     </div>
   </div>
   <div style="padding:12px 24px;text-align:center;border-top:1px solid #f3f4f6">
-    <p style="font-size:10px;color:#9ca3af">Powered by <strong style="color:#2563eb">BORHS Data</strong> · Nigeria's #1 VTU Platform</p>
+    <p style="font-size:10px;color:#9ca3af">Powered by <strong style="color:#0f766e">BORHS</strong> · Fast, secure bill payments</p>
   </div>
 </div>
 <script>window.onload=function(){window.print();}</script>
@@ -139,11 +168,76 @@ function printReceipt(data) {
   win.document.close();
 }
 
+function buildDownloadReceipt(data) {
+  const rows = buildRows(data)
+    .map(([label, value]) => `<tr><td>${label}</td><td>${value}</td></tr>`)
+    .join('');
+  const date = data.date ? format(new Date(data.date), 'MMM dd, yyyy · h:mm a') : '—';
+  return `<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>BORHS Receipt ${data.reference || ''}</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:24px 16px;background:#f8fafc;color:#111827;font-family:Inter,system-ui,sans-serif}
+.receipt{max-width:420px;margin:auto;background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 12px 36px rgba(15,23,42,.12)}
+.brand{padding:24px;text-align:center;color:#fff;background:linear-gradient(135deg,#0f766e,#0d9488)}
+.brand h1{font-size:22px;margin:0 0 2px}.brand p{font-size:10px;letter-spacing:.12em;margin:0;opacity:.75}
+.status{text-align:center;padding:22px 24px 10px}.status h2{font-size:18px;margin:0 0 5px;color:#059669}.status p{font-size:12px;color:#6b7280;margin:0}
+.amount{margin:12px 24px 18px;padding:18px;text-align:center;border-radius:18px;background:#f0fdfa;border:1px solid #ccfbf1}.amount small{display:block;color:#6b7280;font-weight:700;letter-spacing:.08em}.amount strong{display:block;color:#0f766e;font-size:34px;margin-top:4px}
+table{width:calc(100% - 48px);margin:0 24px 18px;border-collapse:collapse}td{padding:10px 0;border-bottom:1px solid #e5e7eb;font-size:12px}td:first-child{color:#6b7280}td:last-child{text-align:right;font-weight:700}
+.meta{margin:0 24px 24px;padding:14px;border-radius:16px;background:#f1f5f9;font-size:11px;color:#6b7280}.meta div{display:flex;justify-content:space-between;gap:12px;margin:4px 0}.meta strong{color:#374151;word-break:break-all}
+.foot{text-align:center;padding:14px;border-top:1px solid #e5e7eb;color:#9ca3af;font-size:10px}
+</style></head><body><main class="receipt">
+<header class="brand"><h1>BORHS</h1><p>OFFICIAL RECEIPT</p></header>
+<section class="status"><h2>${data.status === 'success' ? 'Payment Successful' : data.status === 'failed' ? 'Transaction Failed' : 'Processing'}</h2><p>${SERVICE[data.type]?.label || 'Transaction'}</p></section>
+<section class="amount"><small>AMOUNT PAID</small><strong>₦${Number(data.amount || 0).toLocaleString()}</strong></section>
+${rows ? `<table>${rows}</table>` : ''}
+<section class="meta"><div><span>Reference</span><strong>${data.reference || '—'}</strong></div><div><span>Date & Time</span><strong>${date}</strong></div></section>
+<footer class="foot">Powered by BORHS · Fast, secure bill payments</footer>
+</main></body></html>`;
+}
+
+async function downloadReceipt(data) {
+  const html = buildDownloadReceipt(data);
+  const safeReference = String(data.reference || Date.now()).replace(/[^a-z0-9_-]/gi, '-');
+  const fileName = `BORHS-Receipt-${safeReference}.html`;
+
+  try {
+    if (Capacitor.isNativePlatform()) {
+      const result = await Filesystem.writeFile({
+        path: fileName,
+        data: html,
+        directory: Directory.Cache,
+        encoding: Encoding.UTF8,
+      });
+      await Share.share({
+        title: 'BORHS Transaction Receipt',
+        text: `Receipt ${data.reference || ''}`.trim(),
+        url: result.uri,
+        dialogTitle: 'Save or share receipt',
+      });
+      return;
+    }
+
+    const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    toast.success('Receipt downloaded');
+  } catch (error) {
+    if (error?.message?.toLowerCase().includes('cancel')) return;
+    toast.error('Could not download receipt');
+  }
+}
+
 function Row({ label, value }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-      <span style={{ fontSize: 11, color: '#94a3b8', flexShrink: 0 }}>{label}</span>
-      <span style={{ fontSize: 12, fontWeight: 600, color: '#f1f5f9', textAlign: 'right', wordBreak: 'break-all' }}>{value}</span>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--ds-stroke)' }}>
+      <span style={{ fontSize: 11, color: 'var(--ds-text-tertiary)', flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--ds-text)', textAlign: 'right', wordBreak: 'break-word' }}>{value}</span>
     </div>
   );
 }
@@ -151,7 +245,7 @@ function Row({ label, value }) {
 export default function Receipt({ data, onClose }) {
   if (!data) return null;
 
-  const svc = SERVICE[data.type] || { label: (data.type || 'Transaction').replace(/_/g, ' '), Icon: Wifi, color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' };
+  const svc = SERVICE[data.type] || { label: (data.type || 'Transaction').replace(/_/g, ' '), Icon: Wifi, color: '#14b8a6', bg: 'rgba(20,184,166,0.12)' };
   const { Icon } = svc;
   const rows = buildRows(data);
   const dateStr = data.date ? format(new Date(data.date), 'MMM dd, yyyy · h:mm a') : '—';
@@ -166,26 +260,27 @@ export default function Receipt({ data, onClose }) {
 
   return createPortal(
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'var(--ds-overlay)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ background: '#1e293b', border: '1px solid rgba(51,65,85,0.6)', borderRadius: 20, width: '100%', maxWidth: 400, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 60px rgba(0,0,0,0.5)' }}
+        style={{ background: 'var(--ds-surface)', border: '1px solid var(--ds-stroke)', borderRadius: 'var(--ds-radius-sheet)', width: '100%', maxWidth: 400, maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--ds-shadow-float)' }}
         className="animate-slide-up"
       >
         {/* Header bar */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 0' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Receipt</span>
-          <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(51,65,85,0.5)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#94a3b8' }}>
+          <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--ds-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Transaction receipt</span>
+          <button onClick={onClose} aria-label="Close receipt" style={{ width: 32, height: 32, borderRadius: 12, background: 'var(--ds-surface-subtle)', border: '1px solid var(--ds-stroke)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--ds-text-secondary)' }}>
             <X size={14} />
           </button>
         </div>
 
         {/* Brand strip */}
-        <div style={{ margin: '14px 20px 0', background: 'linear-gradient(135deg,rgba(37,99,235,0.25),rgba(37,99,235,0.1))', border: '1px solid rgba(37,99,235,0.2)', borderRadius: 12, padding: '12px 16px', textAlign: 'center' }}>
-          <p style={{ fontWeight: 900, fontSize: 16, color: '#f1f5f9', letterSpacing: '-0.02em' }}>BORHS DATA</p>
-          <p style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 1 }}>Official Receipt</p>
+        <div style={{ margin: '14px 20px 0', background: 'linear-gradient(135deg,#0f766e,#0d9488)', borderRadius: 20, padding: '14px 16px', textAlign: 'center', boxShadow: '0 10px 24px rgba(15,118,110,0.2)' }}>
+          <img src="/logo-mark.png" alt="" style={{ width: 38, height: 38, objectFit: 'contain', background: '#fff', borderRadius: 12, padding: 4, margin: '0 auto 7px' }} />
+          <p style={{ fontWeight: 900, fontSize: 17, color: '#fff', letterSpacing: '-0.02em' }}>BORHS</p>
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.72)', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 1 }}>Official Receipt</p>
         </div>
 
         {/* Status + Service */}
@@ -193,7 +288,7 @@ export default function Receipt({ data, onClose }) {
           <div style={{ width: 52, height: 52, borderRadius: '50%', background: statusConfig.bg, border: `1px solid ${statusConfig.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
             <StatusIcon size={24} style={{ color: statusConfig.color }} />
           </div>
-          <p style={{ fontSize: 16, fontWeight: 800, color: '#f1f5f9', marginBottom: 4 }}>{statusConfig.label}</p>
+          <p style={{ fontSize: 16, fontWeight: 800, color: 'var(--ds-text)', marginBottom: 4 }}>{statusConfig.label}</p>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: svc.bg, border: `1px solid ${svc.color}30`, borderRadius: 20, padding: '3px 10px' }}>
             <Icon size={11} style={{ color: svc.color }} />
             <span style={{ fontSize: 11, fontWeight: 600, color: svc.color }}>{svc.label}</span>
@@ -201,14 +296,14 @@ export default function Receipt({ data, onClose }) {
         </div>
 
         {/* Amount */}
-        <div style={{ margin: '16px 20px', background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(51,65,85,0.5)', borderRadius: 12, padding: '14px', textAlign: 'center' }}>
-          <p style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 4 }}>Amount Paid</p>
-          <p style={{ fontSize: 32, fontWeight: 900, color: '#f1f5f9' }}>₦{(data.amount || 0).toLocaleString()}</p>
+        <div style={{ margin: '16px 20px', background: 'var(--ds-info-soft)', border: '1px solid rgba(20,184,166,0.22)', borderRadius: 20, padding: '16px', textAlign: 'center' }}>
+          <p style={{ fontSize: 10, color: 'var(--ds-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: 4 }}>Amount Paid</p>
+          <p style={{ fontSize: 32, fontWeight: 900, color: 'var(--ds-brand-700)' }}>₦{(data.amount || 0).toLocaleString()}</p>
         </div>
 
         {/* Details rows */}
         {rows.length > 0 && (
-          <div style={{ margin: '0 20px 16px', background: 'rgba(15,23,42,0.3)', border: '1px solid rgba(51,65,85,0.4)', borderRadius: 12, padding: '4px 14px' }}>
+          <div style={{ margin: '0 20px 16px', background: 'var(--ds-surface-subtle)', border: '1px solid var(--ds-stroke)', borderRadius: 20, padding: '4px 14px' }}>
             {rows.map(([label, value]) => <Row key={label} label={label} value={value} />)}
           </div>
         )}
@@ -234,7 +329,7 @@ export default function Receipt({ data, onClose }) {
             <p style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 8 }}>Exam PINs</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {data.pins.map((pin, i) => (
-                <div key={i} style={{ background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(51,65,85,0.5)', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div key={i} style={{ background: 'var(--ds-surface-subtle)', border: '1px solid var(--ds-stroke)', borderRadius: 16, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
                     <p style={{ fontSize: 10, color: '#64748b', marginBottom: 2 }}>Serial: {pin.serial || '—'}</p>
                     <p style={{ fontSize: 16, fontWeight: 900, color: '#10b981', letterSpacing: '0.08em', fontFamily: 'monospace' }}>{pin.pin}</p>
@@ -252,7 +347,7 @@ export default function Receipt({ data, onClose }) {
         )}
 
         {/* Reference + date */}
-        <div style={{ margin: '0 20px 16px', background: 'rgba(15,23,42,0.3)', border: '1px solid rgba(51,65,85,0.4)', borderRadius: 12, padding: '10px 14px' }}>
+        <div style={{ margin: '0 20px 16px', background: 'var(--ds-surface-subtle)', border: '1px solid var(--ds-stroke)', borderRadius: 20, padding: '12px 14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <span style={{ fontSize: 10, color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Reference</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -274,15 +369,21 @@ export default function Receipt({ data, onClose }) {
         <div style={{ padding: '0 20px 20px', display: 'flex', gap: 8 }}>
           <button
             onClick={onClose}
-            style={{ flex: 1, padding: '10px', borderRadius: 10, background: 'rgba(51,65,85,0.5)', border: '1px solid rgba(71,85,105,0.5)', color: '#94a3b8', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            style={{ flex: 1, minHeight: 44, padding: '10px', borderRadius: 16, background: 'var(--ds-surface-subtle)', border: '1px solid var(--ds-stroke)', color: 'var(--ds-text-secondary)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
           >
             Close
           </button>
           <button
-            onClick={() => printReceipt(data)}
-            style={{ flex: 2, padding: '10px', borderRadius: 10, background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', border: 'none', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+            onClick={() => downloadReceipt(data)}
+            style={{ flex: 1.5, minHeight: 44, padding: '10px', borderRadius: 16, background: 'var(--ds-info-soft)', border: '1px solid rgba(20,184,166,0.22)', color: 'var(--ds-brand-700)', fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
           >
-            <Printer size={14} /> Print Receipt
+            <Download size={14} /> Download
+          </button>
+          <button
+            onClick={() => printReceipt(data)}
+            style={{ flex: 1.5, minHeight: 44, padding: '10px', borderRadius: 16, background: 'linear-gradient(135deg,#0f766e,#0d9488)', border: 'none', color: 'white', fontSize: 13, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, boxShadow: '0 8px 18px rgba(15,118,110,0.2)' }}
+          >
+            <Printer size={14} /> Print
           </button>
         </div>
       </div>

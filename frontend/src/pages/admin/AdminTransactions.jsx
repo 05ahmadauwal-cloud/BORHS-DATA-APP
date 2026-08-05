@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../api';
-import { History, RotateCcw, Search, X, Filter } from 'lucide-react';
+import { History, RotateCcw, Search, X, Filter, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import Receipt from '../../components/ui/Receipt';
 
 const STATUS_COLORS = {
   success: 'badge-success',
@@ -12,11 +13,46 @@ const STATUS_COLORS = {
   pending: 'badge-gray',
 };
 
+const RECEIPT_TYPES = {
+  data_purchase: 'data',
+  airtime_purchase: 'airtime',
+  electricity_purchase: 'electricity',
+  cable_purchase: 'cable',
+  education_purchase: 'education',
+};
+
+function txnToReceipt(txn) {
+  const details = txn.serviceData || {};
+  const metadata = txn.metadata || {};
+  const customer = [txn.user?.firstName, txn.user?.lastName].filter(Boolean).join(' ');
+  return {
+    type: RECEIPT_TYPES[txn.type] || txn.type,
+    reference: details.purchaseReference || txn.reference,
+    date: txn.createdAt,
+    status: txn.status,
+    amount: txn.amount,
+    description: txn.description,
+    customer,
+    customerEmail: txn.user?.email,
+    network: details.network || metadata.network,
+    phone: details.phone || metadata.phone,
+    planName: details.planName,
+    dataSize: details.dataSize,
+    validity: details.validity,
+    dataType: details.dataType,
+    transactionProvider: details.provider,
+    providerReference: details.providerReference,
+    providerStatus: details.providerStatus,
+    providerMessage: details.providerMessage,
+  };
+}
+
 export default function AdminTransactions() {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState({ page: 1, limit: 20, status: '', search: '', reference: '', amountMin: '', amountMax: '' });
   const [searchInput, setSearchInput] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [receipt, setReceipt] = useState(null);
 
   const applySearch = useCallback(() => {
     setFilters(f => ({ ...f, search: searchInput, page: 1 }));
@@ -43,6 +79,7 @@ export default function AdminTransactions() {
 
   return (
     <div className="space-y-4 md:space-y-5">
+      <Receipt data={receipt} onClose={() => setReceipt(null)} />
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-black text-dark-50 flex items-center gap-2">
@@ -190,6 +227,14 @@ export default function AdminTransactions() {
                     <td><span className={`badge text-xs ${STATUS_COLORS[txn.status] || 'badge-gray'}`}>{txn.status}</span></td>
                     <td className="text-dark-400 text-xs">{format(new Date(txn.createdAt), 'MMM dd, HH:mm')}</td>
                     <td>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => setReceipt(txnToReceipt(txn))}
+                          className="p-1.5 rounded-lg bg-primary-500/10 text-primary-400 hover:bg-primary-500/20"
+                          title="View receipt"
+                        >
+                          <Printer size={13} />
+                        </button>
                       {txn.status === 'success' && (
                         <button
                           onClick={() => { const r = prompt('Reversal reason:'); if (r) reverseMutation.mutate({ id: txn._id, reason: r }); }}
@@ -199,6 +244,7 @@ export default function AdminTransactions() {
                           <RotateCcw size={13} />
                         </button>
                       )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -228,6 +274,13 @@ export default function AdminTransactions() {
                   <p className="text-[10px] font-mono text-dark-500">{txn.reference}</p>
                   <div className="flex items-center gap-2">
                     <p className="text-[10px] text-dark-500">{format(new Date(txn.createdAt), 'MMM dd, HH:mm')}</p>
+                    <button
+                      onClick={() => setReceipt(txnToReceipt(txn))}
+                      className="p-1 rounded-lg bg-primary-500/10 text-primary-400"
+                      title="View receipt"
+                    >
+                      <Printer size={11} />
+                    </button>
                     {txn.status === 'success' && (
                       <button
                         onClick={() => { const r = prompt('Reversal reason:'); if (r) reverseMutation.mutate({ id: txn._id, reason: r }); }}

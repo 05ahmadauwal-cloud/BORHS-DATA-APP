@@ -78,6 +78,10 @@ export default function DataPurchase() {
     mutationFn: (payload) => dataAPI.purchase(payload),
     onSuccess: (res) => {
       const purchase = res.data?.purchase || {};
+      const providerResponse = purchase.providerResponse || {};
+      const providerData = providerResponse.data && typeof providerResponse.data === 'object'
+        ? providerResponse.data
+        : {};
       updateUser({ walletBalance: Number(user?.walletBalance || 0) - effectivePrice(selectedPlan) });
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       queryClient.invalidateQueries({ queryKey: ['data-recipient-history'] });
@@ -93,6 +97,23 @@ export default function DataPurchase() {
         planName: selectedPlan.name,
         validity: selectedPlan.validity,
         dataType: formatDataType(dataType),
+        transactionProvider: purchase.provider,
+        providerReference: purchase.providerReference
+          || providerResponse.ref
+          || providerResponse.order_id
+          || providerResponse.transaction_id
+          || providerData.ref
+          || providerData.order_id,
+        providerStatus: providerResponse.Status
+          || providerResponse.status
+          || providerData.Status
+          || providerData.status
+          || purchase.status,
+        providerMessage: providerResponse.message
+          || providerResponse.Message
+          || providerResponse.api_response
+          || providerData.message
+          || providerData.api_response,
       });
       setStep(1);
       setSelectedPlan(null);

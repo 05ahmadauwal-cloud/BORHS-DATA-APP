@@ -29,13 +29,25 @@ const RECEIPT_TYPES = {
 };
 
 function txnToReceipt(txn) {
+  const details = txn.serviceData || {};
+  const metadata = txn.metadata || {};
   return {
     type: RECEIPT_TYPES[txn.type] || txn.type,
-    reference: txn.reference,
+    reference: details.purchaseReference || txn.reference,
     date: txn.createdAt,
     status: txn.status,
     amount: txn.amount,
     description: txn.description,
+    network: details.network || metadata.network,
+    phone: details.phone || metadata.phone,
+    planName: details.planName,
+    dataSize: details.dataSize,
+    validity: details.validity,
+    dataType: details.dataType,
+    transactionProvider: details.provider,
+    providerReference: details.providerReference,
+    providerStatus: details.providerStatus,
+    providerMessage: details.providerMessage,
   };
 }
 

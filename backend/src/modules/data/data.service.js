@@ -99,6 +99,31 @@ const purchaseData = async (userId, body) => {
     purchase.completedAt = new Date();
     await purchase.save();
 
+    // Keep the customer-facing provider details with the wallet transaction so
+    // receipts opened from transaction history contain the same useful facts as
+    // the receipt shown immediately after purchase. Do not copy the entire raw
+    // provider payload into the wallet ledger.
+    const response = providerResult.response || {};
+    const responseData = response.data && typeof response.data === 'object' ? response.data : {};
+    const providerStatus = response.Status || response.status || responseData.Status || responseData.status || 'successful';
+    const providerMessage = response.message || response.Message || response.api_response
+      || responseData.message || responseData.api_response || '';
+    await Transaction.findByIdAndUpdate(debitResult.transaction._id, {
+      serviceData: {
+        purchaseReference: reference,
+        provider: providerResult.provider,
+        providerReference: providerResult.providerReference,
+        providerStatus: String(providerStatus),
+        providerMessage: String(providerMessage),
+        network: plan.network,
+        phone: targetPhone,
+        planName: plan.name,
+        dataSize: plan.dataSize,
+        validity: plan.validity,
+        dataType: dataType || plan.dataType,
+      },
+    });
+
     // 6. Process agent/referral commission
     processCommission(userId, price, TRANSACTION_TYPES.DATA_PURCHASE, debitResult.transaction._id)
       .catch((e) => logger.error('Commission error:', e));
