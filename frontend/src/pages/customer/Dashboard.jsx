@@ -89,7 +89,7 @@ export default function Dashboard() {
       <header>
         <div className="min-w-0">
           <p className="text-sm text-[var(--ds-text-secondary)]">{greeting},</p>
-          <h1 className="truncate text-2xl font-bold text-[var(--ds-text)]">{user?.firstName || 'Welcome'} <span aria-hidden="true">👋</span></h1>
+          <h1 className="truncate text-xl font-bold tracking-tight text-[var(--ds-text)] sm:text-2xl">{user?.firstName || 'Welcome'} <span aria-hidden="true">👋</span></h1>
         </div>
       </header>
 
@@ -98,7 +98,7 @@ export default function Dashboard() {
         <div className="absolute -bottom-24 right-24 h-44 w-44 rounded-full border-[28px] border-white/5" />
         <div className="relative">
           <p className="text-sm font-medium text-teal-100">Available balance</p>
-          <p className="mt-2 text-3xl font-bold tabular-nums tracking-tight sm:text-4xl">₦{balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</p>
+          <p className="mt-2 text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">₦{balance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</p>
           <div className="mt-6 flex gap-3">
             <Button as={Link} to="/wallet" variant="secondary" size="sm" icon={ArrowDownLeft} className="border-0 bg-white text-brand-800 ring-0 hover:bg-teal-50">Fund wallet</Button>
             <Button variant="text" size="sm" icon={ArrowUpRight} className="bg-white/10 text-white hover:bg-white/15" onClick={() => setTransferOpen(true)}>Transfer</Button>
@@ -113,7 +113,7 @@ export default function Dashboard() {
         <section className="rounded-[var(--ds-radius-card)] border border-emerald-200/80 bg-white p-5 shadow-[var(--ds-shadow-card)] dark:border-emerald-400/15 dark:bg-[var(--ds-surface)]">
           <div className="flex items-start gap-4">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-800 dark:bg-emerald-400/10 dark:text-emerald-300"><Building2 size={20} /></span>
-            <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300">Fund with bank transfer</p><ShieldCheck size={14} className="text-emerald-600" /></div><p className="mt-2 text-sm font-bold text-[var(--ds-text)]">{fundingAccount.bankName || 'Moniepoint'}</p><p className="mt-1 text-2xl font-black tracking-[0.08em] text-[var(--ds-text)]">{fundingAccount.accountNumber}</p><p className="mt-1 truncate text-xs text-[var(--ds-text-secondary)]">{virtualAccount?.accountName}</p></div>
+            <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300 sm:text-xs">Fund with bank transfer</p><ShieldCheck size={14} className="text-emerald-600" /></div><p className="mt-2 text-sm font-bold text-[var(--ds-text)]">{fundingAccount.bankName || 'Moniepoint'}</p><p className="mt-1 text-xl font-extrabold tracking-[0.06em] text-[var(--ds-text)] sm:text-2xl">{fundingAccount.accountNumber}</p><p className="mt-1 truncate text-xs text-[var(--ds-text-secondary)]">{virtualAccount?.accountName}</p></div>
             <button onClick={copyAccount} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-100 dark:bg-emerald-400/10 dark:ring-emerald-400/20" aria-label="Copy account number">{copied ? <Check size={18} /> : <Copy size={18} />}</button>
           </div>
         </section>
@@ -126,7 +126,7 @@ export default function Dashboard() {
       )}
 
       <section>
-        <div className="mb-4 flex items-center justify-between"><div><p className="text-lg font-bold text-[var(--ds-text)]">What would you like to do?</p><p className="mt-1 text-sm text-[var(--ds-text-secondary)]">Everyday services, in one place.</p></div></div>
+        <div className="mb-4 flex items-center justify-between"><div><p className="text-base font-bold text-[var(--ds-text)] sm:text-lg">What would you like to do?</p><p className="mt-1 text-xs text-[var(--ds-text-secondary)] sm:text-sm">Everyday services, in one place.</p></div></div>
         <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:gap-4">
           {quickActions.map(({ to, action, icon: Icon, label }, index) => { const Component = action ? 'button' : Link; return <Component key={`${to || action}-${label}`} {...(to ? { to } : { type: 'button', onClick: () => setTransferOpen(true) })} className="group flex min-w-0 flex-col items-center gap-2 text-center"><span className={`flex h-12 w-12 items-center justify-center rounded-2xl border shadow-sm transition duration-200 group-hover:-translate-y-0.5 ${index === 5 ? 'border-brand-700 bg-brand-700 text-white' : index === 7 ? 'border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300' : 'border-teal-200 bg-teal-50 text-teal-800 dark:border-teal-400/15 dark:bg-teal-400/10 dark:text-teal-300'}`}><Icon size={20} strokeWidth={2.2} /></span><span className="text-[11px] font-semibold leading-tight text-[var(--ds-text)] sm:text-xs">{label}</span></Component>; })}
         </div>
@@ -135,7 +135,7 @@ export default function Dashboard() {
       {banner?.active && banner?.text && <section className="flex items-start gap-3 rounded-[var(--ds-radius-card)] bg-[var(--ds-reward-soft)] p-5 text-amber-900 dark:text-amber-200"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/60 text-amber-700 dark:bg-black/10"><Gift size={19} /></span><div><p className="text-sm font-bold">Something for you</p><p className="mt-1 text-sm leading-relaxed opacity-80">{banner.text}</p></div></section>}
 
       <section>
-        <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-bold text-[var(--ds-text)]">Recent transactions</h2><Link to="/transactions" className="text-sm font-semibold text-brand-700">See all</Link></div>
+        <div className="mb-3 flex items-center justify-between"><h2 className="text-base font-bold text-[var(--ds-text)] sm:text-lg">Recent transactions</h2><Link to="/transactions" className="text-xs font-semibold text-brand-700 sm:text-sm">See all</Link></div>
         <Card padding="sm">
           {transactions.length ? transactions.map((transaction) => {
             const isCredit = creditTypes.includes(transaction.type);

@@ -127,14 +127,22 @@ const getTransactions = async (query = {}) => {
   if (startDate || endDate) {
     filter.createdAt = {};
     if (startDate) filter.createdAt.$gte = new Date(startDate);
-    if (endDate) filter.createdAt.$lte = new Date(endDate);
+    if (endDate) {
+      const inclusiveEnd = new Date(endDate);
+      // A date-only filter represents the whole selected calendar day.
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(endDate))) inclusiveEnd.setHours(23, 59, 59, 999);
+      filter.createdAt.$lte = inclusiveEnd;
+    }
   }
   if (search) {
     const regex = { $regex: search, $options: 'i' };
     const matchedUsers = await User.find({
       $or: [{ firstName: regex }, { lastName: regex }, { email: regex }, { username: regex }, { phone: regex }],
     }).select('_id').lean();
-    filter.user = { $in: matchedUsers.map((u) => u._id) };
+    const matchedIds = matchedUsers.map((u) => u._id);
+    filter.user = userId
+      ? { $in: matchedIds.filter((id) => String(id) === String(userId)) }
+      : { $in: matchedIds };
   }
   const [data, total] = await Promise.all([
     Transaction.find(filter).populate('user', 'firstName lastName email username').sort({ createdAt: -1 }).skip(skip).limit(pageSize).lean(),

@@ -126,7 +126,7 @@ function printReceipt(data) {
   const statusLabel = data.status === 'success' ? 'Payment Successful' : data.status === 'failed' ? 'Transaction Failed' : 'Processing';
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt · ${data.reference || 'BORHS Data'}</title>
-<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;display:flex;justify-content:center;padding:32px 16px;min-height:100vh}@media print{body{background:white;padding:0}.receipt{box-shadow:none!important}}</style>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Nunito,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;display:flex;justify-content:center;padding:32px 16px;min-height:100vh}@media print{body{background:white;padding:0}.receipt{box-shadow:none!important}}</style>
 </head><body>
 <div class="receipt" style="background:white;border-radius:16px;box-shadow:0 4px 32px rgba(0,0,0,0.12);width:100%;max-width:400px;overflow:hidden">
   <div style="background:linear-gradient(135deg,#0f766e,#0d9488);padding:22px 24px;text-align:center">
@@ -177,7 +177,7 @@ function buildDownloadReceipt(data) {
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <title>BORHS Receipt ${data.reference || ''}</title>
 <style>
-*{box-sizing:border-box}body{margin:0;padding:24px 16px;background:#f8fafc;color:#111827;font-family:Inter,system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;padding:24px 16px;background:#f8fafc;color:#111827;font-family:Nunito,system-ui,sans-serif}
 .receipt{max-width:420px;margin:auto;background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 12px 36px rgba(15,23,42,.12)}
 .brand{padding:24px;text-align:center;color:#fff;background:linear-gradient(135deg,#0f766e,#0d9488)}
 .brand h1{font-size:22px;margin:0 0 2px}.brand p{font-size:10px;letter-spacing:.12em;margin:0;opacity:.75}

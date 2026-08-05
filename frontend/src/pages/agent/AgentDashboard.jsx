@@ -26,9 +26,9 @@ export default function AgentDashboard() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-sm font-semibold text-brand-700">Agent workspace</p><h1 className="mt-1 text-2xl font-bold text-[var(--ds-text)]">Grow your BORHS business</h1><p className="mt-1 text-sm text-[var(--ds-text-secondary)]">Track customers, commissions and your next milestone.</p></div><Button as={Link} to="/data" size="sm" icon={TrendingUp}>Make an agent purchase</Button></header>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-semibold text-brand-700 sm:text-sm">Agent workspace</p><h1 className="mt-1 text-xl font-bold tracking-tight text-[var(--ds-text)] sm:text-2xl">Grow your BORHS business</h1><p className="mt-1 text-xs text-[var(--ds-text-secondary)] sm:text-sm">Track customers, commissions and your next milestone.</p></div><Button as={Link} to="/data" size="sm" icon={TrendingUp}>Make an agent purchase</Button></header>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">{statCards.map(({ label, value, icon: Icon, tone }) => <Card key={label} padding="sm"><span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${tone}`}><Icon size={18} /></span><p className="mt-5 text-xl font-bold tabular-nums text-[var(--ds-text)] sm:text-2xl">{value}</p><p className="mt-1 text-xs text-[var(--ds-text-secondary)] sm:text-sm">{label}</p></Card>)}</div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">{statCards.map(({ label, value, icon: Icon, tone }) => <Card key={label} padding="sm"><span className={`flex h-10 w-10 items-center justify-center rounded-2xl ${tone}`}><Icon size={18} /></span><p className="mt-5 text-lg font-bold tabular-nums tracking-tight text-[var(--ds-text)] sm:text-xl">{value}</p><p className="mt-1 text-xs text-[var(--ds-text-secondary)]">{label}</p></Card>)}</div>
 
       <div className="grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
         <Card>
@@ -38,11 +38,11 @@ export default function AgentDashboard() {
             { level: 'Direct', count: referralStats?.counts?.level1 || 0, rate: '5%' },
             { level: 'Level 2', count: referralStats?.counts?.level2 || 0, rate: '2%' },
             { level: 'Level 3', count: referralStats?.counts?.level3 || 0, rate: '1%' },
-          ].map((item) => <div key={item.level} className="rounded-2xl bg-[var(--ds-surface-subtle)] p-4 text-center"><p className="text-xl font-bold text-[var(--ds-text)]">{item.count}</p><p className="mt-1 text-xs text-[var(--ds-text-secondary)]">{item.level}</p><p className="mt-2 text-xs font-bold text-green-700 dark:text-green-400">{item.rate} reward</p></div>)}</div>
+          ].map((item) => <div key={item.level} className="rounded-2xl bg-[var(--ds-surface-subtle)] p-4 text-center"><p className="text-lg font-bold text-[var(--ds-text)]">{item.count}</p><p className="mt-1 text-xs text-[var(--ds-text-secondary)]">{item.level}</p><p className="mt-2 text-xs font-bold text-green-700 dark:text-green-400">{item.rate} reward</p></div>)}</div>
         </Card>
 
         <Card className="bg-brand-700 text-white">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15"><Award size={22} /></span><p className="mt-6 text-sm text-teal-100">Next achievement</p><h2 className="mt-1 text-xl font-bold">{target} active customers</h2><p className="mt-2 text-sm leading-relaxed text-teal-100">You are {Math.max(0, target - downlines)} customers away from your next network milestone.</p><div className="mt-6 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-amber-400 transition-all" style={{ width: `${progress}%` }} /></div><p className="mt-2 text-right text-xs font-semibold text-teal-100">{Math.round(progress)}%</p>
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15"><Award size={22} /></span><p className="mt-6 text-xs text-teal-100 sm:text-sm">Next achievement</p><h2 className="mt-1 text-lg font-bold">{target} active customers</h2><p className="mt-2 text-xs leading-relaxed text-teal-100 sm:text-sm">You are {Math.max(0, target - downlines)} customers away from your next network milestone.</p><div className="mt-6 h-2 overflow-hidden rounded-full bg-white/15"><div className="h-full rounded-full bg-amber-400 transition-all" style={{ width: `${progress}%` }} /></div><p className="mt-2 text-right text-xs font-semibold text-teal-100">{Math.round(progress)}%</p>
         </Card>
       </div>
 

@@ -152,7 +152,7 @@ export default function Pricing() {
             style={{ background: 'rgba(37,99,235,0.1)', border: '1px solid rgba(37,99,235,0.25)', color: '#60a5fa' }}>
             <BadgeCheck size={11} /> Always the cheapest rates in Nigeria
           </div>
-          <h1 style={{ fontSize: 'clamp(22px,5.5vw,52px)', fontWeight: 900, lineHeight: 1.08, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: 10 }}>
+          <h1 style={{ fontSize: 'clamp(24px,4vw,38px)', fontWeight: 800, lineHeight: 1.12, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: 10 }}>
             Transparent <span className="gradient-text">Pricing</span>
           </h1>
           <p style={{ fontSize: 'clamp(12px,1.5vw,15px)', color: 'var(--text-muted)', maxWidth: 420, margin: '0 auto' }}>

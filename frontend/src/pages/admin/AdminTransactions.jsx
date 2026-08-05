@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../api';
-import { History, RotateCcw, Search, X, Filter, Printer } from 'lucide-react';
+import { History, RotateCcw, Search, X, Filter, Printer, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import Receipt from '../../components/ui/Receipt';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const STATUS_COLORS = {
   success: 'badge-success',
@@ -49,7 +50,12 @@ function txnToReceipt(txn) {
 
 export default function AdminTransactions() {
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState({ page: 1, limit: 20, status: '', search: '', reference: '', amountMin: '', amountMax: '' });
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedUserId = searchParams.get('userId') || '';
+  const selectedUserName = searchParams.get('userName') || '';
+  const emptyFilters = { page: 1, limit: 20, status: '', search: '', reference: '', amountMin: '', amountMax: '', type: '', startDate: '', endDate: '', userId: selectedUserId };
+  const [filters, setFilters] = useState(emptyFilters);
   const [searchInput, setSearchInput] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [receipt, setReceipt] = useState(null);
@@ -59,11 +65,19 @@ export default function AdminTransactions() {
   }, [searchInput]);
 
   const clearFilters = () => {
-    setFilters({ page: 1, limit: 20, status: '', search: '', reference: '', amountMin: '', amountMax: '' });
+    setFilters({ ...emptyFilters });
     setSearchInput('');
   };
 
-  const activeFilterCount = [filters.search, filters.reference, filters.amountMin, filters.amountMax, filters.status].filter(Boolean).length;
+  const activeFilterCount = [filters.search, filters.reference, filters.amountMin, filters.amountMax, filters.status, filters.type, filters.startDate, filters.endDate].filter(Boolean).length;
+
+  const setDayFilter = (days) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - (days - 1));
+    const toDateInput = (date) => date.toLocaleDateString('en-CA');
+    setFilters((current) => ({ ...current, startDate: toDateInput(start), endDate: toDateInput(end), page: 1 }));
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-transactions', filters],
@@ -82,8 +96,13 @@ export default function AdminTransactions() {
       <Receipt data={receipt} onClose={() => setReceipt(null)} />
       <div className="flex items-start justify-between gap-3">
         <div>
+          {selectedUserId && (
+            <button type="button" onClick={() => navigate('/admin/users')} className="mb-2 inline-flex items-center gap-1 text-xs font-semibold text-primary-400 hover:text-primary-300">
+              <ArrowLeft size={13} /> Back to users
+            </button>
+          )}
           <h1 className="text-xl md:text-2xl font-black text-dark-50 flex items-center gap-2">
-            <History size={22} className="text-primary-400" /> Transactions
+            <History size={22} className="text-primary-400" /> {selectedUserName ? `${selectedUserName}'s Transactions` : 'Transactions'}
           </h1>
           <p className="text-dark-400 text-xs mt-0.5">{data?.pagination?.total || 0} total</p>
         </div>
@@ -194,6 +213,33 @@ export default function AdminTransactions() {
             {s || 'All'}
           </button>
         ))}
+      </div>
+
+      {/* Day/date filters */}
+      <div className="card p-3 md:p-4 space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold text-dark-300 mr-1">Days:</span>
+          {[1, 7, 30, 90].map((days) => (
+            <button key={days} type="button" onClick={() => setDayFilter(days)} className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-dark-800 text-dark-300 border border-dark-700 hover:border-primary-500/40 hover:text-primary-300">
+              {days === 1 ? 'Today' : `Last ${days} days`}
+            </button>
+          ))}
+          {(filters.startDate || filters.endDate) && (
+            <button type="button" onClick={() => setFilters((current) => ({ ...current, startDate: '', endDate: '', page: 1 }))} className="px-3 py-1.5 text-xs font-semibold text-red-400">
+              Clear dates
+            </button>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-3 max-w-md">
+          <div>
+            <label className="label text-xs">From</label>
+            <input type="date" className="input text-xs" value={filters.startDate} onChange={(e) => setFilters((current) => ({ ...current, startDate: e.target.value, page: 1 }))} />
+          </div>
+          <div>
+            <label className="label text-xs">To</label>
+            <input type="date" className="input text-xs" value={filters.endDate} onChange={(e) => setFilters((current) => ({ ...current, endDate: e.target.value, page: 1 }))} />
+          </div>
+        </div>
       </div>
 
       {/* Desktop Table */}

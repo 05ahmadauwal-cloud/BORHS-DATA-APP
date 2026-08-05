@@ -47,7 +47,7 @@ export default function AdminDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-brand-700">Operations</p>
-          <h1 className="mt-1 text-xl md:text-2xl font-bold text-[var(--ds-text)]">Platform overview</h1>
+          <h1 className="mt-1 text-lg font-bold tracking-tight text-[var(--ds-text)] md:text-xl">Platform overview</h1>
           <p className="text-[var(--ds-text-secondary)] text-xs sm:text-sm mt-1">Revenue, customers and transaction health.</p>
         </div>
         <div className="flex gap-1.5 bg-[var(--ds-surface-subtle)] p-1 rounded-2xl w-fit">
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
                 {stat.trend == null ? 'New' : <>{stat.trend > 0 ? '+' : ''}{stat.trend}%</>}
               </span>
             </div>
-            <p className="text-lg md:text-2xl font-black text-dark-50 mb-0.5 tabular-nums leading-tight">
+            <p className="text-base font-extrabold text-dark-50 mb-0.5 tabular-nums leading-tight md:text-xl">
               {isLoading ? <span className="inline-block w-16 h-5 bg-[var(--ds-surface-subtle)] rounded animate-pulse" /> : stat.value}
             </p>
             <p className="text-dark-400 text-xs">{stat.label}</p>

@@ -4,9 +4,11 @@ import { adminAPI } from '../../api';
 import { Users, Search, UserX, UserCheck, Wallet, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminUsers() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({ page: 1, limit: 20, search: '', role: '', isActive: '' });
   const [selectedUser, setSelectedUser] = useState(null);
   const [adjustForm, setAdjustForm] = useState({ amount: '', type: 'credit', reason: '' });
@@ -112,7 +114,14 @@ export default function AdminUsers() {
                   <tr key={user._id}>
                     <td>
                       <div>
-                        <p className="font-semibold text-dark-100 text-sm">{user.firstName} {user.lastName}</p>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/admin/transactions?userId=${user._id}&userName=${encodeURIComponent(`${user.firstName} ${user.lastName}`)}`)}
+                          className="font-semibold text-dark-100 text-sm hover:text-primary-400 text-left transition-colors"
+                          title="View user transactions"
+                        >
+                          {user.firstName} {user.lastName}
+                        </button>
                         <p className="text-xs text-dark-400">{user.email}</p>
                       </div>
                     </td>
@@ -180,7 +189,13 @@ export default function AdminUsers() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-bold text-dark-100 text-sm">{user.firstName} {user.lastName}</p>
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/admin/transactions?userId=${user._id}&userName=${encodeURIComponent(`${user.firstName} ${user.lastName}`)}`)}
+                          className="font-bold text-dark-100 text-sm hover:text-primary-400 text-left transition-colors"
+                        >
+                          {user.firstName} {user.lastName}
+                        </button>
                         <p className="text-xs text-dark-400 truncate">{user.email}</p>
                       </div>
                       <span className={`badge text-xs shrink-0 ${user.isActive ? 'badge-success' : 'badge-danger'}`}>

@@ -52,10 +52,10 @@ export default function Home() {
         <div className="grid items-center gap-10 lg:grid-cols-[1.02fr_0.98fr]">
           <div className="text-center lg:text-left">
             <p className="public-kicker">Built for everyday Nigeria</p>
-            <h1 className="mt-4 text-[clamp(2.7rem,7vw,5.8rem)] font-bold leading-[0.92] tracking-[-0.055em] text-[#073b2a]">
+            <h1 className="mt-4 text-[clamp(2rem,5vw,3.75rem)] font-bold leading-[1.02] tracking-[-0.04em] text-[#073b2a]">
               Everything you pay for, in one calm place.
             </h1>
-            <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-[#315c4d] lg:mx-0 lg:text-lg">
+            <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-[#315c4d] lg:mx-0 sm:text-base">
               Buy data, recharge airtime, settle bills and grow your earnings
               without jumping between apps or wondering if a transaction went
               through.
@@ -116,10 +116,10 @@ export default function Home() {
       <section className="mx-auto grid max-w-6xl gap-12 px-5 py-24 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
         <div>
           <p className="public-kicker">Designed around real life</p>
-          <h2 className="mt-4 text-4xl font-bold leading-tight tracking-[-0.04em] text-[#073b2a] sm:text-5xl">
+          <h2 className="mt-4 text-2xl font-bold leading-tight tracking-[-0.03em] text-[#073b2a] sm:text-3xl">
             The useful parts of a wallet, without the banking noise.
           </h2>
-          <p className="mt-5 text-base leading-7 text-[#557266]">
+          <p className="mt-4 text-sm leading-6 text-[#557266] sm:text-base">
             BORHS keeps the things you do most close at hand—and makes every
             step obvious.
           </p>
@@ -139,7 +139,7 @@ export default function Home() {
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#0f766e]">
                 <Icon size={21} />
               </span>
-              <h3 className="mt-6 text-xl font-bold text-[#073b2a]">{title}</h3>
+              <h3 className="mt-5 text-base font-bold text-[#073b2a] sm:text-lg">{title}</h3>
               <p className="mt-2 text-sm leading-6 text-[#557266]">{text}</p>
             </article>
           ))}
@@ -186,10 +186,10 @@ export default function Home() {
           </div>
           <div className="order-1 lg:order-2">
             <p className="public-kicker">Clear at every step</p>
-            <h2 className="mt-4 text-4xl font-bold leading-tight tracking-[-0.04em] text-[#073b2a] sm:text-5xl">
+            <h2 className="mt-4 text-2xl font-bold leading-tight tracking-[-0.03em] text-[#073b2a] sm:text-3xl">
               Know what happened to your money.
             </h2>
-            <p className="mt-5 text-base leading-7 text-[#315c4d]">
+            <p className="mt-4 text-sm leading-6 text-[#315c4d] sm:text-base">
               Every purchase has a status, reference and receipt. Your wallet
               history tells the full story—without support jargon.
             </p>
@@ -217,10 +217,10 @@ export default function Home() {
 
       <section className="mx-auto max-w-5xl px-5 py-24 text-center">
         <Sparkles className="mx-auto text-amber-500" />
-        <h2 className="mx-auto mt-5 max-w-3xl text-4xl font-bold tracking-[-0.04em] text-[#073b2a] sm:text-6xl">
+        <h2 className="mx-auto mt-5 max-w-3xl text-2xl font-bold tracking-[-0.03em] text-[#073b2a] sm:text-3xl">
           Ready for a simpler way to pay?
         </h2>
-        <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-[#557266]">
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-[#557266] sm:text-base">
           Create your wallet and make your first everyday payment in minutes.
         </p>
         <Link to="/register" className="public-btn-primary mt-8">
