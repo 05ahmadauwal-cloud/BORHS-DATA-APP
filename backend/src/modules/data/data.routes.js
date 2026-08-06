@@ -18,4 +18,12 @@ router.post('/purchase', requireKYC, [
   body('phone').notEmpty().withMessage('Phone number is required'),
 ], validate, asyncHandler(ctrl.purchase));
 
+router.post('/purchase/bulk', requireKYC, [
+  body('recipients').isArray({ min: 1, max: 20 }).withMessage('Recipients must contain 1-20 entries'),
+  body('recipients.*.network').isIn(['mtn', 'airtel', 'glo', '9mobile']).withMessage('Invalid network'),
+  body('recipients.*.planId').notEmpty().withMessage('Plan is required'),
+  body('recipients.*.phone').matches(/^0\d{10}$/).withMessage('Each phone number must be 11 digits'),
+  body('pin').matches(/^\d{4}$/).withMessage('Transaction PIN must be a 4-digit code'),
+], validate, asyncHandler(ctrl.purchaseBulk));
+
 module.exports = router;

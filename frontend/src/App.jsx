@@ -26,6 +26,7 @@ const Dashboard = lazy(() => import('./pages/customer/Dashboard'));
 const Wallet = lazy(() => import('./pages/customer/Wallet'));
 const DataPurchase = lazy(() => import('./pages/customer/DataPurchase'));
 const Airtime = lazy(() => import('./pages/customer/Airtime'));
+const BulkPurchase = lazy(() => import('./pages/customer/BulkPurchase'));
 const Electricity = lazy(() => import('./pages/customer/Electricity'));
 const Cable = lazy(() => import('./pages/customer/Cable'));
 const Education = lazy(() => import('./pages/customer/Education'));
@@ -97,6 +98,7 @@ export default function App() {
           <Route path="/wallet" element={<Wallet />} />
           <Route path="/data" element={<DataPurchase />} />
           <Route path="/airtime" element={<Airtime />} />
+          <Route path="/bulk-purchase" element={<BulkPurchase />} />
           <Route path="/electricity" element={<Electricity />} />
           <Route path="/cable" element={<Cable />} />
           <Route path="/education" element={<Education />} />

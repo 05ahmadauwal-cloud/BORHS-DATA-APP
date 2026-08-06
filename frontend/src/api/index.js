@@ -41,13 +41,14 @@ export const paymentAPI = {
 export const dataAPI = {
   getPlans: (params) => api.get('/data/plans', { params }),
   purchase: (data) => api.post('/data/purchase', data),
+  purchaseBulk: (recipients, pin) => api.post('/data/purchase/bulk', { recipients, pin }),
   getHistory: (params) => api.get('/data/history', { params }),
 };
 
 // Airtime
 export const airtimeAPI = {
   purchase: (data) => api.post('/airtime/purchase', data),
-  purchaseBulk: (recipients) => api.post('/airtime/purchase/bulk', { recipients }),
+  purchaseBulk: (recipients, pin) => api.post('/airtime/purchase/bulk', { recipients, pin }),
   getHistory: (params) => api.get('/airtime/history', { params }),
 };
 

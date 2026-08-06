@@ -168,4 +168,17 @@ const getDataHistory = async (userId, query = {}) => {
   };
 };
 
-module.exports = { getDataPlans, purchaseData, getDataHistory };
+const purchaseBulkData = async (userId, recipients, pin) => {
+  const results = [];
+  for (const recipient of recipients) {
+    try {
+      const purchase = await purchaseData(userId, { ...recipient, pin });
+      results.push({ phone: recipient.phone, status: 'success', reference: purchase.reference });
+    } catch (error) {
+      results.push({ phone: recipient.phone, status: 'failed', error: error.message });
+    }
+  }
+  return results;
+};
+
+module.exports = { getDataPlans, purchaseData, purchaseBulkData, getDataHistory };

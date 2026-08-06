@@ -22,6 +22,7 @@ router.post('/purchase/bulk', requireKYC, [
   body('recipients.*.phone').notEmpty(),
   body('recipients.*.network').isIn(['mtn', 'airtel', 'glo', '9mobile']),
   body('recipients.*.amount').isNumeric().toFloat(),
+  body('pin').matches(/^\d{4}$/).withMessage('Transaction PIN must be a 4-digit code'),
 ], validate, asyncHandler(ctrl.purchaseBulk));
 
 module.exports = router;

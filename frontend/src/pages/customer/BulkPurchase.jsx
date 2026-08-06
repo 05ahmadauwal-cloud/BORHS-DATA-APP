@@ -1,0 +1,102 @@
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ListPlus, Wifi, Phone, CheckCircle, XCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { airtimeAPI, dataAPI } from '../../api';
+import useAuthStore from '../../store/authStore';
+import { NetworkButton } from '../../components/NetworkLogo';
+import { ServiceHeader } from '../../components/ui';
+import { detectNetwork, NETWORK_LABELS } from '../../utils/phoneNetwork';
+
+const NETWORKS = ['mtn', 'airtel', 'glo', '9mobile'];
+const DATA_TYPES = ['sme', 'corporate', 'gifting', 'direct'];
+
+function parsePhones(value) {
+  return [...new Set(value.split(/[\s,;]+/).map((phone) => phone.replace(/\D/g, '')).filter(Boolean))];
+}
+
+export default function BulkPurchase() {
+  const [type, setType] = useState('data');
+  const [network, setNetwork] = useState('mtn');
+  const [dataType, setDataType] = useState('sme');
+  const [planId, setPlanId] = useState('');
+  const [amount, setAmount] = useState('');
+  const [phoneText, setPhoneText] = useState('');
+  const [pin, setPin] = useState('');
+  const [results, setResults] = useState(null);
+  const { user, refreshUser } = useAuthStore();
+  const queryClient = useQueryClient();
+  const phones = useMemo(() => parsePhones(phoneText), [phoneText]);
+
+  const { data: plans = [], isLoading: plansLoading } = useQuery({
+    queryKey: ['bulk-data-plans', network, dataType],
+    queryFn: () => dataAPI.getPlans({ network, dataType }),
+    select: (response) => response.data.plans || [],
+    enabled: type === 'data',
+  });
+  const selectedPlan = plans.find((plan) => String(plan.planId) === String(planId));
+  const unitPrice = type === 'data'
+    ? Number(user?.role === 'agent' && selectedPlan?.agentPrice ? selectedPlan.agentPrice : selectedPlan?.sellingPrice || 0)
+    : Number(amount || 0);
+  const estimatedTotal = unitPrice * phones.length;
+
+  const mutation = useMutation({
+    mutationFn: () => type === 'data'
+      ? dataAPI.purchaseBulk(phones.map((phone) => ({ phone, network, planId, dataType })), pin)
+      : airtimeAPI.purchaseBulk(phones.map((phone) => ({ phone, network: detectNetwork(phone) || network, amount: Number(amount) })), pin),
+    onSuccess: (response) => {
+      const batchResults = response.data.results || [];
+      setResults(batchResults);
+      setPin('');
+      queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      queryClient.invalidateQueries({ queryKey: ['data-recipient-history'] });
+      queryClient.invalidateQueries({ queryKey: ['airtime-recipient-history'] });
+      refreshUser();
+      const succeeded = batchResults.filter((item) => item.status === 'success').length;
+      toast.success(`${succeeded} of ${batchResults.length} purchases completed`);
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Bulk purchase failed'),
+  });
+
+  const submit = () => {
+    if (!phones.length || phones.length > 20) return toast.error('Enter between 1 and 20 phone numbers');
+    if (phones.some((phone) => !/^0\d{10}$/.test(phone))) return toast.error('Every phone number must be 11 digits and start with 0');
+    if (type === 'data' && !selectedPlan) return toast.error('Select a data plan');
+    if (type === 'data' && phones.some((phone) => detectNetwork(phone) && detectNetwork(phone) !== network)) return toast.error(`All numbers must belong to ${NETWORK_LABELS[network]}`);
+    if (type === 'airtime' && (Number(amount) < 100 || Number(amount) > 50000)) return toast.error('Airtime amount must be between ₦100 and ₦50,000');
+    if (estimatedTotal > Number(user?.walletBalance || 0)) return toast.error('Insufficient wallet balance for this batch');
+    if (!/^\d{4}$/.test(pin)) return toast.error('Enter your 4-digit transaction PIN');
+    setResults(null);
+    mutation.mutate();
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <ServiceHeader icon={ListPlus} title="Bulk purchase" description="Send data or airtime to up to 20 numbers in one batch." />
+      <div className="card p-5 space-y-5">
+        <div className="grid grid-cols-2 gap-2">
+          {[['data', Wifi, 'Bulk Data'], ['airtime', Phone, 'Bulk Airtime']].map(([value, Icon, label]) => (
+            <button key={value} type="button" onClick={() => { setType(value); setResults(null); }} className={`py-3 rounded-xl border flex items-center justify-center gap-2 font-bold ${type === value ? 'border-primary-500 bg-primary-500/10 text-primary-400' : 'border-dark-600 text-dark-400'}`}>
+              <Icon size={17} />{label}
+            </button>
+          ))}
+        </div>
+
+        {type === 'data' && <>
+          <div><label className="label">Network</label><div className="grid grid-cols-4 gap-2">{NETWORKS.map((item) => <NetworkButton key={item} network={item} selected={network === item} onClick={() => { setNetwork(item); setPlanId(''); }} />)}</div></div>
+          <div><label className="label">Data type</label><select className="input" value={dataType} onChange={(event) => { setDataType(event.target.value); setPlanId(''); }}>{DATA_TYPES.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}</select></div>
+          <div><label className="label">Plan</label><select className="input" value={planId} disabled={plansLoading} onChange={(event) => setPlanId(event.target.value)}><option value="">{plansLoading ? 'Loading plans...' : 'Select plan'}</option>{plans.map((plan) => <option key={plan.planId} value={plan.planId}>{plan.dataSize} · {plan.validity} · ₦{Number(user?.role === 'agent' && plan.agentPrice ? plan.agentPrice : plan.sellingPrice).toLocaleString()}</option>)}</select></div>
+        </>}
+
+        {type === 'airtime' && <div><label className="label">Amount for each number (₦)</label><input type="number" min="100" max="50000" className="input" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="500" /><p className="mt-1 text-xs text-dark-500">The network will be detected for each phone number.</p></div>}
+
+        <div><label className="label">Phone numbers ({phones.length}/20)</label><textarea className="input min-h-36 resize-y" value={phoneText} onChange={(event) => setPhoneText(event.target.value)} placeholder={'08012345678\n08123456789\n07012345678'} /><p className="mt-1 text-xs text-dark-500">Enter one per line, or separate numbers with commas.</p></div>
+        <div className="rounded-xl bg-dark-700/50 p-4 flex justify-between"><span className="text-sm text-dark-400">Estimated total</span><strong className="text-dark-100">₦{estimatedTotal.toLocaleString()}</strong></div>
+        <div><label className="label">Transaction PIN</label><input type="password" inputMode="numeric" maxLength={4} className="input text-center tracking-[0.7em] text-lg" value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="••••" /></div>
+        <button type="button" onClick={submit} disabled={mutation.isPending} className="btn-primary btn-lg w-full">{mutation.isPending ? 'Processing batch...' : `Purchase for ${phones.length} number${phones.length === 1 ? '' : 's'}`}</button>
+      </div>
+
+      {results && <div className="card p-5 space-y-3"><h2 className="font-bold text-dark-100">Batch results</h2>{results.map((result, index) => <div key={`${result.phone}-${index}`} className="flex items-start gap-3 border-b border-dark-700 py-3 last:border-0">{result.status === 'success' ? <CheckCircle className="text-success-500 shrink-0" size={18} /> : <XCircle className="text-red-400 shrink-0" size={18} />}<div className="min-w-0"><p className="font-bold text-sm text-dark-100">{result.phone}</p><p className="text-xs text-dark-400 break-words">{result.reference || result.error}</p></div></div>)}</div>}
+    </div>
+  );
+}

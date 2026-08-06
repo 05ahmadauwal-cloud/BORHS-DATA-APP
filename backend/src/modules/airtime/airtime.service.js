@@ -100,11 +100,11 @@ const purchaseAirtime = async (userId, body) => {
   }
 };
 
-const purchaseBulkAirtime = async (userId, recipients) => {
+const purchaseBulkAirtime = async (userId, recipients, pin) => {
   const results = [];
   for (const r of recipients) {
     try {
-      const result = await purchaseAirtime(userId, r);
+      const result = await purchaseAirtime(userId, { ...r, pin });
       results.push({ phone: r.phone, status: 'success', reference: result.reference });
     } catch (e) {
       results.push({ phone: r.phone, status: 'failed', error: e.message });

@@ -2,7 +2,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Wallet, Wifi, Phone, Zap, Tv, GraduationCap,
   Users, BarChart3, History, User, X, LogOut, TrendingUp, Star,
-  ShieldCheck, ArrowUpRight,
+  ShieldCheck, ArrowUpRight, ListPlus,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
@@ -17,6 +17,7 @@ const mainNav = [
 const servicesNav = [
   { to: '/data', icon: Wifi, label: 'Buy Data' },
   { to: '/airtime', icon: Phone, label: 'Buy Airtime' },
+  { to: '/bulk-purchase', icon: ListPlus, label: 'Bulk Purchase' },
   { to: '/electricity', icon: Zap, label: 'Electricity' },
   { to: '/cable', icon: Tv, label: 'Cable TV' },
   { to: '/education', icon: GraduationCap, label: 'Exam PINs' },

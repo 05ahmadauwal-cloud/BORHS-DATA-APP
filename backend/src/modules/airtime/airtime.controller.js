@@ -7,7 +7,7 @@ const purchase = async (req, res) => {
 };
 
 const purchaseBulk = async (req, res) => {
-  const results = await airtimeService.purchaseBulkAirtime(req.user._id, req.body.recipients);
+  const results = await airtimeService.purchaseBulkAirtime(req.user._id, req.body.recipients, req.body.pin);
   return ApiResponse.success(res, { results }, 'Bulk airtime processed');
 };
 

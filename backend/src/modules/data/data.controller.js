@@ -12,9 +12,14 @@ const purchase = async (req, res) => {
   return ApiResponse.success(res, { purchase: result }, 'Data purchase successful');
 };
 
+const purchaseBulk = async (req, res) => {
+  const results = await dataService.purchaseBulkData(req.user._id, req.body.recipients, req.body.pin);
+  return ApiResponse.success(res, { results }, 'Bulk data processed');
+};
+
 const getHistory = async (req, res) => {
   const data = await dataService.getDataHistory(req.user._id, req.query);
   return ApiResponse.success(res, data);
 };
 
-module.exports = { getPlans, purchase, getHistory };
+module.exports = { getPlans, purchase, purchaseBulk, getHistory };
