@@ -14,6 +14,7 @@ import useThemeStore from '../../store/themeStore';
 import toast from 'react-hot-toast';
 import {
   BIOMETRIC_SERVER,
+  activateBiometricsForAccount,
   clearBiometricCredentials,
   getBiometricAccountId,
   getUserAccountId,
@@ -33,6 +34,8 @@ export default function Login() {
   const [biometricSaved, setBiometricSaved] = useState(false);
   const [biometricLoading, setBiometricLoading] = useState(false);
   const [rememberIdentifier, setRememberIdentifier] = useState(true);
+  const [pendingBiometricSetup, setPendingBiometricSetup] = useState(null);
+  const [biometricSetupLoading, setBiometricSetupLoading] = useState(false);
   const { login, isLoading } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const navigate = useNavigate();
@@ -97,10 +100,42 @@ export default function Login() {
       }
 
       toast.success(`Welcome back, ${result.user.firstName}!`);
+      const needsBiometricSetup = biometricAvailable
+        && getBiometricAccountId() !== getUserAccountId(result.user);
+      if (needsBiometricSetup) {
+        setPendingBiometricSetup({
+          user: result.user,
+          identifier: data.identifier.trim(),
+          password: data.password,
+        });
+        return;
+      }
       navigateAfterLogin(result.user);
     } catch (error) {
       const message = error.response?.data?.message || 'Login failed. Please try again.';
       toast.error(message);
+    }
+  };
+
+  const finishBiometricSetup = () => {
+    const user = pendingBiometricSetup?.user;
+    setPendingBiometricSetup(null);
+    if (user) navigateAfterLogin(user);
+  };
+
+  const activateFingerprintAfterLogin = async () => {
+    if (!pendingBiometricSetup) return;
+    setBiometricSetupLoading(true);
+    try {
+      await clearBiometricCredentials();
+      await activateBiometricsForAccount(pendingBiometricSetup);
+      setBiometricSaved(true);
+      toast.success('Fingerprint login activated for this account.');
+      finishBiometricSetup();
+    } catch (error) {
+      toast.error(error.message || 'Fingerprint setup was not completed.');
+    } finally {
+      setBiometricSetupLoading(false);
     }
   };
 
@@ -143,6 +178,29 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-canvas flex items-center justify-center p-4 py-10">
+      {pendingBiometricSetup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ background: 'rgba(2,6,23,0.86)', backdropFilter: 'blur(10px)' }}>
+          <div className="card w-full max-w-sm p-6 text-center space-y-5 animate-slide-up" role="dialog" aria-modal="true" aria-labelledby="fingerprint-setup-title">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-primary-500/10 text-primary-400 border border-primary-500/20">
+              <Fingerprint size={32} />
+            </div>
+            <div>
+              <h2 id="fingerprint-setup-title" className="text-xl font-black" style={{ color: 'var(--text-primary)' }}>Set up fingerprint login?</h2>
+              <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                Activate fingerprint for {pendingBiometricSetup.user.email}. It will work only with this account on this device.
+              </p>
+            </div>
+            <button type="button" onClick={activateFingerprintAfterLogin} disabled={biometricSetupLoading} className="btn-primary w-full gap-2">
+              {biometricSetupLoading ? <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> : <Fingerprint size={17} />}
+              {biometricSetupLoading ? 'Activating...' : 'Activate Fingerprint'}
+            </button>
+            <button type="button" onClick={finishBiometricSetup} disabled={biometricSetupLoading} className="btn-ghost w-full">
+              Not now
+            </button>
+            <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>You can activate it later from Profile → Security.</p>
+          </div>
+        </div>
+      )}
       {/* Theme toggle */}
       <button
         onClick={toggleTheme}
