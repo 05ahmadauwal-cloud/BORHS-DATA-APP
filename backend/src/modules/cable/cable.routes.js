@@ -22,6 +22,7 @@ router.post('/purchase', requireKYC, [
   body('provider').isIn(PROVIDERS).withMessage('Invalid provider'),
   body('smartCardNumber').notEmpty().withMessage('Smart card number is required'),
   body('packageId').notEmpty().withMessage('Package is required'),
+  body('paymentSource').optional().isIn(['main', 'reward', 'reward_first']),
 ], validate, asyncHandler(ctrl.purchase));
 
 module.exports = router;

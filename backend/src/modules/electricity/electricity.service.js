@@ -1,6 +1,6 @@
 const ElectricityPurchase = require('../../models/ElectricityPurchase');
 const User = require('../../models/User');
-const { debitWallet } = require('../wallet/wallet.service');
+const { debitWallet, refundWalletDebit } = require('../wallet/wallet.service');
 const { withFallback, getProvider } = require('../../services/providers');
 const { generateReference } = require('../../utils/helpers');
 const { TRANSACTION_TYPES, TRANSACTION_STATUS } = require('../../config/constants');
@@ -27,10 +27,6 @@ const purchaseElectricity = async (userId, body) => {
   const pinOk = await user.comparePin(String(pin));
   if (!pinOk) throw Object.assign(new Error('Invalid transaction PIN'), { statusCode: 401 });
 
-  if (user.walletBalance < amount) {
-    throw Object.assign(new Error('Insufficient wallet balance'), { statusCode: 400 });
-  }
-
   let customerInfo = {};
   try {
     customerInfo = await verifyMeter(provider, meterNumber, meterType);
@@ -52,11 +48,12 @@ const purchaseElectricity = async (userId, body) => {
     status: TRANSACTION_STATUS.PENDING,
   });
 
+  let debitResult;
   try {
-    const debitResult = await debitWallet(
+    debitResult = await debitWallet(
       userId, amount, TRANSACTION_TYPES.ELECTRICITY_PURCHASE,
       `₦${amount} electricity for meter ${meterNumber}`,
-      { provider, meterNumber, meterType }
+      { provider, meterNumber, meterType }, null, body.paymentSource
     );
     purchase.transaction = debitResult.transaction._id;
 
@@ -83,7 +80,8 @@ const purchaseElectricity = async (userId, body) => {
     purchase.status = TRANSACTION_STATUS.FAILED;
     purchase.failureReason = error.message;
     await purchase.save();
-    await User.findByIdAndUpdate(userId, { $inc: { walletBalance: amount } });
+    if (!debitResult) throw error;
+    await refundWalletDebit(userId, debitResult);
     throw Object.assign(new Error(`Electricity purchase failed: ${error.message}`), { statusCode: 502 });
   }
 };

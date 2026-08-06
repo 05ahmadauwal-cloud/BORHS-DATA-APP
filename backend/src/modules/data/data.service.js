@@ -2,7 +2,7 @@ const DataPurchase = require('../../models/DataPurchase');
 const DataPlan = require('../../models/DataPlan');
 const User = require('../../models/User');
 const Transaction = require('../../models/Transaction');
-const { debitWallet } = require('../wallet/wallet.service');
+const { debitWallet, refundWalletDebit } = require('../wallet/wallet.service');
 const { withFallback } = require('../../services/providers');
 const { generateReference, sanitizePhone } = require('../../utils/helpers');
 const { TRANSACTION_TYPES, TRANSACTION_STATUS } = require('../../config/constants');
@@ -39,13 +39,6 @@ const purchaseData = async (userId, body) => {
     ? (plan.agentPrice || plan.sellingPrice)
     : plan.sellingPrice;
 
-  if (user.walletBalance < price) {
-    throw Object.assign(
-      new Error(`Insufficient balance. Required: ₦${price.toLocaleString()}, Available: ₦${user.walletBalance.toLocaleString()}`),
-      { statusCode: 400 }
-    );
-  }
-
   const reference = generateReference('DATA');
 
   // 3. Create purchase record
@@ -69,7 +62,7 @@ const purchaseData = async (userId, body) => {
     debitResult = await debitWallet(
       userId, price, TRANSACTION_TYPES.DATA_PURCHASE,
       `${plan.dataSize} ${plan.name} for ${targetPhone}`,
-      { planId: plan.planId, network: plan.network, phone: targetPhone }
+      { planId: plan.planId, network: plan.network, phone: targetPhone }, null, body.paymentSource
     );
     purchase.transaction = debitResult.transaction._id;
     await purchase.save();
@@ -139,7 +132,7 @@ const purchaseData = async (userId, body) => {
     await purchase.save();
 
     // Refund wallet
-    await User.findByIdAndUpdate(userId, { $inc: { walletBalance: price } });
+    await refundWalletDebit(userId, debitResult);
 
     // Update debit transaction to reversed
     await Transaction.findByIdAndUpdate(debitResult.transaction._id, {
@@ -168,11 +161,11 @@ const getDataHistory = async (userId, query = {}) => {
   };
 };
 
-const purchaseBulkData = async (userId, recipients, pin) => {
+const purchaseBulkData = async (userId, recipients, pin, paymentSource) => {
   const results = [];
   for (const recipient of recipients) {
     try {
-      const purchase = await purchaseData(userId, { ...recipient, pin });
+      const purchase = await purchaseData(userId, { ...recipient, pin, paymentSource });
       results.push({ phone: recipient.phone, status: 'success', reference: purchase.reference });
     } catch (error) {
       results.push({ phone: recipient.phone, status: 'failed', error: error.message });

@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { airtimeAPI, dataAPI } from '../../api';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton } from '../../components/NetworkLogo';
-import { ServiceHeader } from '../../components/ui';
+import { PaymentSourceSelect, ServiceHeader } from '../../components/ui';
 import { detectNetwork, NETWORK_LABELS } from '../../utils/phoneNetwork';
 
 const NETWORKS = ['mtn', 'airtel', 'glo', '9mobile'];
@@ -24,6 +24,7 @@ export default function BulkPurchase() {
   const [amount, setAmount] = useState('');
   const [phoneText, setPhoneText] = useState('');
   const [pin, setPin] = useState('');
+  const [paymentSource, setPaymentSource] = useState('main');
   const [results, setResults] = useState(null);
   const { user, refreshUser } = useAuthStore();
   const queryClient = useQueryClient();
@@ -50,8 +51,8 @@ export default function BulkPurchase() {
       for (let index = 0; index < recipients.length; index += REQUEST_BATCH_SIZE) {
         const batch = recipients.slice(index, index + REQUEST_BATCH_SIZE);
         const response = type === 'data'
-          ? await dataAPI.purchaseBulk(batch, pin)
-          : await airtimeAPI.purchaseBulk(batch, pin);
+          ? await dataAPI.purchaseBulk(batch, pin, paymentSource)
+          : await airtimeAPI.purchaseBulk(batch, pin, paymentSource);
         batchResults.push(...(response.data.results || []));
       }
       return batchResults;
@@ -75,7 +76,10 @@ export default function BulkPurchase() {
     if (type === 'data' && !selectedPlan) return toast.error('Select a data plan');
     if (type === 'data' && phones.some((phone) => detectNetwork(phone) && detectNetwork(phone) !== network)) return toast.error(`All numbers must belong to ${NETWORK_LABELS[network]}`);
     if (type === 'airtime' && (Number(amount) < 100 || Number(amount) > 50000)) return toast.error('Airtime amount must be between ₦100 and ₦50,000');
-    if (estimatedTotal > Number(user?.walletBalance || 0)) return toast.error('Insufficient wallet balance for this batch');
+    const available = paymentSource === 'main' ? Number(user?.walletBalance || 0)
+      : paymentSource === 'reward' ? Number(user?.rewardBalance || 0)
+      : Number(user?.walletBalance || 0) + Number(user?.rewardBalance || 0);
+    if (estimatedTotal > available) return toast.error('Insufficient balance in the selected wallet source');
     if (!/^\d{4}$/.test(pin)) return toast.error('Enter your 4-digit transaction PIN');
     setResults(null);
     mutation.mutate();
@@ -103,6 +107,7 @@ export default function BulkPurchase() {
 
         <div><label className="label">Phone numbers ({phones.length})</label><textarea className="input min-h-36 resize-y" value={phoneText} onChange={(event) => setPhoneText(event.target.value)} placeholder={'08012345678\n08123456789\n07012345678'} /><p className="mt-1 text-xs text-dark-500">Enter one per line, or separate numbers with commas. Duplicate numbers are removed automatically.</p></div>
         <div className="rounded-xl bg-dark-700/50 p-4 flex justify-between"><span className="text-sm text-dark-400">Estimated total</span><strong className="text-dark-100">₦{estimatedTotal.toLocaleString()}</strong></div>
+        <PaymentSourceSelect value={paymentSource} onChange={setPaymentSource} user={user} />
         <div><label className="label">Transaction PIN</label><input type="password" inputMode="numeric" maxLength={4} className="input text-center tracking-[0.7em] text-lg" value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="••••" /></div>
         <button type="button" onClick={submit} disabled={mutation.isPending} className="btn-primary btn-lg w-full">{mutation.isPending ? 'Processing batch...' : `Purchase for ${phones.length} number${phones.length === 1 ? '' : 's'}`}</button>
       </div>

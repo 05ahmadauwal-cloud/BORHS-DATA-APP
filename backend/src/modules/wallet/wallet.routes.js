@@ -19,6 +19,11 @@ router.post('/transfer', requireKYC, [
   body('pin').optional().isLength({ min: 4, max: 4 }),
 ], validate, asyncHandler(ctrl.transfer));
 
+router.post('/rewards/transfer', [
+  body('amount').isFloat({ gt: 0 }).withMessage('Amount must be greater than zero').toFloat(),
+  body('pin').matches(/^\d{4}$/).withMessage('Transaction PIN must be a 4-digit code'),
+], validate, asyncHandler(ctrl.transferRewards));
+
 router.post('/set-pin', [
   body('pin').isLength({ min: 4, max: 4 }).withMessage('PIN must be 4 digits').isNumeric(),
 ], validate, asyncHandler(ctrl.setPin));

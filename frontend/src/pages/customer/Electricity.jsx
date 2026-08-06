@@ -5,7 +5,7 @@ import { Zap, CheckCircle, Copy, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
-import { ServiceHeader } from '../../components/ui';
+import { PaymentSourceSelect, ServiceHeader } from '../../components/ui';
 
 const PROVIDERS = [
   { id: 'ikedc', label: 'IKEDC', full: 'Ikeja Electric' },
@@ -17,7 +17,7 @@ const PROVIDERS = [
 ];
 
 export default function Electricity() {
-  const { user, updateUser } = useAuthStore();
+  const { user, refreshUser } = useAuthStore();
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ provider: 'ikedc', meterNumber: '', meterType: 'prepaid', amount: '', phone: '' });
   const [customerInfo, setCustomerInfo] = useState(null);
@@ -25,6 +25,7 @@ export default function Electricity() {
   const [result, setResult] = useState(null);
   const [receipt, setReceipt] = useState(null);
   const [pin, setPin] = useState('');
+  const [paymentSource, setPaymentSource] = useState('main');
   const [pinAttempts, setPinAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState(null);
 
@@ -42,7 +43,7 @@ export default function Electricity() {
     onSuccess: (res) => {
       const p = res.data.purchase;
       setResult(p);
-      updateUser({ walletBalance: Number(user?.walletBalance || 0) - Number(form.amount) });
+      refreshUser();
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       setReceipt({
         type: 'electricity',
@@ -174,6 +175,7 @@ export default function Electricity() {
             </button>
           ) : (
             <div className="space-y-3">
+              <PaymentSourceSelect value={paymentSource} onChange={setPaymentSource} user={user} />
               <div>
                 <label className="label">Transaction PIN</label>
                 <input className="input text-center tracking-[0.4em]" type="password" inputMode="numeric" autoComplete="off" placeholder="••••" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
@@ -185,7 +187,7 @@ export default function Electricity() {
                   onClick={() => {
                     if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
                     if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
-                    purchaseMutation.mutate({ ...form, pin });
+                    purchaseMutation.mutate({ ...form, pin, paymentSource });
                   }}
                   disabled={!form.amount || Number(form.amount) < 500 || purchaseMutation.isPending}
                   className="btn-primary flex-1"

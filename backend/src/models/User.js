@@ -50,6 +50,11 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Balance cannot be negative'],
     },
+    rewardBalance: {
+      type: Number,
+      default: 0,
+      min: [0, 'Reward balance cannot be negative'],
+    },
     bonusBalance: {
       type: Number,
       default: 0,

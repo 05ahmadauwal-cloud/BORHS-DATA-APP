@@ -5,7 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Wallet as WalletIcon, Send, CreditCard,
   CheckCircle, XCircle, Clock, Copy, Check, Building2,
-  RefreshCw, AlertCircle, Banknote, Tag, Info,
+  RefreshCw, AlertCircle, Banknote, Tag, Info, Gift,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -14,7 +14,7 @@ import useAuthStore from '../../store/authStore';
 const ALL_TABS = ['Bank Transfer', 'Billstack', 'Online Payment', 'Promo Code', 'History'];
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 const isCredit = (type) => [
-  'wallet_fund', 'commission_earned', 'referral_bonus', 'refund',
+  'wallet_fund', 'commission_earned', 'referral_bonus', 'reward_transfer', 'refund',
 ].includes(type);
 
 function computeFee(amount, type, value) {
@@ -218,11 +218,13 @@ function BankTransferTab({ chargeType, chargeValue, provider = 'monnify' }) {
 
 export default function Wallet() {
   const user = useAuthStore((state) => state.user);
+  const refreshUser = useAuthStore((state) => state.refreshUser);
   const [activeTab, setActiveTab] = useState('Bank Transfer');
   const [fundAmount, setFundAmount] = useState('');
   const [gateway, setGateway] = useState('paystack');
   const [transferForm, setTransferForm] = useState({ recipient: '', amount: '', pin: '' });
   const [verifyStatus, setVerifyStatus] = useState(null);
+  const [rewardForm, setRewardForm] = useState({ amount: '', pin: '' });
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -376,6 +378,18 @@ export default function Wallet() {
   });
 
   const walletBalance = Number(balance?.walletBalance ?? 0);
+  const rewardBalance = Number(balance?.rewardBalance ?? user?.rewardBalance ?? 0);
+  const rewardTransferMutation = useMutation({
+    mutationFn: () => walletAPI.transferRewards(Number(rewardForm.amount), rewardForm.pin),
+    onSuccess: () => {
+      toast.success('Rewards transferred to your main wallet');
+      setRewardForm({ amount: '', pin: '' });
+      queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
+      refreshUser();
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Reward transfer failed'),
+  });
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
@@ -416,6 +430,18 @@ export default function Wallet() {
               </button>
             )}
           </div>
+        </div>
+      </div>
+
+      <div className="card p-5 border-amber-500/20 bg-amber-500/5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400"><Gift size={19} /></span><div><p className="text-xs text-dark-400">Reward Wallet</p><p className="text-2xl font-black text-dark-100">₦{rewardBalance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</p></div></div>
+        </div>
+        <p className="mt-3 text-xs text-dark-400">Commissions and referral rewards are paid here. Transfer them to your main wallet or use them directly for purchases.</p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_120px_auto]">
+          <input type="number" min="1" max={rewardBalance} className="input" placeholder="Amount" value={rewardForm.amount} onChange={(event) => setRewardForm({ ...rewardForm, amount: event.target.value })} />
+          <input type="password" inputMode="numeric" maxLength={4} className="input text-center tracking-[0.3em]" placeholder="PIN" value={rewardForm.pin} onChange={(event) => setRewardForm({ ...rewardForm, pin: event.target.value.replace(/\D/g, '').slice(0, 4) })} />
+          <button type="button" className="btn-primary" disabled={rewardTransferMutation.isPending || Number(rewardForm.amount) <= 0 || Number(rewardForm.amount) > rewardBalance || rewardForm.pin.length !== 4} onClick={() => rewardTransferMutation.mutate()}>{rewardTransferMutation.isPending ? 'Moving...' : 'Move to Main'}</button>
         </div>
       </div>
 

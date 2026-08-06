@@ -25,6 +25,7 @@ export const walletAPI = {
   transfer: (data) => api.post('/wallet/transfer', data),
   setPin: (pin) => api.post('/wallet/set-pin', { pin }),
   resetPin: (password, newPin) => api.post('/wallet/reset-pin', { password, newPin }),
+  transferRewards: (amount, pin) => api.post('/wallet/rewards/transfer', { amount, pin }),
 };
 
 // Payment
@@ -41,14 +42,14 @@ export const paymentAPI = {
 export const dataAPI = {
   getPlans: (params) => api.get('/data/plans', { params }),
   purchase: (data) => api.post('/data/purchase', data),
-  purchaseBulk: (recipients, pin) => api.post('/data/purchase/bulk', { recipients, pin }),
+  purchaseBulk: (recipients, pin, paymentSource) => api.post('/data/purchase/bulk', { recipients, pin, paymentSource }),
   getHistory: (params) => api.get('/data/history', { params }),
 };
 
 // Airtime
 export const airtimeAPI = {
   purchase: (data) => api.post('/airtime/purchase', data),
-  purchaseBulk: (recipients, pin) => api.post('/airtime/purchase/bulk', { recipients, pin }),
+  purchaseBulk: (recipients, pin, paymentSource) => api.post('/airtime/purchase/bulk', { recipients, pin, paymentSource }),
   getHistory: (params) => api.get('/airtime/history', { params }),
 };
 

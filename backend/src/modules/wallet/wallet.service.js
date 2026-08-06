@@ -99,7 +99,9 @@ const fundWallet = async (userId, amount, gateway, externalReference, metadata =
   }
 };
 
-const debitWallet = async (userId, amount, type, description, metadata = {}, session = null) => {
+const normalizePaymentSource = (source) => ['main', 'reward', 'reward_first'].includes(source) ? source : 'main';
+
+const debitWallet = async (userId, amount, type, description, metadata = {}, session = null, paymentSource = 'main') => {
   const ownSession = !session;
   if (ownSession) session = await mongoose.startSession();
 
@@ -108,13 +110,19 @@ const debitWallet = async (userId, amount, type, description, metadata = {}, ses
 
     const user = await User.findById(userId).session(session);
     if (!user) throw new Error('User not found');
-    if (user.walletBalance < amount) {
-      throw Object.assign(new Error('Insufficient wallet balance'), { statusCode: 400 });
+    const source = normalizePaymentSource(paymentSource);
+    const mainBefore = Number(user.walletBalance || 0);
+    const rewardBefore = Number(user.rewardBalance || 0);
+    const rewardUsed = source === 'reward' ? amount : source === 'reward_first' ? Math.min(rewardBefore, amount) : 0;
+    const mainUsed = amount - rewardUsed;
+    if (mainBefore < mainUsed || rewardBefore < rewardUsed) {
+      throw Object.assign(new Error(source === 'reward' ? 'Insufficient reward balance' : 'Insufficient combined wallet balance'), { statusCode: 400 });
     }
 
-    const balanceBefore = user.walletBalance;
-    const balanceAfter = balanceBefore - amount;
+    const balanceBefore = mainBefore;
+    const balanceAfter = mainBefore - mainUsed;
     user.walletBalance = balanceAfter;
+    user.rewardBalance = rewardBefore - rewardUsed;
     await user.save({ session });
 
     const reference = generateReference('DB');
@@ -128,18 +136,48 @@ const debitWallet = async (userId, amount, type, description, metadata = {}, ses
       reference,
       gateway: 'wallet',
       description,
-      metadata,
+      metadata: { ...metadata, paymentSource: source, mainUsed, rewardUsed, rewardBalanceBefore: rewardBefore, rewardBalanceAfter: rewardBefore - rewardUsed },
       completedAt: new Date(),
     }], { session });
 
     if (ownSession) await session.commitTransaction();
-    return { transaction: transaction[0], newBalance: balanceAfter, reference };
+    return { transaction: transaction[0], newBalance: balanceAfter, newRewardBalance: rewardBefore - rewardUsed, mainUsed, rewardUsed, reference };
   } catch (error) {
     if (ownSession) await session.abortTransaction();
     throw error;
   } finally {
     if (ownSession) session.endSession();
   }
+};
+
+const refundWalletDebit = async (userId, debitResult) => {
+  const mainUsed = Number(debitResult?.mainUsed || 0);
+  const rewardUsed = Number(debitResult?.rewardUsed || 0);
+  if (!mainUsed && !rewardUsed) return;
+  await User.findByIdAndUpdate(userId, { $inc: { walletBalance: mainUsed, rewardBalance: rewardUsed } });
+};
+
+const transferRewardsToWallet = async (userId, amount, pin) => {
+  if (!Number.isFinite(amount) || amount <= 0) throw Object.assign(new Error('Enter a valid amount'), { statusCode: 400 });
+  const user = await User.findById(userId).select('+transactionPin');
+  if (!user) throw Object.assign(new Error('User not found'), { statusCode: 404 });
+  if (!user.isPinSet || !await user.comparePin(String(pin || ''))) throw Object.assign(new Error('Invalid transaction PIN'), { statusCode: 401 });
+  const updatedUser = await User.findOneAndUpdate(
+    { _id: userId, rewardBalance: { $gte: amount } },
+    { $inc: { rewardBalance: -amount, walletBalance: amount } },
+    { new: true }
+  );
+  if (!updatedUser) throw Object.assign(new Error('Insufficient reward balance'), { statusCode: 400 });
+  const mainBefore = Number(updatedUser.walletBalance || 0) - amount;
+  const rewardBefore = Number(updatedUser.rewardBalance || 0) + amount;
+  const transaction = await Transaction.create({
+    user: userId, type: TRANSACTION_TYPES.REWARD_TRANSFER, amount,
+    balanceBefore: mainBefore, balanceAfter: updatedUser.walletBalance,
+    status: TRANSACTION_STATUS.SUCCESS, reference: generateReference('RWD'), gateway: 'wallet',
+    description: 'Reward balance transferred to main wallet',
+    metadata: { rewardBalanceBefore: rewardBefore, rewardBalanceAfter: updatedUser.rewardBalance }, completedAt: new Date(),
+  });
+  return { walletBalance: updatedUser.walletBalance, rewardBalance: updatedUser.rewardBalance, transaction };
 };
 
 const transferWallet = async (senderId, recipientIdentifier, amount, pin) => {
@@ -241,7 +279,7 @@ const transferWallet = async (senderId, recipientIdentifier, amount, pin) => {
 };
 
 const getWalletBalance = async (userId) => {
-  const user = await User.findById(userId).select('walletBalance bonusBalance');
+  const user = await User.findById(userId).select('walletBalance rewardBalance bonusBalance');
   if (!user) throw new Error('User not found');
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
@@ -258,6 +296,7 @@ const getWalletBalance = async (userId) => {
   ]);
   return {
     walletBalance: user.walletBalance,
+    rewardBalance: user.rewardBalance || 0,
     bonusBalance: user.bonusBalance,
     cashback: user.bonusBalance || 0,
     commission: summary?.commission || 0,
@@ -313,4 +352,4 @@ const resetTransactionPin = async (userId, loginPassword, newPin) => {
   return true;
 };
 
-module.exports = { computeDepositCharge, fundWallet, debitWallet, transferWallet, getWalletBalance, getTransactionHistory, setTransactionPin, resetTransactionPin };
+module.exports = { computeDepositCharge, fundWallet, debitWallet, refundWalletDebit, transferRewardsToWallet, transferWallet, getWalletBalance, getTransactionHistory, setTransactionPin, resetTransactionPin };

@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
-import { ServiceHeader } from '../../components/ui';
+import { PaymentSourceSelect, ServiceHeader } from '../../components/ui';
 import { detectNetwork, isPhoneComplete, NETWORK_LABELS } from '../../utils/phoneNetwork';
 
 const NETWORKS = [
@@ -36,7 +36,7 @@ const formatDataType = (value) => {
 };
 
 export default function DataPurchase() {
-  const { user, updateUser } = useAuthStore();
+  const { user, refreshUser } = useAuthStore();
   const [network, setNetwork] = useState('mtn');
   const [dataType, setDataType] = useState('sme');
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -44,6 +44,7 @@ export default function DataPurchase() {
   const [step, setStep] = useState(1);
   const [receipt, setReceipt] = useState(null);
   const [pin, setPin] = useState('');
+  const [paymentSource, setPaymentSource] = useState('main');
   const [pinAttempts, setPinAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState(null);
   const queryClient = useQueryClient();
@@ -82,7 +83,7 @@ export default function DataPurchase() {
       const providerData = providerResponse.data && typeof providerResponse.data === 'object'
         ? providerResponse.data
         : {};
-      updateUser({ walletBalance: Number(user?.walletBalance || 0) - effectivePrice(selectedPlan) });
+      refreshUser();
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       queryClient.invalidateQueries({ queryKey: ['data-recipient-history'] });
       setReceipt({
@@ -141,7 +142,7 @@ export default function DataPurchase() {
   const detectedNetwork = detectNetwork(phone);
   const phoneComplete = isPhoneComplete(phone);
   const networkMismatch = phoneComplete && detectedNetwork && detectedNetwork !== network;
-  const walletBalance = Number(user?.walletBalance) || 0;
+  const walletBalance = Number(user?.walletBalance || 0) + Number(user?.rewardBalance || 0);
   const selectedPrice = selectedPlan ? Number(effectivePrice(selectedPlan)) || 0 : 0;
   const insufficientFunds = Boolean(selectedPlan) && selectedPrice > walletBalance;
   const amountShort = Math.max(0, selectedPrice - walletBalance);
@@ -345,7 +346,6 @@ export default function DataPurchase() {
               ['Validity', selectedPlan.validity || 'N/A'],
               ['Phone', phone],
               ['Amount', `₦${effectivePrice(selectedPlan).toLocaleString()}`],
-              ['New Balance', `₦${(Number(user?.walletBalance || 0) - effectivePrice(selectedPlan)).toLocaleString()}`],
             ].map(([key, val]) => (
               <div key={key} className="flex justify-between text-sm">
                 <span className="text-dark-400">{key}</span>
@@ -356,6 +356,7 @@ export default function DataPurchase() {
           <div className="flex gap-3">
             <button onClick={() => setStep(1)} className="btn-secondary flex-1">Back</button>
             <div className="space-y-3">
+              <PaymentSourceSelect value={paymentSource} onChange={setPaymentSource} user={user} />
               <div>
                 <label className="label">Transaction PIN</label>
                 <input
@@ -376,9 +377,10 @@ export default function DataPurchase() {
               <button
                 onClick={() => {
                   if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
-                  if (effectivePrice(selectedPlan) > (Number(user?.walletBalance) || 0)) return toast.error('Insufficient funds. Please fund your wallet and try again.');
+                  const available = paymentSource === 'main' ? Number(user?.walletBalance || 0) : paymentSource === 'reward' ? Number(user?.rewardBalance || 0) : Number(user?.walletBalance || 0) + Number(user?.rewardBalance || 0);
+                  if (effectivePrice(selectedPlan) > available) return toast.error('Insufficient balance in the selected wallet source.');
                   if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
-                  purchaseMutation.mutate({ network, planId: selectedPlan.planId, phone, dataType, pin });
+                  purchaseMutation.mutate({ network, planId: selectedPlan.planId, phone, dataType, pin, paymentSource });
                 }}
                 disabled={purchaseMutation.isPending}
                 className="btn-primary flex-1 gap-2"

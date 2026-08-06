@@ -27,18 +27,19 @@ const processCommission = async (userId, amount, transactionType, transactionId)
   if (user.role === ROLES.AGENT) {
     const agentCommission = amount * rates.agent;
     if (agentCommission > 0) {
-      await User.findByIdAndUpdate(userId, { $inc: { walletBalance: agentCommission, commissionEarned: agentCommission } });
+      const rewardBefore = Number(user.rewardBalance || 0);
+      await User.findByIdAndUpdate(userId, { $inc: { rewardBalance: agentCommission, commissionEarned: agentCommission } });
       await Transaction.create({
         user: userId,
         type: TRANSACTION_TYPES.COMMISSION_EARNED,
         amount: agentCommission,
         balanceBefore: user.walletBalance,
-        balanceAfter: user.walletBalance + agentCommission,
+        balanceAfter: user.walletBalance,
         status: TRANSACTION_STATUS.SUCCESS,
         reference: generateReference('COM'),
         gateway: 'system',
         description: `Commission on ${transactionType.replace(/_/g, ' ')}`,
-        metadata: { sourceTransaction: transactionId, rate: rates.agent },
+        metadata: { sourceTransaction: transactionId, rate: rates.agent, rewardBalanceBefore: rewardBefore, rewardBalanceAfter: rewardBefore + agentCommission },
         completedAt: new Date(),
       });
     }
@@ -56,7 +57,7 @@ const processCommission = async (userId, amount, transactionType, transactionId)
 
     if (commission > 0) {
       await User.findByIdAndUpdate(referrer._id, {
-        $inc: { walletBalance: commission, referralEarnings: commission },
+        $inc: { rewardBalance: commission, referralEarnings: commission },
       });
 
       await Transaction.create({
@@ -64,12 +65,12 @@ const processCommission = async (userId, amount, transactionType, transactionId)
         type: TRANSACTION_TYPES.REFERRAL_BONUS,
         amount: commission,
         balanceBefore: referrer.walletBalance,
-        balanceAfter: referrer.walletBalance + commission,
+        balanceAfter: referrer.walletBalance,
         status: TRANSACTION_STATUS.SUCCESS,
         reference: generateReference('REF'),
         gateway: 'system',
         description: `Level ${ref.level} referral commission`,
-        metadata: { referredUserId: userId, sourceTransaction: transactionId, level: ref.level },
+        metadata: { referredUserId: userId, sourceTransaction: transactionId, level: ref.level, rewardBalanceBefore: Number(referrer.rewardBalance || 0), rewardBalanceAfter: Number(referrer.rewardBalance || 0) + commission },
         completedAt: new Date(),
       });
 

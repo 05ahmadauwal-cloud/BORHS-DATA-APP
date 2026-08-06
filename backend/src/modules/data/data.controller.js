@@ -13,7 +13,7 @@ const purchase = async (req, res) => {
 };
 
 const purchaseBulk = async (req, res) => {
-  const results = await dataService.purchaseBulkData(req.user._id, req.body.recipients, req.body.pin);
+  const results = await dataService.purchaseBulkData(req.user._id, req.body.recipients, req.body.pin, req.body.paymentSource);
   return ApiResponse.success(res, { results }, 'Bulk data processed');
 };
 

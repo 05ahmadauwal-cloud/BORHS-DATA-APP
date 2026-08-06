@@ -1,6 +1,6 @@
 const AirtimePurchase = require('../../models/AirtimePurchase');
 const User = require('../../models/User');
-const { debitWallet } = require('../wallet/wallet.service');
+const { debitWallet, refundWalletDebit } = require('../wallet/wallet.service');
 const { withFallback } = require('../../services/providers');
 const { generateReference, sanitizePhone } = require('../../utils/helpers');
 const { TRANSACTION_TYPES, TRANSACTION_STATUS } = require('../../config/constants');
@@ -27,13 +27,6 @@ const purchaseAirtime = async (userId, body) => {
   const discountRate = user.role === 'agent' ? 0.03 : 0;
   const price = Math.ceil(amount * (1 - discountRate));
 
-  if (user.walletBalance < price) {
-    throw Object.assign(
-      new Error(`Insufficient funds. Required: ₦${price.toLocaleString()}, Available: ₦${user.walletBalance.toLocaleString()}`),
-      { statusCode: 400 }
-    );
-  }
-
   const reference = generateReference('AIR');
 
   const purchase = await AirtimePurchase.create({
@@ -53,7 +46,7 @@ const purchaseAirtime = async (userId, body) => {
     debitResult = await debitWallet(
       userId, price, TRANSACTION_TYPES.AIRTIME_PURCHASE,
       `₦${amount} ${network.toUpperCase()} airtime for ${targetPhone}`,
-      { network, phone: targetPhone }
+      { network, phone: targetPhone }, null, body.paymentSource
     );
     purchase.transaction = debitResult.transaction._id;
     await purchase.save();
@@ -91,7 +84,7 @@ const purchaseAirtime = async (userId, body) => {
     await purchase.save();
 
     // Refund wallet
-    await User.findByIdAndUpdate(userId, { $inc: { walletBalance: price } });
+    await refundWalletDebit(userId, debitResult);
 
     throw Object.assign(
       new Error(`Airtime purchase failed: ${error.message}. Your wallet has been refunded.`),
@@ -100,11 +93,11 @@ const purchaseAirtime = async (userId, body) => {
   }
 };
 
-const purchaseBulkAirtime = async (userId, recipients, pin) => {
+const purchaseBulkAirtime = async (userId, recipients, pin, paymentSource) => {
   const results = [];
   for (const r of recipients) {
     try {
-      const result = await purchaseAirtime(userId, { ...r, pin });
+      const result = await purchaseAirtime(userId, { ...r, pin, paymentSource });
       results.push({ phone: r.phone, status: 'success', reference: result.reference });
     } catch (e) {
       results.push({ phone: r.phone, status: 'failed', error: e.message });

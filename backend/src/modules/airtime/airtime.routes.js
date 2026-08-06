@@ -15,6 +15,7 @@ router.post('/purchase', requireKYC, [
   body('network').isIn(['mtn', 'airtel', 'glo', '9mobile']).withMessage('Invalid network'),
   body('phone').notEmpty().withMessage('Phone number is required'),
   body('amount').isNumeric().toFloat().withMessage('Amount must be a number'),
+  body('paymentSource').optional().isIn(['main', 'reward', 'reward_first']),
 ], validate, asyncHandler(ctrl.purchase));
 
 router.post('/purchase/bulk', requireKYC, [
@@ -23,6 +24,7 @@ router.post('/purchase/bulk', requireKYC, [
   body('recipients.*.network').isIn(['mtn', 'airtel', 'glo', '9mobile']),
   body('recipients.*.amount').isNumeric().toFloat(),
   body('pin').matches(/^\d{4}$/).withMessage('Transaction PIN must be a 4-digit code'),
+  body('paymentSource').optional().isIn(['main', 'reward', 'reward_first']),
 ], validate, asyncHandler(ctrl.purchaseBulk));
 
 module.exports = router;

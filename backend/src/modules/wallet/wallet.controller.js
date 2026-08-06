@@ -43,6 +43,11 @@ const transfer = async (req, res) => {
   return ApiResponse.success(res, data, 'Transfer successful');
 };
 
+const transferRewards = async (req, res) => {
+  const data = await walletService.transferRewardsToWallet(req.user._id, Number(req.body.amount), req.body.pin);
+  return ApiResponse.success(res, data, 'Rewards transferred to main wallet');
+};
+
 const setPin = async (req, res) => {
   await walletService.setTransactionPin(req.user._id, req.body.pin);
   return ApiResponse.success(res, {}, 'Transaction PIN set successfully');
@@ -53,4 +58,4 @@ const resetPin = async (req, res) => {
   return ApiResponse.success(res, {}, 'Transaction PIN reset successfully');
 };
 
-module.exports = { getBalance, getDashboard, getTransactions, transfer, setPin, resetPin };
+module.exports = { getBalance, getDashboard, getTransactions, transfer, transferRewards, setPin, resetPin };

@@ -23,6 +23,7 @@ router.post('/purchase', requireKYC, [
   body('meterNumber').notEmpty().withMessage('Meter number is required'),
   body('meterType').isIn(['prepaid', 'postpaid']),
   body('amount').isNumeric().toFloat().withMessage('Amount must be a number'),
+  body('paymentSource').optional().isIn(['main', 'reward', 'reward_first']),
 ], validate, asyncHandler(ctrl.purchase));
 
 module.exports = router;

@@ -17,6 +17,7 @@ module.exports = {
     EDUCATION_PURCHASE: 'education_purchase',
     COMMISSION_EARNED: 'commission_earned',
     REFERRAL_BONUS: 'referral_bonus',
+    REWARD_TRANSFER: 'reward_transfer',
     REFUND: 'refund',
     AGENT_FEE: 'agent_fee',
   },

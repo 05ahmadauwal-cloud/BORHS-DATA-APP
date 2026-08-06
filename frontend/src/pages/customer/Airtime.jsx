@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
-import { ServiceHeader } from '../../components/ui';
+import { PaymentSourceSelect, ServiceHeader } from '../../components/ui';
 import { detectNetwork, isPhoneComplete, NETWORK_LABELS } from '../../utils/phoneNetwork';
 
 const NETWORKS = [
@@ -18,15 +18,16 @@ const NETWORKS = [
 const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
 export default function Airtime() {
-  const { user, updateUser } = useAuthStore();
+  const { user, refreshUser } = useAuthStore();
   const queryClient = useQueryClient();
   const [form, setForm] = useState({ network: 'mtn', phone: '', amount: '' });
   const [step, setStep] = useState(1);
   const [receipt, setReceipt] = useState(null);
   const [pin, setPin] = useState('');
+  const [paymentSource, setPaymentSource] = useState('main');
   const [pinAttempts, setPinAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState(null);
-  const walletBalance = Number(user?.walletBalance) || 0;
+  const walletBalance = Number(user?.walletBalance || 0) + Number(user?.rewardBalance || 0);
   const airtimeAmount = Number(form.amount) || 0;
   const insufficientFunds = airtimeAmount > walletBalance;
   const amountShort = Math.max(0, airtimeAmount - walletBalance);
@@ -52,7 +53,7 @@ export default function Airtime() {
     mutationFn: (payload) => airtimeAPI.purchase(payload),
     onSuccess: (res) => {
       const purchase = res.data?.purchase || {};
-      updateUser({ walletBalance: Number(user?.walletBalance || 0) - Number(form.amount) });
+      refreshUser();
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       queryClient.invalidateQueries({ queryKey: ['airtime-recipient-history'] });
       setReceipt({
@@ -222,7 +223,6 @@ export default function Airtime() {
               ['Network', <NetworkLogo key="net" network={form.network} size="sm" />],
               ['Phone', form.phone],
               ['Amount', `₦${Number(form.amount).toLocaleString()}`],
-              ['New Balance', `₦${(Number(user?.walletBalance || 0) - Number(form.amount)).toLocaleString()}`],
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between text-sm">
                 <span className="text-dark-400">{k}</span>
@@ -231,6 +231,7 @@ export default function Airtime() {
             ))}
           </div>
             <div className="space-y-3">
+              <PaymentSourceSelect value={paymentSource} onChange={setPaymentSource} user={user} />
               <div>
                 <label className="label">Transaction PIN</label>
                 <input className="input text-center tracking-[0.4em]" type="password" inputMode="numeric" autoComplete="off" placeholder="••••" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
@@ -241,9 +242,10 @@ export default function Airtime() {
                 <button
                   onClick={() => {
                     if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
-                    if (Number(form.amount) > (Number(user?.walletBalance) || 0)) return toast.error('Insufficient funds. Please fund your wallet and try again.');
+                    const available = paymentSource === 'main' ? Number(user?.walletBalance || 0) : paymentSource === 'reward' ? Number(user?.rewardBalance || 0) : Number(user?.walletBalance || 0) + Number(user?.rewardBalance || 0);
+                    if (Number(form.amount) > available) return toast.error('Insufficient balance in the selected wallet source.');
                     if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
-                    mutation.mutate({ ...form, pin });
+                    mutation.mutate({ ...form, pin, paymentSource });
                   }}
                   disabled={mutation.isPending}
                   className="btn-primary flex-1"

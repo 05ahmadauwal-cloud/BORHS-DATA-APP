@@ -5,7 +5,7 @@ import { Tv, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
-import { ServiceHeader } from '../../components/ui';
+import { PaymentSourceSelect, ServiceHeader } from '../../components/ui';
 
 const PROVIDERS = [
   { id: 'dstv', label: 'DStv', emoji: '📡' },
@@ -14,7 +14,7 @@ const PROVIDERS = [
 ];
 
 export default function Cable() {
-  const { user, updateUser } = useAuthStore();
+  const { user, refreshUser } = useAuthStore();
   const queryClient = useQueryClient();
   const [provider, setProvider] = useState('dstv');
   const [smartCard, setSmartCard] = useState('');
@@ -23,6 +23,7 @@ export default function Cable() {
   const [step, setStep] = useState(1);
   const [receipt, setReceipt] = useState(null);
   const [pin, setPin] = useState('');
+  const [paymentSource, setPaymentSource] = useState('main');
   const [pinAttempts, setPinAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState(null);
 
@@ -42,7 +43,7 @@ export default function Cable() {
     mutationFn: (payload) => cableAPI.purchase(payload),
     onSuccess: (res) => {
       const purchase = res.data?.purchase || {};
-      updateUser({ walletBalance: Number(user?.walletBalance || 0) - Number(selectedPkg.amount) });
+      refreshUser();
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
       setReceipt({
         type: 'cable',
@@ -154,6 +155,7 @@ export default function Cable() {
 
         {step >= 2 && selectedPkg && (
           <div className="space-y-3">
+            <PaymentSourceSelect value={paymentSource} onChange={setPaymentSource} user={user} />
             <div>
               <label className="label">Transaction PIN</label>
               <input className="input text-center tracking-[0.4em]" type="password" inputMode="numeric" autoComplete="off" placeholder="••••" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
@@ -163,7 +165,7 @@ export default function Cable() {
               onClick={() => {
                 if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
                 if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
-                purchaseMutation.mutate({ provider, smartCardNumber: smartCard, packageId: selectedPkg.id, pin });
+                purchaseMutation.mutate({ provider, smartCardNumber: smartCard, packageId: selectedPkg.id, pin, paymentSource });
               }}
               disabled={purchaseMutation.isPending}
               className="btn-primary w-full btn-lg"

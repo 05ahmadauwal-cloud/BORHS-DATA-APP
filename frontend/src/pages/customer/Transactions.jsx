@@ -5,7 +5,7 @@ import { History, CheckCircle, XCircle, Clock, SlidersHorizontal, Printer } from
 import { format } from 'date-fns';
 import Receipt from '../../components/ui/Receipt';
 
-const isCredit = (type) => ['wallet_fund', 'commission_earned', 'referral_bonus'].includes(type);
+const isCredit = (type) => ['wallet_fund', 'commission_earned', 'referral_bonus', 'reward_transfer'].includes(type);
 
 const TYPE_LABELS = {
   wallet_fund: 'Wallet Fund',
@@ -17,6 +17,7 @@ const TYPE_LABELS = {
   education_purchase: 'Exam PIN',
   commission_earned: 'Commission',
   referral_bonus: 'Referral Bonus',
+  reward_transfer: 'Reward Transfer',
   withdrawal: 'Withdrawal',
 };
 

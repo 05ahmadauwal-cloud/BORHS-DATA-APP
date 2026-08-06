@@ -19,7 +19,7 @@ const quickActions = [
   { to: '/become-agent', icon: UserPlus, label: 'Become Agent' },
 ];
 
-const creditTypes = ['wallet_fund', 'commission_earned', 'referral_bonus', 'coupon'];
+const creditTypes = ['wallet_fund', 'commission_earned', 'referral_bonus', 'reward_transfer', 'coupon'];
 
 export default function Dashboard() {
   const { user, updateUser } = useAuthStore();

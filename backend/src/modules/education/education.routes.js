@@ -14,6 +14,7 @@ router.get('/history', asyncHandler(ctrl.getHistory));
 router.post('/purchase', requireKYC, [
   body('examType').isIn(['waec', 'neco', 'nabteb', 'jamb']).withMessage('Invalid exam type'),
   body('quantity').optional().isInt({ min: 1, max: 10 }).toInt(),
+  body('paymentSource').optional().isIn(['main', 'reward', 'reward_first']),
 ], validate, asyncHandler(ctrl.purchase));
 
 module.exports = router;

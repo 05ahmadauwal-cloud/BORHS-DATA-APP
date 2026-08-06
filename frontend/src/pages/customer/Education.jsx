@@ -5,7 +5,7 @@ import { GraduationCap, Copy, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
-import { ServiceHeader } from '../../components/ui';
+import { PaymentSourceSelect, ServiceHeader } from '../../components/ui';
 
 const EXAMS = [
   { id: 'waec', label: 'WAEC', desc: 'West African Examinations Council' },
@@ -15,13 +15,14 @@ const EXAMS = [
 ];
 
 export default function Education() {
-  const { user, updateUser } = useAuthStore();
+  const { user, refreshUser } = useAuthStore();
   const queryClient = useQueryClient();
   const [examType, setExamType] = useState('waec');
   const [quantity, setQuantity] = useState(1);
   const [result, setResult] = useState(null);
   const [receipt, setReceipt] = useState(null);
   const [pin, setPin] = useState('');
+  const [paymentSource, setPaymentSource] = useState('main');
   const [pinAttempts, setPinAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState(null);
 
@@ -47,7 +48,7 @@ export default function Education() {
         quantity: purchase.pins?.length || quantity,
         pins: purchase.pins,
       });
-      updateUser({ walletBalance: Number(user?.walletBalance || 0) - Number(cost) });
+      refreshUser();
       setPin('');
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
     },
@@ -124,10 +125,11 @@ export default function Education() {
               <span className="text-dark-100">Total</span>
               <span className="text-primary-400">₦{total.toLocaleString()}</span>
             </div>
-            <p className="text-xs text-dark-500 mt-1">Balance after: ₦{(Number(user?.walletBalance || 0) - total).toLocaleString()}</p>
+            <p className="text-xs text-dark-500 mt-1">Combined available: ₦{(Number(user?.walletBalance || 0) + Number(user?.rewardBalance || 0)).toLocaleString()}</p>
           </div>
 
           <div className="space-y-3">
+            <PaymentSourceSelect value={paymentSource} onChange={setPaymentSource} user={user} />
             <div>
               <label className="label">Transaction PIN</label>
               <input className="input text-center tracking-[0.4em]" type="password" inputMode="numeric" autoComplete="off" placeholder="••••" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
@@ -137,15 +139,15 @@ export default function Education() {
               onClick={() => {
                 if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
                 if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
-                mutation.mutate({ examType, quantity, pin });
+                mutation.mutate({ examType, quantity, pin, paymentSource });
               }}
-              disabled={mutation.isPending || total > Number(user?.walletBalance || 0)}
+              disabled={mutation.isPending || total > Number(user?.walletBalance || 0) + Number(user?.rewardBalance || 0)}
               className="btn-primary w-full btn-lg"
             >
               {mutation.isPending ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : `Purchase ${quantity} ${selectedExam?.label} PIN${quantity > 1 ? 's' : ''}`}
             </button>
           </div>
-          {total > Number(user?.walletBalance || 0) && (
+          {total > Number(user?.walletBalance || 0) + Number(user?.rewardBalance || 0) && (
             <p className="text-red-400 text-xs text-center">Insufficient balance. Please fund your wallet.</p>
           )}
         </div>
