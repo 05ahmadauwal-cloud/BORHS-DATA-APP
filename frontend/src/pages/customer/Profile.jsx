@@ -1,15 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { authAPI, walletAPI } from '../../api';
 import {
   User, Shield, Lock, KeyRound, CheckCircle, Copy, Check, Clock,
   Mail, Phone, Calendar, Star, Wallet, Eye, EyeOff, AlertCircle, ChevronRight,
+  Fingerprint,
 } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { NativeBiometric } from '@capgo/capacitor-native-biometric';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import KYCFlow from './KYCFlow';
 import VerificationBadge from '../../components/common/VerificationBadge';
+import {
+  BIOMETRIC_SERVER,
+  activateBiometricsForAccount,
+  clearBiometricCredentials,
+  getBiometricAccountId,
+  getUserAccountId,
+} from '../../utils/biometric';
 
 const TABS = [
   { id: 'profile', label: 'Profile', icon: User },
@@ -86,6 +96,47 @@ export default function Profile() {
   const [phoneOtp, setPhoneOtp] = useState('');
   const [showPhoneOtp, setShowPhoneOtp] = useState(false);
   const [username, setUsername] = useState(user?.username || '');
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricActive, setBiometricActive] = useState(false);
+  const [biometricPassword, setBiometricPassword] = useState('');
+  const [biometricLoading, setBiometricLoading] = useState(false);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    NativeBiometric.isAvailable().then(async (availability) => {
+      setBiometricAvailable(availability.isAvailable);
+      if (!availability.isAvailable) return;
+      const saved = await NativeBiometric.isCredentialsSaved({ server: BIOMETRIC_SERVER });
+      setBiometricActive(saved.isSaved && getBiometricAccountId() === getUserAccountId(user));
+    }).catch(() => setBiometricAvailable(false));
+  }, [user]);
+
+  const enableFingerprint = async () => {
+    if (!biometricPassword) return toast.error('Enter your password to activate fingerprint login');
+    setBiometricLoading(true);
+    try {
+      const response = await authAPI.login({ identifier: user.email, password: biometricPassword });
+      const verifiedUser = response.data.user;
+      if (getUserAccountId(verifiedUser) !== getUserAccountId(user)) throw new Error('Account verification failed');
+      await clearBiometricCredentials();
+      await activateBiometricsForAccount({ user, identifier: user.email, password: biometricPassword });
+      setBiometricPassword('');
+      setBiometricActive(true);
+      toast.success('Fingerprint login activated for this account.');
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || 'Could not activate fingerprint login');
+    } finally {
+      setBiometricLoading(false);
+    }
+  };
+
+  const disableFingerprint = async () => {
+    setBiometricLoading(true);
+    await clearBiometricCredentials();
+    setBiometricActive(false);
+    setBiometricLoading(false);
+    toast.success('Fingerprint login disabled.');
+  };
 
   const usernameMutation = useMutation({
     mutationFn: () => authAPI.updateUsername(username),
@@ -380,6 +431,33 @@ export default function Profile() {
       {/* ── Security Tab ─────────────────────────────────────────────── */}
       {activeTab === 'security' && (
         <div className="space-y-4">
+
+          {biometricAvailable && (
+            <div className="card overflow-hidden">
+              <div className="px-5 py-4 border-b flex items-center gap-2" style={{ borderColor: 'var(--border)' }}>
+                <Fingerprint size={17} className="text-primary-400" />
+                <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>Fingerprint Login</h3>
+                {biometricActive && <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-success-500/10 text-success-400 border border-success-500/20">Active</span>}
+              </div>
+              <div className="p-5 space-y-3">
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  Fingerprint login is linked only to this account on this device. Signing in to another account will disable it.
+                </p>
+                {biometricActive ? (
+                  <button onClick={disableFingerprint} disabled={biometricLoading} className="btn-secondary w-full gap-2">
+                    <Fingerprint size={16} />{biometricLoading ? 'Disabling...' : 'Disable Fingerprint Login'}
+                  </button>
+                ) : (
+                  <>
+                    <PasswordInput placeholder="Confirm your account password" value={biometricPassword} onChange={(e) => setBiometricPassword(e.target.value)} />
+                    <button onClick={enableFingerprint} disabled={biometricLoading || !biometricPassword} className="btn-primary w-full gap-2">
+                      <Fingerprint size={16} />{biometricLoading ? 'Activating...' : 'Activate for This Account'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Change Password */}
           <div className="card overflow-hidden">

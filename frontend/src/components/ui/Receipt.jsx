@@ -20,13 +20,6 @@ function buildRows(data) {
     data.customer && ['Customer', data.customer],
     data.customerEmail && ['Customer Email', data.customerEmail],
   ].filter(Boolean);
-  const providerRows = [
-    data.transactionProvider && ['Processed By', data.transactionProvider],
-    data.providerReference && ['Provider Reference', data.providerReference],
-    data.providerStatus && ['Provider Status', data.providerStatus],
-    data.providerMessage && ['Provider Message', data.providerMessage],
-  ].filter(Boolean);
-
   if (data.type === 'data') {
     return [
       ...customerRows,
@@ -36,7 +29,6 @@ function buildRows(data) {
       data.planName    && ['Plan',      data.planName],
       data.validity    && ['Validity',  data.validity],
       data.dataType    && ['Type',      data.dataType],
-      ...providerRows,
     ].filter(Boolean);
   }
   if (data.type === 'airtime') {
@@ -44,7 +36,6 @@ function buildRows(data) {
       ...customerRows,
       data.network && ['Network', data.network],
       data.phone   && ['Phone',   data.phone],
-      ...providerRows,
     ].filter(Boolean);
   }
   if (data.type === 'electricity') {
@@ -55,7 +46,6 @@ function buildRows(data) {
       data.meterType    && ['Meter Type',  data.meterType.charAt(0).toUpperCase() + data.meterType.slice(1)],
       data.customerName && ['Customer',    data.customerName],
       data.units        && ['Units',       data.units],
-      ...providerRows,
     ].filter(Boolean);
   }
   if (data.type === 'cable') {
@@ -65,7 +55,6 @@ function buildRows(data) {
       data.smartCardNumber && ['Smart Card', data.smartCardNumber],
       data.customerName   && ['Customer',   data.customerName],
       data.packageName    && ['Package',    data.packageName],
-      ...providerRows,
     ].filter(Boolean);
   }
   if (data.type === 'education') {
@@ -73,13 +62,11 @@ function buildRows(data) {
       ...customerRows,
       data.examType && ['Exam Type', data.examType],
       data.quantity && ['Quantity',  `${data.quantity} PIN${data.quantity > 1 ? 's' : ''}`],
-      ...providerRows,
     ].filter(Boolean);
   }
   return [
     ...customerRows,
     data.description && ['Details', data.description],
-    ...providerRows,
   ].filter(Boolean);
 }
 

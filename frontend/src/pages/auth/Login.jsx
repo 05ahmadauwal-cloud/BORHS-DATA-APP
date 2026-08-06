@@ -6,27 +6,31 @@ import { useEffect, useState } from 'react';
 import { Eye, EyeOff, Fingerprint, LogIn, Sun, Moon } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import {
-  AccessControl,
   BiometricAuthError,
   NativeBiometric,
 } from '@capgo/capacitor-native-biometric';
 import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
 import toast from 'react-hot-toast';
+import {
+  BIOMETRIC_SERVER,
+  clearBiometricCredentials,
+  getBiometricAccountId,
+  getUserAccountId,
+  invalidateBiometricsForDifferentAccount,
+} from '../../utils/biometric';
 
 const schema = z.object({
   identifier: z.string().min(3, 'Email or username is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
-const BIOMETRIC_SERVER = 'com.borhsdata.app';
 const REMEMBERED_IDENTIFIER_KEY = 'borhs_remembered_identifier';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricSaved, setBiometricSaved] = useState(false);
-  const [enableBiometric, setEnableBiometric] = useState(true);
   const [biometricLoading, setBiometricLoading] = useState(false);
   const [rememberIdentifier, setRememberIdentifier] = useState(true);
   const { login, isLoading } = useAuthStore();
@@ -61,9 +65,11 @@ export default function Login() {
         if (!active || !availability.isAvailable) return;
 
         const saved = await NativeBiometric.isCredentialsSaved({ server: BIOMETRIC_SERVER });
+        const isAccountBound = Boolean(getBiometricAccountId());
+        if (saved.isSaved && !isAccountBound) await clearBiometricCredentials();
         if (active) {
           setBiometricAvailable(true);
-          setBiometricSaved(saved.isSaved);
+          setBiometricSaved(saved.isSaved && isAccountBound);
         }
       } catch {
         if (active) setBiometricAvailable(false);
@@ -78,25 +84,16 @@ export default function Login() {
     try {
       const result = await login(data.identifier, data.password);
 
+      const invalidated = await invalidateBiometricsForDifferentAccount(result.user).catch(() => false);
+      if (invalidated) {
+        setBiometricSaved(false);
+        toast('Fingerprint login was reset because you signed in to a different account. Activate it in Profile → Security.');
+      }
+
       if (rememberIdentifier) {
         localStorage.setItem(REMEMBERED_IDENTIFIER_KEY, data.identifier.trim());
       } else {
         localStorage.removeItem(REMEMBERED_IDENTIFIER_KEY);
-      }
-
-      if (biometricAvailable && enableBiometric && !biometricSaved) {
-        try {
-          await NativeBiometric.setCredentials({
-            username: data.identifier,
-            password: data.password,
-            server: BIOMETRIC_SERVER,
-            accessControl: AccessControl.BIOMETRY_CURRENT_SET,
-          });
-          setBiometricSaved(true);
-          toast.success('Fingerprint login enabled on this device.');
-        } catch {
-          toast('Signed in, but fingerprint setup was not completed.');
-        }
       }
 
       toast.success(`Welcome back, ${result.user.firstName}!`);
@@ -119,6 +116,12 @@ export default function Login() {
         negativeButtonText: 'Use password',
       });
       const result = await login(credentials.username, credentials.password);
+      if (getBiometricAccountId() !== getUserAccountId(result.user)) {
+        await clearBiometricCredentials();
+        setBiometricSaved(false);
+        toast.error('This fingerprint login is not linked to that account. Sign in with your password and activate it again in Settings.');
+        return;
+      }
       toast.success(`Welcome back, ${result.user.firstName}!`);
       navigateAfterLogin(result.user);
     } catch (error) {
@@ -127,7 +130,7 @@ export default function Login() {
       }
 
       if ([401, 403].includes(error.response?.status)) {
-        await NativeBiometric.deleteCredentials({ server: BIOMETRIC_SERVER }).catch(() => {});
+        await clearBiometricCredentials();
         setBiometricSaved(false);
         toast.error('Saved login has expired. Sign in with your password again.');
       } else {
@@ -212,21 +215,6 @@ export default function Login() {
               />
               Remember email or username
             </label>
-
-            {biometricAvailable && !biometricSaved && (
-              <label className="flex items-start gap-3 cursor-pointer rounded-xl p-3"
-                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
-                <input
-                  type="checkbox"
-                  checked={enableBiometric}
-                  onChange={(event) => setEnableBiometric(event.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-primary-500"
-                />
-                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  Enable fingerprint login on this device
-                </span>
-              </label>
-            )}
 
             <button
               type="submit"
