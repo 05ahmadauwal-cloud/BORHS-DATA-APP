@@ -19,7 +19,7 @@ router.post('/purchase', requireKYC, [
 ], validate, asyncHandler(ctrl.purchase));
 
 router.post('/purchase/bulk', requireKYC, [
-  body('recipients').isArray({ min: 1, max: 20 }).withMessage('Recipients must contain 1-20 entries'),
+  body('recipients').isArray({ min: 1 }).withMessage('At least one recipient is required'),
   body('recipients.*.network').isIn(['mtn', 'airtel', 'glo', '9mobile']).withMessage('Invalid network'),
   body('recipients.*.planId').notEmpty().withMessage('Plan is required'),
   body('recipients.*.phone').matches(/^0\d{10}$/).withMessage('Each phone number must be 11 digits'),

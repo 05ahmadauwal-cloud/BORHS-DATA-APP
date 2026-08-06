@@ -18,7 +18,7 @@ router.post('/purchase', requireKYC, [
 ], validate, asyncHandler(ctrl.purchase));
 
 router.post('/purchase/bulk', requireKYC, [
-  body('recipients').isArray({ min: 1, max: 20 }).withMessage('Recipients must be an array of 1-20'),
+  body('recipients').isArray({ min: 1 }).withMessage('At least one recipient is required'),
   body('recipients.*.phone').notEmpty(),
   body('recipients.*.network').isIn(['mtn', 'airtel', 'glo', '9mobile']),
   body('recipients.*.amount').isNumeric().toFloat(),

@@ -10,6 +10,7 @@ import { detectNetwork, NETWORK_LABELS } from '../../utils/phoneNetwork';
 
 const NETWORKS = ['mtn', 'airtel', 'glo', '9mobile'];
 const DATA_TYPES = ['sme', 'corporate', 'gifting', 'direct'];
+const REQUEST_BATCH_SIZE = 20;
 
 function parsePhones(value) {
   return [...new Set(value.split(/[\s,;]+/).map((phone) => phone.replace(/\D/g, '')).filter(Boolean))];
@@ -41,11 +42,21 @@ export default function BulkPurchase() {
   const estimatedTotal = unitPrice * phones.length;
 
   const mutation = useMutation({
-    mutationFn: () => type === 'data'
-      ? dataAPI.purchaseBulk(phones.map((phone) => ({ phone, network, planId, dataType })), pin)
-      : airtimeAPI.purchaseBulk(phones.map((phone) => ({ phone, network: detectNetwork(phone) || network, amount: Number(amount) })), pin),
-    onSuccess: (response) => {
-      const batchResults = response.data.results || [];
+    mutationFn: async () => {
+      const recipients = type === 'data'
+        ? phones.map((phone) => ({ phone, network, planId, dataType }))
+        : phones.map((phone) => ({ phone, network: detectNetwork(phone) || network, amount: Number(amount) }));
+      const batchResults = [];
+      for (let index = 0; index < recipients.length; index += REQUEST_BATCH_SIZE) {
+        const batch = recipients.slice(index, index + REQUEST_BATCH_SIZE);
+        const response = type === 'data'
+          ? await dataAPI.purchaseBulk(batch, pin)
+          : await airtimeAPI.purchaseBulk(batch, pin);
+        batchResults.push(...(response.data.results || []));
+      }
+      return batchResults;
+    },
+    onSuccess: (batchResults) => {
       setResults(batchResults);
       setPin('');
       queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
@@ -59,7 +70,7 @@ export default function BulkPurchase() {
   });
 
   const submit = () => {
-    if (!phones.length || phones.length > 20) return toast.error('Enter between 1 and 20 phone numbers');
+    if (!phones.length) return toast.error('Enter at least one phone number');
     if (phones.some((phone) => !/^0\d{10}$/.test(phone))) return toast.error('Every phone number must be 11 digits and start with 0');
     if (type === 'data' && !selectedPlan) return toast.error('Select a data plan');
     if (type === 'data' && phones.some((phone) => detectNetwork(phone) && detectNetwork(phone) !== network)) return toast.error(`All numbers must belong to ${NETWORK_LABELS[network]}`);
@@ -72,7 +83,7 @@ export default function BulkPurchase() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <ServiceHeader icon={ListPlus} title="Bulk purchase" description="Send data or airtime to up to 20 numbers in one batch." />
+      <ServiceHeader icon={ListPlus} title="Bulk purchase" description="Send data or airtime to every number in your list." />
       <div className="card p-5 space-y-5">
         <div className="grid grid-cols-2 gap-2">
           {[['data', Wifi, 'Bulk Data'], ['airtime', Phone, 'Bulk Airtime']].map(([value, Icon, label]) => (
@@ -90,7 +101,7 @@ export default function BulkPurchase() {
 
         {type === 'airtime' && <div><label className="label">Amount for each number (₦)</label><input type="number" min="100" max="50000" className="input" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="500" /><p className="mt-1 text-xs text-dark-500">The network will be detected for each phone number.</p></div>}
 
-        <div><label className="label">Phone numbers ({phones.length}/20)</label><textarea className="input min-h-36 resize-y" value={phoneText} onChange={(event) => setPhoneText(event.target.value)} placeholder={'08012345678\n08123456789\n07012345678'} /><p className="mt-1 text-xs text-dark-500">Enter one per line, or separate numbers with commas.</p></div>
+        <div><label className="label">Phone numbers ({phones.length})</label><textarea className="input min-h-36 resize-y" value={phoneText} onChange={(event) => setPhoneText(event.target.value)} placeholder={'08012345678\n08123456789\n07012345678'} /><p className="mt-1 text-xs text-dark-500">Enter one per line, or separate numbers with commas. Duplicate numbers are removed automatically.</p></div>
         <div className="rounded-xl bg-dark-700/50 p-4 flex justify-between"><span className="text-sm text-dark-400">Estimated total</span><strong className="text-dark-100">₦{estimatedTotal.toLocaleString()}</strong></div>
         <div><label className="label">Transaction PIN</label><input type="password" inputMode="numeric" maxLength={4} className="input text-center tracking-[0.7em] text-lg" value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="••••" /></div>
         <button type="button" onClick={submit} disabled={mutation.isPending} className="btn-primary btn-lg w-full">{mutation.isPending ? 'Processing batch...' : `Purchase for ${phones.length} number${phones.length === 1 ? '' : 's'}`}</button>
