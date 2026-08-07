@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { dataAPI } from '../../api';
+import { dataAPI, purchaseToolsAPI } from '../../api';
 import { Wifi, CheckCircle, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
-import { PaymentSourceSelect, ServiceHeader } from '../../components/ui';
+import { AutoRenewalOption, PaymentSourceSelect, ServiceHeader } from '../../components/ui';
 import { detectNetwork, isPhoneComplete, NETWORK_LABELS } from '../../utils/phoneNetwork';
 
 const NETWORKS = [
@@ -45,6 +45,8 @@ export default function DataPurchase() {
   const [receipt, setReceipt] = useState(null);
   const [pin, setPin] = useState('');
   const [paymentSource, setPaymentSource] = useState('main');
+  const [autoRenew, setAutoRenew] = useState(false);
+  const [renewalFrequency, setRenewalFrequency] = useState('monthly');
   const [pinAttempts, setPinAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState(null);
   const queryClient = useQueryClient();
@@ -116,6 +118,11 @@ export default function DataPurchase() {
           || providerData.message
           || providerData.api_response,
       });
+      if (autoRenew) {
+        purchaseToolsAPI.createAutoRenewal({ serviceType: 'data', label: `${selectedPlan.dataSize} for ${phone}`, payload: { network, planId: selectedPlan.planId, phone, dataType }, frequency: renewalFrequency, paymentSource, pin })
+          .then(() => toast.success('Auto-renewal activated'))
+          .catch((error) => toast.error(error.response?.data?.message || 'Purchase succeeded, but auto-renewal could not be activated'));
+      }
       setStep(1);
       setSelectedPlan(null);
       setPhone('');
@@ -357,6 +364,7 @@ export default function DataPurchase() {
             <button onClick={() => setStep(1)} className="btn-secondary flex-1">Back</button>
             <div className="space-y-3">
               <PaymentSourceSelect value={paymentSource} onChange={setPaymentSource} user={user} />
+              <AutoRenewalOption enabled={autoRenew} onEnabledChange={setAutoRenew} frequency={renewalFrequency} onFrequencyChange={setRenewalFrequency} />
               <div>
                 <label className="label">Transaction PIN</label>
                 <input

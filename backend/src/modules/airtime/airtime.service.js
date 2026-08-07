@@ -7,7 +7,7 @@ const { TRANSACTION_TYPES, TRANSACTION_STATUS } = require('../../config/constant
 const { processCommission } = require('../agent/agent.service');
 const logger = require('../../utils/logger');
 
-const purchaseAirtime = async (userId, body) => {
+const purchaseAirtime = async (userId, body, options = {}) => {
   const { network, phone } = body;
   const amount = Number(body.amount);
   const targetPhone = sanitizePhone(phone);
@@ -20,10 +20,12 @@ const purchaseAirtime = async (userId, body) => {
 
   // Require and validate transaction PIN
   const { pin } = body;
-  if (!user.isPinSet) throw Object.assign(new Error('Transaction PIN not set. Please set a PIN to continue.'), { statusCode: 400 });
-  if (!pin || !/^\d{4}$/.test(String(pin))) throw Object.assign(new Error('Transaction PIN must be a 4-digit code'), { statusCode: 400 });
-  const pinOk = await user.comparePin(String(pin));
-  if (!pinOk) throw Object.assign(new Error('Invalid transaction PIN'), { statusCode: 401 });
+  if (!options.skipPin) {
+    if (!user.isPinSet) throw Object.assign(new Error('Transaction PIN not set. Please set a PIN to continue.'), { statusCode: 400 });
+    if (!pin || !/^\d{4}$/.test(String(pin))) throw Object.assign(new Error('Transaction PIN must be a 4-digit code'), { statusCode: 400 });
+    const pinOk = await user.comparePin(String(pin));
+    if (!pinOk) throw Object.assign(new Error('Invalid transaction PIN'), { statusCode: 401 });
+  }
   const discountRate = user.role === 'agent' ? 0.03 : 0;
   const price = Math.ceil(amount * (1 - discountRate));
 

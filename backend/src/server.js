@@ -27,6 +27,9 @@ if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
 
 // ─── Database ─────────────────────────────────────────────────────────────────
 connectDB();
+mongoose.connection.once('open', () => {
+  require('./modules/renewal/renewal.service').startRenewalWorker();
+});
 
 // ─── Security Middleware ──────────────────────────────────────────────────────
 app.use(helmet({

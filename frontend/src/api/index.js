@@ -106,6 +106,16 @@ export const notificationAPI = {
   markRead: (ids) => api.patch('/notifications/read', { ids }),
 };
 
+export const purchaseToolsAPI = {
+  getRecipientLists: () => api.get('/purchase-tools/recipient-lists'),
+  saveRecipientList: (name, numbers) => api.post('/purchase-tools/recipient-lists', { name, numbers }),
+  deleteRecipientList: (id) => api.delete(`/purchase-tools/recipient-lists/${id}`),
+  getAutoRenewals: () => api.get('/purchase-tools/auto-renewals'),
+  createAutoRenewal: (data) => api.post('/purchase-tools/auto-renewals', data),
+  setAutoRenewalActive: (id, isActive) => api.patch(`/purchase-tools/auto-renewals/${id}`, { isActive }),
+  deleteAutoRenewal: (id) => api.delete(`/purchase-tools/auto-renewals/${id}`),
+};
+
 // Banner
 export const bannerAPI = {
   get: () => api.get('/banner'),

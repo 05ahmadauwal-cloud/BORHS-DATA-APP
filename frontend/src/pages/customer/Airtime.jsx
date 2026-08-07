@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { airtimeAPI } from '../../api';
+import { airtimeAPI, purchaseToolsAPI } from '../../api';
 import { Phone, CheckCircle, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
-import { PaymentSourceSelect, ServiceHeader } from '../../components/ui';
+import { AutoRenewalOption, PaymentSourceSelect, ServiceHeader } from '../../components/ui';
 import { detectNetwork, isPhoneComplete, NETWORK_LABELS } from '../../utils/phoneNetwork';
 
 const NETWORKS = [
@@ -25,6 +25,8 @@ export default function Airtime() {
   const [receipt, setReceipt] = useState(null);
   const [pin, setPin] = useState('');
   const [paymentSource, setPaymentSource] = useState('main');
+  const [autoRenew, setAutoRenew] = useState(false);
+  const [renewalFrequency, setRenewalFrequency] = useState('monthly');
   const [pinAttempts, setPinAttempts] = useState(0);
   const [lockUntil, setLockUntil] = useState(null);
   const walletBalance = Number(user?.walletBalance || 0) + Number(user?.rewardBalance || 0);
@@ -65,6 +67,11 @@ export default function Airtime() {
         network: form.network.toUpperCase(),
         phone: form.phone,
       });
+      if (autoRenew) {
+        purchaseToolsAPI.createAutoRenewal({ serviceType: 'airtime', label: `₦${form.amount} airtime for ${form.phone}`, payload: { ...form, amount: Number(form.amount) }, frequency: renewalFrequency, paymentSource, pin })
+          .then(() => toast.success('Auto-renewal activated'))
+          .catch((error) => toast.error(error.response?.data?.message || 'Purchase succeeded, but auto-renewal could not be activated'));
+      }
       setForm({ network: 'mtn', phone: '', amount: '' });
       setPin('');
       setStep(1);
@@ -232,6 +239,7 @@ export default function Airtime() {
           </div>
             <div className="space-y-3">
               <PaymentSourceSelect value={paymentSource} onChange={setPaymentSource} user={user} />
+              <AutoRenewalOption enabled={autoRenew} onEnabledChange={setAutoRenew} frequency={renewalFrequency} onFrequencyChange={setRenewalFrequency} />
               <div>
                 <label className="label">Transaction PIN</label>
                 <input className="input text-center tracking-[0.4em]" type="password" inputMode="numeric" autoComplete="off" placeholder="••••" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
