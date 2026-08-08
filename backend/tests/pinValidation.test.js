@@ -4,6 +4,10 @@ jest.mock('../src/models/DataPurchase');
 jest.mock('../src/models/Transaction');
 jest.mock('../src/modules/wallet/wallet.service', () => ({ debitWallet: jest.fn() }));
 jest.mock('../src/services/providers', () => ({ withFallback: jest.fn() }));
+jest.mock('../src/modules/data/networkAvailability', () => ({
+  getNetworkStatus: jest.fn().mockResolvedValue({ mtn: true, airtel: true, glo: true, '9mobile': true }),
+  isNetworkEnabled: jest.fn().mockResolvedValue(true),
+}));
 
 const User = require('../src/models/User');
 const DataPlan = require('../src/models/DataPlan');
@@ -11,12 +15,25 @@ const DataPurchase = require('../src/models/DataPurchase');
 const Transaction = require('../src/models/Transaction');
 const walletService = require('../src/modules/wallet/wallet.service');
 const providers = require('../src/services/providers');
+const networkAvailability = require('../src/modules/data/networkAvailability');
 
 const dataService = require('../src/modules/data/data.service');
 
 describe('PIN validation for data purchases', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    networkAvailability.isNetworkEnabled.mockResolvedValue(true);
+    networkAvailability.getNetworkStatus.mockResolvedValue({ mtn: true, airtel: true, glo: true, '9mobile': true });
+  });
+
+  test('blocks a disabled network before loading a plan or debiting a wallet', async () => {
+    networkAvailability.isNetworkEnabled.mockResolvedValue(false);
+
+    await expect(dataService.purchaseData('u1', {
+      network: 'mtn', planId: 'p1', phone: '08012345678', pin: '1234',
+    })).rejects.toMatchObject({ statusCode: 503 });
+    expect(DataPlan.findOne).not.toHaveBeenCalled();
+    expect(walletService.debitWallet).not.toHaveBeenCalled();
   });
 
   test('throws when PIN is not set', async () => {

@@ -87,6 +87,20 @@ router.delete('/data-plans/:id', asyncHandler(async (req, res) => {
   return ApiResponse.success(res, {}, 'Data plan deleted');
 }));
 
+router.get('/data-networks', asyncHandler(async (req, res) => {
+  const { getNetworkStatus } = require('../data/networkAvailability');
+  const networks = await getNetworkStatus();
+  return ApiResponse.success(res, { networks });
+}));
+
+router.patch('/data-networks/:network', [
+  body('enabled').isBoolean().withMessage('Enabled must be true or false'),
+], validate, asyncHandler(async (req, res) => {
+  const { setNetworkEnabled } = require('../data/networkAvailability');
+  const networks = await setNetworkEnabled(req.params.network.toLowerCase(), req.body.enabled, req.user._id);
+  return ApiResponse.success(res, { networks }, `${req.params.network.toUpperCase()} data ${req.body.enabled ? 'enabled' : 'disabled'}`);
+}));
+
 // ─── Agent Applications ───────────────────────────────────────────────────────
 const agentService = require('../agent/agent.service');
 

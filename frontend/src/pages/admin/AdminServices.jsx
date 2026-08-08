@@ -15,6 +15,8 @@ const EMPTY_PLAN = {
   agentPrice: '', providerPlanCode: '',
 };
 
+const DATA_NETWORKS = ['mtn', 'airtel', 'glo', '9mobile'];
+
 export default function AdminServices() {
   const queryClient = useQueryClient();
   const [filterNetwork, setFilterNetwork] = useState('');
@@ -32,6 +34,12 @@ export default function AdminServices() {
     queryKey: ['admin-data-plans', filterNetwork, filterDataType],
     queryFn: () => adminAPI.getDataPlans({ network: filterNetwork, dataType: filterDataType }),
     select: (res) => res.data.plans,
+  });
+
+  const { data: networkStatus = {} } = useQuery({
+    queryKey: ['admin-data-networks'],
+    queryFn: adminAPI.getDataNetworks,
+    select: (res) => res.data.networks || {},
   });
 
   const { data: savedRates } = useQuery({
@@ -91,6 +99,16 @@ export default function AdminServices() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-data-plans'] }),
   });
 
+  const networkToggleMutation = useMutation({
+    mutationFn: ({ network, enabled }) => adminAPI.setDataNetworkEnabled(network, enabled),
+    onSuccess: (res) => {
+      toast.success(res.data.message);
+      queryClient.invalidateQueries({ queryKey: ['admin-data-networks'] });
+      queryClient.invalidateQueries({ queryKey: ['data-plans'] });
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Could not update network'),
+  });
+
   const openEdit = (plan) => { setForm({ ...plan }); setEditPlan(plan); setShowForm(true); };
   const openCreate = () => { setForm(EMPTY_PLAN); setEditPlan(null); setShowForm(true); };
 
@@ -110,6 +128,31 @@ export default function AdminServices() {
         </div>
         <div className="flex gap-2">
           <button onClick={openCreate} className="btn-secondary btn-sm gap-1.5"><Plus size={14} /> Add Plan</button>
+        </div>
+      </div>
+
+      <div className="card p-4">
+        <div className="mb-3">
+          <h2 className="text-sm font-bold text-dark-100">Data network availability</h2>
+          <p className="text-xs text-dark-400">Disable a network during provider downtime. Its plans and purchases will be blocked immediately.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {DATA_NETWORKS.map((network) => {
+            const enabled = networkStatus[network] !== false;
+            const pending = networkToggleMutation.isPending && networkToggleMutation.variables?.network === network;
+            return (
+              <button
+                key={network}
+                type="button"
+                disabled={pending}
+                onClick={() => networkToggleMutation.mutate({ network, enabled: !enabled })}
+                className={`flex items-center justify-between rounded-xl border p-3 text-left transition ${enabled ? 'border-success-500/30 bg-success-500/10' : 'border-red-500/30 bg-red-500/10'}`}
+              >
+                <span><NetworkLogo network={network} size="sm" /><span className={`mt-1 block text-xs font-semibold ${enabled ? 'text-success-500' : 'text-red-400'}`}>{pending ? 'Updating...' : enabled ? 'Enabled' : 'Disabled'}</span></span>
+                {enabled ? <ToggleRight size={24} className="text-success-500" /> : <ToggleLeft size={24} className="text-red-400" />}
+              </button>
+            );
+          })}
         </div>
       </div>
 

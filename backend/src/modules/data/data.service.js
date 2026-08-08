@@ -8,10 +8,14 @@ const { generateReference, sanitizePhone } = require('../../utils/helpers');
 const { TRANSACTION_TYPES, TRANSACTION_STATUS } = require('../../config/constants');
 const { processCommission } = require('../agent/agent.service');
 const logger = require('../../utils/logger');
+const { getNetworkStatus, isNetworkEnabled } = require('./networkAvailability');
 
 const getDataPlans = async (network, dataType) => {
+  const networkStatus = await getNetworkStatus();
+  if (network && networkStatus[network] === false) return [];
   const filter = { isActive: true };
   if (network) filter.network = network;
+  else filter.network = { $nin: Object.keys(networkStatus).filter((key) => networkStatus[key] === false) };
   if (dataType) filter.dataType = dataType;
   return DataPlan.find(filter).sort({ network: 1, sellingPrice: 1 }).lean();
 };
@@ -19,6 +23,10 @@ const getDataPlans = async (network, dataType) => {
 const purchaseData = async (userId, body, options = {}) => {
   const { network, planId, phone, dataType, recipientPhone } = body;
   const targetPhone = sanitizePhone(recipientPhone || phone);
+
+  if (!(await isNetworkEnabled(network))) {
+    throw Object.assign(new Error(`${network.toUpperCase()} data is temporarily unavailable`), { statusCode: 503 });
+  }
 
   // 1. Load plan
   const plan = await DataPlan.findOne({ planId, network, isActive: true });
