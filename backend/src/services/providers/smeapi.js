@@ -14,29 +14,51 @@ const toLocalPhone = (phone) => {
   return phone;
 };
 
+const getToken = () => {
+  const token = String(process.env.SMEAPI_TOKEN || '').trim();
+  if (!token) throw new Error('SMEAPI_TOKEN is not configured on the server');
+  return token;
+};
+
 const headers = () => ({
-  Authorization: `Token ${process.env.SMEAPI_TOKEN}`,
+  Authorization: `Token ${getToken()}`,
   'Content-Type': 'application/json',
 });
 
+const providerError = (error) => {
+  const response = error.response?.data;
+  const message = response ? getError(response) : error.message;
+  const status = error.response?.status;
+  logger.error(`[SMEAPI] Request failed${status ? ` (${status})` : ''}: ${message}`);
+  return new Error(message || 'SMEAPI request failed');
+};
+
 const post = async (path, body) => {
   logger.info(`[SMEAPI] POST ${path} ${JSON.stringify({ ...body, ref: body.ref })}`);
-  const { data } = await axios.post(`${BASE_URL}${path}`, body, {
-    headers: headers(),
-    timeout: 30000,
-  });
-  logger.info(`[SMEAPI] Response: ${JSON.stringify(data)}`);
-  return data;
+  try {
+    const { data } = await axios.post(`${BASE_URL}${path}`, body, {
+      headers: headers(),
+      timeout: 30000,
+    });
+    logger.info(`[SMEAPI] Response: ${JSON.stringify(data)}`);
+    return data;
+  } catch (error) {
+    throw providerError(error);
+  }
 };
 
 const get = async (path, auth = true) => {
   logger.info(`[SMEAPI] GET ${path}`);
-  const { data } = await axios.get(`${BASE_URL}${path}`, {
-    headers: auth ? headers() : { 'Content-Type': 'application/json' },
-    timeout: 30000,
-  });
-  logger.info(`[SMEAPI] Response: ${JSON.stringify(data)}`);
-  return data;
+  try {
+    const { data } = await axios.get(`${BASE_URL}${path}`, {
+      headers: auth ? headers() : { 'Content-Type': 'application/json' },
+      timeout: 30000,
+    });
+    logger.info(`[SMEAPI] Response: ${JSON.stringify(data)}`);
+    return data;
+  } catch (error) {
+    throw providerError(error);
+  }
 };
 
 const isSuccess = (data) => {
