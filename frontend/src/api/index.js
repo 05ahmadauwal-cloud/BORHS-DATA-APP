@@ -123,6 +123,7 @@ export const bannerAPI = {
 
 // Public settings
 export const publicAPI = {
+  getAppConfig: () => api.get('/app-config'),
   getDepositCharge: () => api.get('/deposit-charge'),
   getFundingMethods: () => api.get('/funding-methods'),
   getFeaturedPlans: () => api.get('/featured-plans'),

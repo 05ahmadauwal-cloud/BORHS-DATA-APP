@@ -8,7 +8,7 @@ const Settings = require('../../models/Settings');
 const logger = require('../../utils/logger');
 const { debitWallet, fundWallet } = require('../wallet/wallet.service');
 
-const COMMISSION_RATES = {
+const DEFAULT_COMMISSION_RATES = {
   [TRANSACTION_TYPES.DATA_PURCHASE]: { agent: 0.02, admin: 0.01 },
   [TRANSACTION_TYPES.AIRTIME_PURCHASE]: { agent: 0.01, admin: 0.005 },
   [TRANSACTION_TYPES.ELECTRICITY_PURCHASE]: { agent: 0.015, admin: 0.01 },
@@ -20,7 +20,7 @@ const processCommission = async (userId, amount, transactionType, transactionId)
   const user = await User.findById(userId);
   if (!user) return;
 
-  const rates = COMMISSION_RATES[transactionType];
+  const rates = await getServiceCommissionRates(transactionType);
   if (!rates) return;
 
   // If user is agent, they earn from their own transactions
@@ -47,11 +47,11 @@ const processCommission = async (userId, amount, transactionType, transactionId)
 
   // Process referral commissions up the chain
   const referrals = await Referral.find({ referred: userId }).populate('referrer');
+  const referralRates = await getReferralRates();
   for (const ref of referrals) {
     const referrer = ref.referrer;
     if (!referrer || !referrer.isActive) continue;
 
-    const referralRates = await getReferralRates();
     const rate = referralRates[`level${ref.level}`] / 100;
     const commission = amount * rate;
 
@@ -91,11 +91,31 @@ const processCommission = async (userId, amount, transactionType, transactionId)
 };
 
 const getReferralRates = async () => {
+  const rates = await Settings.getMany([
+    'referral_level1_percent',
+    'referral_level2_percent',
+    'referral_level3_percent',
+  ]);
   return {
-    level1: parseFloat(process.env.REFERRAL_LEVEL1_PERCENT) || 5,
-    level2: parseFloat(process.env.REFERRAL_LEVEL2_PERCENT) || 2,
-    level3: parseFloat(process.env.REFERRAL_LEVEL3_PERCENT) || 1,
+    level1: Number(rates.referral_level1_percent ?? process.env.REFERRAL_LEVEL1_PERCENT ?? 5),
+    level2: Number(rates.referral_level2_percent ?? process.env.REFERRAL_LEVEL2_PERCENT ?? 2),
+    level3: Number(rates.referral_level3_percent ?? process.env.REFERRAL_LEVEL3_PERCENT ?? 1),
   };
+};
+
+const getServiceCommissionRates = async (transactionType) => {
+  const defaults = DEFAULT_COMMISSION_RATES[transactionType];
+  if (!defaults) return null;
+
+  const settingKey = transactionType === TRANSACTION_TYPES.DATA_PURCHASE
+    ? 'data_commission_rate'
+    : transactionType === TRANSACTION_TYPES.AIRTIME_PURCHASE
+      ? 'airtime_commission_rate'
+      : null;
+  if (!settingKey) return defaults;
+
+  const percent = Number(await Settings.get(settingKey, defaults.agent * 100));
+  return { ...defaults, agent: Number.isFinite(percent) ? percent / 100 : defaults.agent };
 };
 
 const getAgentStats = async (agentId) => {
@@ -266,7 +286,7 @@ const reviewAgentApplication = async (adminId, appId, action, rejectionReason) =
 };
 
 module.exports = {
-  processCommission, getReferralRates, getAgentStats, getAgentDownlines, getCommissionHistory,
+  processCommission, getReferralRates, getServiceCommissionRates, getAgentStats, getAgentDownlines, getCommissionHistory,
   getAgentFee, applyForAgent, getMyApplication,
   getAgentApplications, getAgentApplicationCounts, reviewAgentApplication,
 };

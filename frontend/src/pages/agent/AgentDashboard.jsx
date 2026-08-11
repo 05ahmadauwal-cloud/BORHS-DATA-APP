@@ -5,11 +5,13 @@ import { Link } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
 import { Button, Card, CardHeader } from '../../components/ui';
+import useAppConfig from '../../hooks/useAppConfig';
 
 const money = (value) => `₦${(Number(value) || 0).toLocaleString('en-NG')}`;
 
 export default function AgentDashboard() {
   const { user } = useAuthStore();
+  const { data: config } = useAppConfig();
   const { data: stats } = useQuery({ queryKey: ['agent-stats'], queryFn: () => agentAPI.getStats(), select: (res) => res.data });
   const { data: referralStats } = useQuery({ queryKey: ['referral-stats'], queryFn: () => referralAPI.getStats(), select: (res) => res.data });
   const referralLink = `${window.location.origin}/register?ref=${user?.referralCode}`;
@@ -35,9 +37,9 @@ export default function AgentDashboard() {
           <CardHeader eyebrow="Acquisition" title="Your referral network" description="Share one link and earn as your network grows." action={<span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--ds-info-soft)] text-brand-700"><LinkIcon size={19} /></span>} />
           <div className="flex items-center gap-2 rounded-[var(--ds-radius-input)] bg-[var(--ds-surface-subtle)] p-2 pl-4"><p className="min-w-0 flex-1 truncate text-xs text-[var(--ds-text-secondary)] sm:text-sm">{referralLink}</p><Button variant="secondary" size="sm" icon={Copy} onClick={() => { navigator.clipboard.writeText(referralLink); toast.success('Referral link copied'); }}>Copy</Button></div>
           <div className="mt-5 grid grid-cols-3 gap-3">{[
-            { level: 'Direct', count: referralStats?.counts?.level1 || 0, rate: '5%' },
-            { level: 'Level 2', count: referralStats?.counts?.level2 || 0, rate: '2%' },
-            { level: 'Level 3', count: referralStats?.counts?.level3 || 0, rate: '1%' },
+            { level: 'Direct', count: referralStats?.counts?.level1 || 0, rate: `${config.referralRates.level1}%` },
+            { level: 'Level 2', count: referralStats?.counts?.level2 || 0, rate: `${config.referralRates.level2}%` },
+            { level: 'Level 3', count: referralStats?.counts?.level3 || 0, rate: `${config.referralRates.level3}%` },
           ].map((item) => <div key={item.level} className="rounded-2xl bg-[var(--ds-surface-subtle)] p-4 text-center"><p className="text-lg font-bold text-[var(--ds-text)]">{item.count}</p><p className="mt-1 text-xs text-[var(--ds-text-secondary)]">{item.level}</p><p className="mt-2 text-xs font-bold text-green-700 dark:text-green-400">{item.rate} reward</p></div>)}</div>
         </Card>
 

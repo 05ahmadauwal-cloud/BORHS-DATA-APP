@@ -20,6 +20,12 @@ const quickActions = [
 ];
 
 const creditTypes = ['wallet_fund', 'commission_earned', 'referral_bonus', 'reward_transfer', 'coupon'];
+const bannerStyles = {
+  primary: 'bg-[var(--ds-info-soft)] text-blue-900 dark:text-blue-200',
+  yellow: 'bg-[var(--ds-reward-soft)] text-amber-900 dark:text-amber-200',
+  green: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-400/10 dark:text-emerald-200',
+  red: 'bg-red-100 text-red-900 dark:bg-red-400/10 dark:text-red-200',
+};
 
 export default function Dashboard() {
   const { user, updateUser } = useAuthStore();
@@ -38,7 +44,7 @@ export default function Dashboard() {
   });
   const balanceData = dashboardData?.balance;
   const transactionsData = dashboardData?.transactions;
-  const { data: banner } = useQuery({ queryKey: ['banner'], queryFn: bannerAPI.get, select: (response) => response.data.data, enabled: Boolean(dashboardData), refetchInterval: 300000, staleTime: 300000 });
+  const { data: banner } = useQuery({ queryKey: ['banner'], queryFn: bannerAPI.get, select: (response) => response.data.data, enabled: Boolean(dashboardData), refetchInterval: 30_000, staleTime: 0, refetchOnWindowFocus: true });
   const hasDedicatedAccountKYC = ['tier2', 'tier3'].includes(user?.kycStatus);
   const virtualAccount = dashboardData?.virtualAccount;
   const transferMutation = useMutation({
@@ -132,7 +138,7 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {banner?.active && banner?.text && <section className="flex items-start gap-3 rounded-[var(--ds-radius-card)] bg-[var(--ds-reward-soft)] p-5 text-amber-900 dark:text-amber-200"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/60 text-amber-700 dark:bg-black/10"><Gift size={19} /></span><div><p className="text-sm font-bold">Something for you</p><p className="mt-1 text-sm leading-relaxed opacity-80">{banner.text}</p></div></section>}
+      {banner?.active && banner?.text && <section className={`flex items-start gap-3 rounded-[var(--ds-radius-card)] p-5 ${bannerStyles[banner.color] || bannerStyles.primary}`}><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/60 dark:bg-black/10"><Gift size={19} /></span><div><p className="text-sm font-bold">Something for you</p><p className="mt-1 text-sm leading-relaxed opacity-80">{banner.text}</p></div></section>}
 
       <section>
         <div className="mb-3 flex items-center justify-between"><h2 className="text-base font-bold text-[var(--ds-text)] sm:text-lg">Recent transactions</h2><Link to="/transactions" className="text-xs font-semibold text-brand-700 sm:text-sm">See all</Link></div>

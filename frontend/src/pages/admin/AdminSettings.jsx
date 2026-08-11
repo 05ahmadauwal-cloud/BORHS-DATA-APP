@@ -79,6 +79,9 @@ export default function AdminSettings() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
       queryClient.invalidateQueries({ queryKey: ['admin-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['funding-methods'] });
+      queryClient.invalidateQueries({ queryKey: ['app-config'] });
+      queryClient.invalidateQueries({ queryKey: ['banner'] });
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Failed to save'),
   });

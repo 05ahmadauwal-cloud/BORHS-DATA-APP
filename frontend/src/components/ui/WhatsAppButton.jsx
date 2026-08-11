@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-
-const WHATSAPP_NUMBER = '2347065896598'; // change to real number
-const WHATSAPP_MESSAGE = "Hello BORHS Data Support 👋 I need help with my account.";
+import useAppConfig from '../../hooks/useAppConfig';
 
 export default function WhatsAppButton() {
   const [tooltip, setTooltip] = useState(false);
+  const { data: config } = useAppConfig();
+  const whatsappNumber = String(config.supportPhone || '2347065896598').replace(/\D/g, '').replace(/^0/, '234');
+  const whatsappMessage = `Hello ${config.appName} Support 👋 I need help with my account.`;
 
-  const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
+  const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
     <div className="hidden lg:flex fixed bottom-8 right-6 z-50 flex-col items-end gap-2">
@@ -19,7 +20,7 @@ export default function WhatsAppButton() {
             className="relative bg-white text-gray-800 text-sm font-medium px-4 py-3 rounded-2xl rounded-br-sm shadow-2xl max-w-[200px] leading-snug"
             style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.25)' }}
           >
-            <p className="font-bold text-[13px] text-gray-900 mb-0.5">BORHS Data Support</p>
+            <p className="font-bold text-[13px] text-gray-900 mb-0.5">{config.appName} Support</p>
             <p className="text-[12px] text-gray-500">We reply in minutes ⚡</p>
             {/* Tail */}
             <span className="absolute -bottom-2 right-4 w-0 h-0 border-l-8 border-l-transparent border-r-0 border-t-8 border-t-white" />

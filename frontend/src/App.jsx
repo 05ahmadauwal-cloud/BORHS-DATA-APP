@@ -9,6 +9,7 @@ import usePullToRefresh from './hooks/usePullToRefresh';
 import RefreshIndicator from './components/common/RefreshIndicator';
 import InteractionFeedback from './components/common/InteractionFeedback';
 import BrandedLoader from './components/ui/BrandedLoader';
+import useAppConfig from './hooks/useAppConfig';
 
 const PublicLayout = lazy(() => import('./components/layout/PublicLayout'));
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
@@ -54,6 +55,7 @@ import RoleRoute from './components/common/RoleRoute';
 export default function App() {
   const { user, isAuthenticated, refreshUser, accessToken } = useAuthStore();
   const { initTheme } = useThemeStore();
+  const { data: appConfig } = useAppConfig();
   useIdleLogout();
   const { isRefreshing, pullProgress } = usePullToRefresh();
   const isNativeApp = Capacitor.isNativePlatform();
@@ -65,6 +67,25 @@ export default function App() {
     initTheme();
     if (accessToken) refreshUser();
   }, [accessToken, initTheme, refreshUser]);
+
+  useEffect(() => {
+    document.title = appConfig.appName;
+  }, [appConfig.appName]);
+
+  if (appConfig.maintenanceMode && !['admin', 'super_admin'].includes(user?.role)) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-canvas p-6 text-center">
+        <div className="card w-full max-w-md p-8">
+          <img src="/logo.png" alt={appConfig.appName} className="mx-auto h-16 w-auto" />
+          <h1 className="mt-6 text-2xl font-black" style={{ color: 'var(--text-primary)' }}>We’ll be right back</h1>
+          <p className="mt-3 text-sm leading-6" style={{ color: 'var(--text-muted)' }}>
+            {appConfig.appName} is undergoing scheduled maintenance. Please try again shortly.
+          </p>
+          {appConfig.supportEmail && <a className="mt-5 inline-block text-sm font-semibold text-primary-400" href={`mailto:${appConfig.supportEmail}`}>Contact support</a>}
+        </div>
+      </main>
+    );
+  }
 
   return (
     <BrowserRouter>

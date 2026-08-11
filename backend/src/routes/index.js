@@ -50,23 +50,55 @@ router.get('/banner', async (req, res) => {
     Settings.get('banner_active', false),
     Settings.get('banner_color', 'primary'),
   ]);
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.json({ success: true, data: { text, active: !!active, color } });
+});
+
+// Public app configuration used by both the web and native clients.
+router.get('/app-config', async (req, res) => {
+  const Settings = require('../models/Settings');
+  const values = await Settings.getMany([
+    'app_name', 'app_tagline', 'support_email', 'support_phone',
+    'min_wallet_fund', 'max_wallet_fund', 'maintenance_mode',
+    'referral_level1_percent', 'referral_level2_percent', 'referral_level3_percent',
+  ]);
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.json({
+    success: true,
+    data: {
+      appName: values.app_name || 'BORHS Data',
+      appTagline: values.app_tagline || 'Everyday payments, simplified.',
+      supportEmail: values.support_email || process.env.SUPPORT_EMAIL || '',
+      supportPhone: values.support_phone || '',
+      minWalletFund: Number(values.min_wallet_fund ?? 100),
+      maxWalletFund: Number(values.max_wallet_fund ?? 5000000),
+      maintenanceMode: values.maintenance_mode === true || values.maintenance_mode === 'true',
+      referralRates: {
+        level1: Number(values.referral_level1_percent ?? 5),
+        level2: Number(values.referral_level2_percent ?? 2),
+        level3: Number(values.referral_level3_percent ?? 1),
+      },
+    },
+  });
 });
 
 // Public funding methods — which payment channels are enabled
 router.get('/funding-methods', async (req, res) => {
   const Settings = require('../models/Settings');
-  const [bankTransfer, paystack, flutterwave] = await Promise.all([
-    Settings.get('funding_bank_transfer', true),
-    Settings.get('funding_paystack', true),
-    Settings.get('funding_flutterwave', true),
+  const [bankTransfer, paystack, flutterwave, billstack] = await Promise.all([
+    Settings.getBoolean('funding_bank_transfer', true),
+    Settings.getBoolean('funding_paystack', true),
+    Settings.getBoolean('funding_flutterwave', true),
+    Settings.getBoolean('funding_billstack', false),
   ]);
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.json({
     success: true,
     data: {
-      bankTransfer: bankTransfer !== false,
-      paystack: paystack !== false,
-      flutterwave: flutterwave !== false,
+      bankTransfer,
+      paystack,
+      flutterwave,
+      billstack,
     },
   });
 });

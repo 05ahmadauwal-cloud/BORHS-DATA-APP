@@ -16,6 +16,12 @@ settingsSchema.statics.get = async function (key, defaultValue = null) {
   return setting ? setting.value : defaultValue;
 };
 
+settingsSchema.statics.getBoolean = async function (key, defaultValue = false) {
+  const value = await this.get(key, defaultValue);
+  if (typeof value === 'string') return value.trim().toLowerCase() === 'true';
+  return value === true;
+};
+
 settingsSchema.statics.set = async function (key, value, userId = null) {
   return this.findOneAndUpdate(
     { key },

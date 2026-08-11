@@ -10,6 +10,7 @@ import {
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import useAuthStore from '../../store/authStore';
+import useAppConfig from '../../hooks/useAppConfig';
 
 const ALL_TABS = ['Bank Transfer', 'Billstack', 'Online Payment', 'Promo Code', 'History'];
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
@@ -218,6 +219,7 @@ function BankTransferTab({ chargeType, chargeValue, provider = 'monnify' }) {
 export default function Wallet() {
   const user = useAuthStore((state) => state.user);
   const refreshUser = useAuthStore((state) => state.refreshUser);
+  const { data: appConfig } = useAppConfig();
   const [activeTab, setActiveTab] = useState('Bank Transfer');
   const [fundAmount, setFundAmount] = useState('');
   const [gateway, setGateway] = useState('paystack');
@@ -275,7 +277,10 @@ export default function Wallet() {
     queryKey: ['funding-methods'],
     queryFn: () => publicAPI.getFundingMethods(),
     select: (res) => res.data.data,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: 15_000,
   });
 
   const fm = fundingMethods || { bankTransfer: true, billstack: false, paystack: true, flutterwave: true };
@@ -519,7 +524,7 @@ export default function Wallet() {
             <input
               type="number"
               className="input text-base"
-              placeholder="Min ₦100"
+              placeholder={`Min ₦${appConfig.minWalletFund.toLocaleString('en-NG')}`}
               value={fundAmount}
               onChange={(e) => setFundAmount(e.target.value)}
             />
@@ -565,7 +570,7 @@ export default function Wallet() {
             const displayAmt = Number(fundAmount || 0);
             return (
               <div className="space-y-3">
-                {displayAmt >= 100 && (
+                {displayAmt >= appConfig.minWalletFund && displayAmt <= appConfig.maxWalletFund && (
                   <div className="flex items-center justify-between rounded-xl bg-dark-700/50 px-4 py-3">
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-dark-500">Payment total</p>
@@ -579,7 +584,7 @@ export default function Wallet() {
                 )}
                 <button
                 onClick={() => fundMutation.mutate()}
-                disabled={!fundAmount || displayAmt < 100 || fundMutation.isPending}
+                disabled={!fundAmount || displayAmt < appConfig.minWalletFund || displayAmt > appConfig.maxWalletFund || fundMutation.isPending}
                 className="btn-primary w-full btn-lg gap-2 text-base"
               >
                 {fundMutation.isPending

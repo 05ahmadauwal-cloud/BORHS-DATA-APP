@@ -3,9 +3,12 @@ import { referralAPI } from '../../api';
 import { Users, Copy, TrendingUp, Link as LinkIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
+import useAppConfig from '../../hooks/useAppConfig';
 
 export default function Referrals() {
   const { user } = useAuthStore();
+  const { data: config } = useAppConfig();
+  const rates = config.referralRates;
 
   const { data: stats } = useQuery({
     queryKey: ['referral-stats'],
@@ -56,9 +59,9 @@ export default function Referrals() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: 'Total Earnings', value: `₦${(stats?.totalEarnings || 0).toLocaleString()}`, color: 'text-success-500' },
-          { label: 'Level 1 Refs', value: stats?.counts?.level1 || 0, sub: '5% commission' },
-          { label: 'Level 2 Refs', value: stats?.counts?.level2 || 0, sub: '2% commission' },
-          { label: 'Level 3 Refs', value: stats?.counts?.level3 || 0, sub: '1% commission' },
+          { label: 'Level 1 Refs', value: stats?.counts?.level1 || 0, sub: `${rates.level1}% commission` },
+          { label: 'Level 2 Refs', value: stats?.counts?.level2 || 0, sub: `${rates.level2}% commission` },
+          { label: 'Level 3 Refs', value: stats?.counts?.level3 || 0, sub: `${rates.level3}% commission` },
         ].map((stat) => (
           <div key={stat.label} className="card p-4 text-center">
             <p className={`text-2xl font-black mb-1 ${stat.color || 'text-dark-50'}`}>{stat.value}</p>
@@ -73,9 +76,9 @@ export default function Referrals() {
         <h2 className="text-lg font-bold text-dark-100 mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-success-500" /> How It Works</h2>
         <div className="space-y-3">
           {[
-            { level: 1, desc: 'Direct referrals you bring in', rate: '5%', color: 'bg-success-500/10 border-success-500/20 text-success-500' },
-            { level: 2, desc: 'People your referrals bring in', rate: '2%', color: 'bg-primary-500/10 border-primary-500/20 text-primary-400' },
-            { level: 3, desc: 'Third-level downlines', rate: '1%', color: 'bg-purple-500/10 border-purple-500/20 text-purple-400' },
+            { level: 1, desc: 'Direct referrals you bring in', rate: `${rates.level1}%`, color: 'bg-success-500/10 border-success-500/20 text-success-500' },
+            { level: 2, desc: 'People your referrals bring in', rate: `${rates.level2}%`, color: 'bg-primary-500/10 border-primary-500/20 text-primary-400' },
+            { level: 3, desc: 'Third-level downlines', rate: `${rates.level3}%`, color: 'bg-purple-500/10 border-purple-500/20 text-purple-400' },
           ].map((l) => (
             <div key={l.level} className={`flex items-center justify-between p-4 rounded-xl border ${l.color}`}>
               <div>
