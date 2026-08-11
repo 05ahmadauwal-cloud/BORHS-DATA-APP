@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(import.meta.dirname, './src'),
     },
   },
   server: {
@@ -23,10 +23,11 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          charts: ['recharts'],
-          query: ['@tanstack/react-query'],
+        manualChunks(id) {
+          if (id.includes('node_modules/recharts')) return 'charts';
+          if (id.includes('node_modules/@tanstack/react-query')) return 'query';
+          if (/node_modules[\\/](react|react-dom|react-router|react-router-dom)[\\/]/.test(id)) return 'vendor';
+          return undefined;
         },
       },
     },

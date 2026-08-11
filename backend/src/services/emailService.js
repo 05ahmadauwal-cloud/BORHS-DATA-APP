@@ -113,6 +113,24 @@ const emailTemplates = {
       </div>
     `,
   }),
+
+  providerBalanceLow: (data) => ({
+    subject: `Urgent: ${data.provider} API balance is low`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; color: #0f172a;">
+        <h1 style="color: #dc2626;">Provider balance alert</h1>
+        <p>A customer transaction was rejected because your provider account appears to have insufficient funds.</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0;">
+          <tr><td style="padding: 8px; font-weight: bold;">Provider</td><td style="padding: 8px;">${data.provider}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold;">Operation</td><td style="padding: 8px;">${data.operation}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold;">Detected</td><td style="padding: 8px;">${data.detectedAt}</td></tr>
+          <tr><td style="padding: 8px; font-weight: bold;">Provider response</td><td style="padding: 8px;">${data.providerMessage}</td></tr>
+        </table>
+        <p><strong>Please fund the provider account as soon as possible.</strong></p>
+        <p style="color: #64748b; font-size: 12px;">Repeated alerts for this provider are suppressed for one hour.</p>
+      </div>
+    `,
+  }),
 };
 
 const sendEmail = async (to, templateName, data) => {

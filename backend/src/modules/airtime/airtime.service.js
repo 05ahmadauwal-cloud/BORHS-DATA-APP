@@ -88,10 +88,11 @@ const purchaseAirtime = async (userId, body, options = {}) => {
     // Refund wallet
     await refundWalletDebit(userId, debitResult);
 
-    throw Object.assign(
-      new Error(`Airtime purchase failed: ${error.message}. Your wallet has been refunded.`),
-      { statusCode: 502 }
-    );
+    throw Object.assign(new Error('Airtime purchase could not be completed. Your wallet has been refunded. Please try again later.'), {
+      statusCode: 503,
+      isProviderError: true,
+      publicMessage: 'Airtime purchase could not be completed. Your wallet has been refunded. Please try again later.',
+    });
   }
 };
 

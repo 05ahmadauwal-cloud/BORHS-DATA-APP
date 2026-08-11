@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, MessageCircle } from 'lucide-react';
+import { X } from 'lucide-react';
 
 const WHATSAPP_NUMBER = '2347065896598'; // change to real number
 const WHATSAPP_MESSAGE = "Hello BORHS Data Support 👋 I need help with my account.";

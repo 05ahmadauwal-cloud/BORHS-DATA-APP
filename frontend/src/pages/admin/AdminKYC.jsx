@@ -4,7 +4,7 @@ import { adminAPI } from '../../api';
 import {
   Shield, CheckCircle, XCircle, Clock, AlertCircle,
   Eye, X, ChevronLeft, ChevronRight, User, FileText,
-  BadgeCheck, Camera, RefreshCw,
+  Camera, RefreshCw,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -298,7 +298,6 @@ const tierIcon = (t) => {
 };
 
 export default function AdminKYC() {
-  const queryClient = useQueryClient();
   const [status, setStatus] = useState('pending');
   const [tier, setTier] = useState('');
   const [page, setPage] = useState(1);

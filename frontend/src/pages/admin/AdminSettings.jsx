@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../api';
 import {
-  Settings, Save, Megaphone, Shield, Wallet, Users, Percent,
-  Star, Zap, Phone, Tv, GraduationCap, CreditCard, AlertTriangle,
+  Settings, Save, Megaphone, Wallet, Users, Percent,
+  Star, CreditCard, AlertTriangle,
   ChevronDown, ChevronUp, CheckCircle, ToggleLeft,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -404,9 +404,9 @@ export default function AdminSettings() {
       >
         <div className="grid grid-cols-2 gap-4">
           {[
-            { key: 'data_commission_rate', label: 'Data Commission (%)', icon: Zap },
-            { key: 'airtime_commission_rate', label: 'Airtime Commission (%)', icon: Phone },
-          ].map(({ key, label, icon: Icon }) => (
+            { key: 'data_commission_rate', label: 'Data Commission (%)' },
+            { key: 'airtime_commission_rate', label: 'Airtime Commission (%)' },
+          ].map(({ key, label }) => (
             <FieldRow key={key} label={label}>
               <div className="relative">
                 <input

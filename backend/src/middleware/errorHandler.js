@@ -36,7 +36,14 @@ const errorHandler = (err, req, res, next) => {
     statusCode = 401;
   }
 
-  if (statusCode === 500) {
+  // Never expose upstream provider or billing details to customers. The raw
+  // error remains available in logs and purchase records for administrators.
+  if (err.isProviderError) {
+    statusCode = 503;
+    message = err.publicMessage || 'This service is temporarily unavailable. Please try again later.';
+  }
+
+  if (statusCode >= 500) {
     logger.error(`Unhandled error: ${err.message}`, { stack: err.stack, url: req.url, method: req.method });
   }
 

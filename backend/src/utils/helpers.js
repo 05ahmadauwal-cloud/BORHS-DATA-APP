@@ -1,5 +1,4 @@
 const crypto = require('crypto');
-const { v4: uuidv4 } = require('uuid');
 
 const generateReference = (prefix = 'TXN') => {
   const timestamp = Date.now().toString(36).toUpperCase();

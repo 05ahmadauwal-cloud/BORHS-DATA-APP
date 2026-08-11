@@ -64,7 +64,7 @@ export default function App() {
   useEffect(() => {
     initTheme();
     if (accessToken) refreshUser();
-  }, []);
+  }, [accessToken, initTheme, refreshUser]);
 
   return (
     <BrowserRouter>

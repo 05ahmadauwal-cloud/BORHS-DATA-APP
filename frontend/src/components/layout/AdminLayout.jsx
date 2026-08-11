@@ -1,7 +1,7 @@
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import {
-  BarChart3, Users, History, Settings, Shield, Zap,
+  Users, History, Settings, Shield, Zap,
   LogOut, LayoutDashboard, Menu, X, Star, Tag, Megaphone, Sun, Moon,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';

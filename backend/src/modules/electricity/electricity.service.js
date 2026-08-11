@@ -82,7 +82,11 @@ const purchaseElectricity = async (userId, body) => {
     await purchase.save();
     if (!debitResult) throw error;
     await refundWalletDebit(userId, debitResult);
-    throw Object.assign(new Error(`Electricity purchase failed: ${error.message}`), { statusCode: 502 });
+    throw Object.assign(new Error('Electricity purchase could not be completed. Your wallet has been refunded. Please try again later.'), {
+      statusCode: 503,
+      isProviderError: true,
+      publicMessage: 'Electricity purchase could not be completed. Your wallet has been refunded. Please try again later.',
+    });
   }
 };
 

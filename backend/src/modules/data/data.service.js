@@ -151,10 +151,11 @@ const purchaseData = async (userId, body, options = {}) => {
       failureReason: `Provider failed: ${error.message}`,
     });
 
-    throw Object.assign(
-      new Error(`Data purchase failed: ${error.message}. Your wallet has been refunded.`),
-      { statusCode: 502 }
-    );
+    throw Object.assign(new Error('Data purchase could not be completed. Your wallet has been refunded. Please try again later.'), {
+      statusCode: 503,
+      isProviderError: true,
+      publicMessage: 'Data purchase could not be completed. Your wallet has been refunded. Please try again later.',
+    });
   }
 };
 

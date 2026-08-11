@@ -188,7 +188,6 @@ const STATUS_TABS = [
 ];
 
 export default function AdminAgentApplications() {
-  const queryClient = useQueryClient();
   const [status, setStatus] = useState('pending');
   const [page, setPage] = useState(1);
   const [selectedApp, setSelectedApp] = useState(null);

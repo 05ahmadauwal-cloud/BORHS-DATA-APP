@@ -82,6 +82,8 @@ services:
         value: https://borhs-data-app.onrender.com
       - key: SUPPORT_EMAIL
         value: support@borhsdata.com
+      - key: ADMIN_EMAIL
+        value: ahmadauwal077@gmail.com
       - key: RATE_LIMIT_WINDOW_MS
         value: 900000
       - key: RATE_LIMIT_MAX

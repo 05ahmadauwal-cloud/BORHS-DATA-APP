@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminAPI } from '../../api';
 import api from '../../api/axios';
@@ -46,8 +46,11 @@ export default function AdminServices() {
     queryKey: ['commission-rates'],
     queryFn: () => api.get('/admin/sync/commission-rates'),
     select: (res) => res.data,
-    onSuccess: (data) => setRates(data),
   });
+
+  useEffect(() => {
+    if (savedRates) setRates(savedRates);
+  }, [savedRates]);
 
   // ─── Mutations ─────────────────────────────────────────────────────────────
   const syncMutation = useMutation({

@@ -25,8 +25,6 @@ const useAuthStore = create(
           get().setToken(accessToken);
           set({ user, isAuthenticated: true });
           return { success: true, user };
-        } catch (error) {
-          throw error;
         } finally {
           set({ isLoading: false });
         }
@@ -40,8 +38,6 @@ const useAuthStore = create(
           get().setToken(accessToken);
           set({ user, isAuthenticated: true });
           return { success: true, user };
-        } catch (error) {
-          throw error;
         } finally {
           set({ isLoading: false });
         }

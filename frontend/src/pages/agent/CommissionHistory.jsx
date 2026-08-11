@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { agentAPI } from '../../api';
-import { DollarSign, TrendingUp } from 'lucide-react';
+import { DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function CommissionHistory() {

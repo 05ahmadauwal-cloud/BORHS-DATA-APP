@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { walletAPI, paymentAPI, couponAPI, publicAPI } from '../../api';
 import { useSearchParams } from 'react-router-dom';
 import {
-  Wallet as WalletIcon, Send, CreditCard,
+  Send, CreditCard,
   CheckCircle, XCircle, Clock, Copy, Check, Building2,
   RefreshCw, AlertCircle, Banknote, Tag, Info, Gift,
 } from 'lucide-react';
@@ -87,7 +87,6 @@ function CopyButton({ text }) {
 }
 
 function BankTransferTab({ chargeType, chargeValue, provider = 'monnify' }) {
-  const queryClient = useQueryClient();
   const [previewAmt, setPreviewAmt] = useState('');
   const isBillstack = provider === 'billstack';
 
@@ -238,12 +237,12 @@ export default function Wallet() {
     document.body.appendChild(script);
   }, []);
 
-  const creditWallet = (amount) => {
+  const creditWallet = useCallback((amount) => {
     setVerifyStatus('success');
     toast.success(`₦${amount?.toLocaleString()} added to your wallet!`);
     queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
     queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
-  };
+  }, [queryClient]);
 
   // Fallback: auto-verify after redirect (Flutterwave always redirects; Paystack redirect if popup blocked)
   useEffect(() => {
@@ -263,7 +262,7 @@ export default function Wallet() {
         .then((res) => { creditWallet(res.data.amount); setSearchParams({}); })
         .catch(() => { setVerifyStatus('failed'); toast.error('Payment verification failed. Contact support.'); });
     }
-  }, []);
+  }, [creditWallet, searchParams, setSearchParams]);
 
   const { data: chargeInfo } = useQuery({
     queryKey: ['deposit-charge'],
@@ -282,25 +281,25 @@ export default function Wallet() {
   const fm = fundingMethods || { bankTransfer: true, billstack: false, paystack: true, flutterwave: true };
   const hasDedicatedAccountKYC = ['tier2', 'tier3'].includes(user?.kycStatus);
   const hasAnyOnline = fm.paystack || fm.flutterwave;
-  const TABS = ALL_TABS.filter((t) => {
+  const TABS = useMemo(() => ALL_TABS.filter((t) => {
     if (t === 'Bank Transfer' && (!fm.bankTransfer || !hasDedicatedAccountKYC)) return false;
     if (t === 'Billstack' && !fm.billstack) return false;
     if (t === 'Online Payment' && !hasAnyOnline) return false;
     return true;
-  });
+  }), [fm.bankTransfer, fm.billstack, hasAnyOnline, hasDedicatedAccountKYC]);
 
   // Auto-redirect to first available tab when funding methods load
   useEffect(() => {
     if (!fundingMethods) return;
     if (!TABS.includes(activeTab)) setActiveTab(TABS[0] || 'History');
-  }, [fundingMethods, hasDedicatedAccountKYC]);
+  }, [TABS, activeTab, fundingMethods]);
 
   // Auto-switch gateway if currently selected one is disabled
   useEffect(() => {
     if (!fundingMethods) return;
     if (gateway === 'paystack' && !fundingMethods.paystack && fundingMethods.flutterwave) setGateway('flutterwave');
     if (gateway === 'flutterwave' && !fundingMethods.flutterwave && fundingMethods.paystack) setGateway('paystack');
-  }, [fundingMethods]);
+  }, [fundingMethods, gateway]);
 
   const { data: balance } = useQuery({
     queryKey: ['wallet-balance'],

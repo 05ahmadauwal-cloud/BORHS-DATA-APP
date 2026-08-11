@@ -1,5 +1,4 @@
 import axios from 'axios';
-import toast from 'react-hot-toast';
 
 // Use env var in production builds, Vite proxy (/api/v1) in local dev
 const getBaseURL = () => {

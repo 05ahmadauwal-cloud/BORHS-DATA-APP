@@ -46,7 +46,8 @@ export default function Register() {
 
   const onSubmit = async (data) => {
     try {
-      const { confirmPassword, ...payload } = data;
+      const payload = { ...data };
+      delete payload.confirmPassword;
       const result = await storeRegister(payload);
       toast.success(`Welcome to BORHS Data, ${result.user.firstName}!`);
       navigate('/dashboard');

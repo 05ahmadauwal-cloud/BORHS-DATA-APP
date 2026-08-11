@@ -88,6 +88,7 @@ FLUTTERWAVE_SECRET_KEY=FLWSECK_...
 SMTP_HOST=smtp.gmail.com
 SMTP_USER=you@gmail.com
 SMTP_PASS=your_app_password
+ADMIN_EMAIL=ahmadauwal077@gmail.com
 ```
 
 ### 3. Seed Database

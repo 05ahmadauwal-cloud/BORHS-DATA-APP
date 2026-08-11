@@ -17,7 +17,7 @@ const BENEFITS = [
   { icon: Star, title: 'Agent Dashboard', desc: 'Access your agent dashboard, commission history, and downline reports' },
 ];
 
-function StatusCard({ application, fee }) {
+function StatusCard({ application }) {
   if (!application) return null;
 
   if (application.status === 'pending') {
@@ -154,7 +154,7 @@ export default function BecomeAgent() {
 
       {/* Application status card (if exists) */}
       {!isLoading && application && (
-        <StatusCard application={application} fee={fee} />
+        <StatusCard application={application} />
       )}
 
       {/* Benefits */}

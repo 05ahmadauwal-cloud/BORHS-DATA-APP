@@ -79,7 +79,11 @@ const purchaseExamPin = async (userId, body) => {
     await purchase.save();
     if (!debitResult) throw error;
     await refundWalletDebit(userId, debitResult);
-    throw Object.assign(new Error(`Exam PIN purchase failed: ${error.message}`), { statusCode: 502 });
+    throw Object.assign(new Error('Exam PIN purchase could not be completed. Your wallet has been refunded. Please try again later.'), {
+      statusCode: 503,
+      isProviderError: true,
+      publicMessage: 'Exam PIN purchase could not be completed. Your wallet has been refunded. Please try again later.',
+    });
   }
 };
 
