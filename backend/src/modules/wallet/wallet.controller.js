@@ -19,6 +19,18 @@ const reconcileMonnifyInBackground = (userId) => {
 };
 
 const getDashboard = async (req, res) => {
+  if (!req.user.monnifyVirtualAccount?.reference
+      && process.env.MONNIFY_API_KEY && process.env.MONNIFY_CONTRACT_CODE) {
+    try {
+      const { createReservedAccount } = require('../../services/monnify');
+      const account = await createReservedAccount(req.user);
+      req.user.monnifyVirtualAccount = { ...account, kycSyncStatus: 'pending' };
+      await req.user.save();
+    } catch (error) {
+      logger.warn(`Monnify starter account is not ready for user ${req.user._id}: ${error.message}`);
+    }
+  }
+
   const [balance, transactions] = await Promise.all([
     walletService.getWalletBalance(req.user._id),
     walletService.getTransactionHistory(req.user._id, { limit: 5 }),

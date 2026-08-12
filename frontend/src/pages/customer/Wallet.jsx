@@ -284,14 +284,13 @@ export default function Wallet() {
   });
 
   const fm = fundingMethods || { bankTransfer: true, billstack: false, paystack: true, flutterwave: true };
-  const hasDedicatedAccountKYC = ['tier2', 'tier3'].includes(user?.kycStatus);
   const hasAnyOnline = fm.paystack || fm.flutterwave;
   const TABS = useMemo(() => ALL_TABS.filter((t) => {
-    if (t === 'Bank Transfer' && (!fm.bankTransfer || !hasDedicatedAccountKYC)) return false;
+    if (t === 'Bank Transfer' && !fm.bankTransfer) return false;
     if (t === 'Billstack' && !fm.billstack) return false;
     if (t === 'Online Payment' && !hasAnyOnline) return false;
     return true;
-  }), [fm.bankTransfer, fm.billstack, hasAnyOnline, hasDedicatedAccountKYC]);
+  }), [fm.bankTransfer, fm.billstack, hasAnyOnline]);
 
   // Auto-redirect to first available tab when funding methods load
   useEffect(() => {
@@ -428,7 +427,7 @@ export default function Wallet() {
             ₦{Number.isFinite(walletBalance) ? walletBalance.toLocaleString('en-NG', { minimumFractionDigits: 2 }) : '0.00'}
           </h2>
           <div className="flex gap-2 sm:gap-3">
-            {fm.bankTransfer && hasDedicatedAccountKYC && (
+            {fm.bankTransfer && (
               <button onClick={() => setActiveTab('Bank Transfer')} className="flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-colors">
                 <Building2 size={14} /> Bank Transfer
               </button>
@@ -466,7 +465,7 @@ export default function Wallet() {
       </div>
 
       {/* Bank Transfer Tab */}
-      {activeTab === 'Bank Transfer' && fm.bankTransfer && hasDedicatedAccountKYC && (
+      {activeTab === 'Bank Transfer' && fm.bankTransfer && (
         <BankTransferTab
           chargeType={chargeInfo?.monnify?.type || 'percentage'}
           chargeValue={chargeInfo?.monnify?.value ?? 2}

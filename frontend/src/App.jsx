@@ -10,6 +10,7 @@ import RefreshIndicator from './components/common/RefreshIndicator';
 import InteractionFeedback from './components/common/InteractionFeedback';
 import BrandedLoader from './components/ui/BrandedLoader';
 import useAppConfig from './hooks/useAppConfig';
+import AnnouncementPopup from './components/common/AnnouncementPopup';
 
 const PublicLayout = lazy(() => import('./components/layout/PublicLayout'));
 const DashboardLayout = lazy(() => import('./components/layout/DashboardLayout'));
@@ -90,6 +91,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <NativeAppLifecycle />
+      <AnnouncementPopup />
       <InteractionFeedback />
       <RefreshIndicator isRefreshing={isRefreshing} progress={pullProgress} />
       <Suspense fallback={<BrandedLoader />}>

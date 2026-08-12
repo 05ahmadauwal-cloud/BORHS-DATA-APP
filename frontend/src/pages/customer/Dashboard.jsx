@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { ArrowDownLeft, ArrowUpRight, Building2, Check, Copy, GraduationCap, Gift, Phone, Send, ShieldCheck, Tv, UserPlus, Wallet, Wifi, Zap } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Building2, Check, Copy, GraduationCap, Phone, Send, ShieldCheck, Tv, UserPlus, Wallet, Wifi, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { bannerAPI, kycAPI, walletAPI } from '../../api';
+import { kycAPI, walletAPI } from '../../api';
 import useAuthStore from '../../store/authStore';
 import { Button, Card, EmptyState, Input, Modal, TransactionRow } from '../../components/ui';
 
@@ -20,12 +20,6 @@ const quickActions = [
 ];
 
 const creditTypes = ['wallet_fund', 'commission_earned', 'referral_bonus', 'reward_transfer', 'coupon'];
-const bannerStyles = {
-  primary: 'bg-[var(--ds-info-soft)] text-blue-900 dark:text-blue-200',
-  yellow: 'bg-[var(--ds-reward-soft)] text-amber-900 dark:text-amber-200',
-  green: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-400/10 dark:text-emerald-200',
-  red: 'bg-red-100 text-red-900 dark:bg-red-400/10 dark:text-red-200',
-};
 
 export default function Dashboard() {
   const { user, updateUser } = useAuthStore();
@@ -44,8 +38,7 @@ export default function Dashboard() {
   });
   const balanceData = dashboardData?.balance;
   const transactionsData = dashboardData?.transactions;
-  const { data: banner } = useQuery({ queryKey: ['banner'], queryFn: bannerAPI.get, select: (response) => response.data.data, enabled: Boolean(dashboardData), refetchInterval: 30_000, staleTime: 0, refetchOnWindowFocus: true });
-  const hasDedicatedAccountKYC = ['tier2', 'tier3'].includes(user?.kycStatus);
+  const hasVerifiedFundingAccount = ['tier2', 'tier3'].includes(user?.kycStatus);
   const virtualAccount = dashboardData?.virtualAccount;
   const transferMutation = useMutation({
     mutationFn: () => walletAPI.transfer({ recipient: transferForm.recipient.trim(), amount: Number(transferForm.amount), pin: transferForm.pin }),
@@ -125,9 +118,9 @@ export default function Dashboard() {
         </section>
       )}
 
-      {!hasDedicatedAccountKYC && (
+      {fundingAccount && !hasVerifiedFundingAccount && (
         <section className="rounded-[var(--ds-radius-card)] border border-dashed border-teal-300 bg-teal-50/70 p-5 dark:border-teal-400/25 dark:bg-teal-400/[0.06]">
-          <div className="flex items-start gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-teal-800 shadow-sm ring-1 ring-teal-200 dark:bg-teal-400/10 dark:text-teal-300 dark:ring-teal-400/20"><Building2 size={20} /></span><div className="min-w-0 flex-1"><p className="font-bold text-[var(--ds-text)]">Get your funding account</p><p className="mt-1 text-sm leading-6 text-[var(--ds-text-secondary)]">Verify your NIN to receive a dedicated Moniepoint account for automatic wallet funding.</p><Button size="sm" className="mt-4" icon={ShieldCheck} onClick={() => setNinOpen(true)}>Verify NIN</Button></div></div>
+          <div className="flex items-start gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-teal-800 shadow-sm ring-1 ring-teal-200 dark:bg-teal-400/10 dark:text-teal-300 dark:ring-teal-400/20"><ShieldCheck size={20} /></span><div className="min-w-0 flex-1"><p className="font-bold text-[var(--ds-text)]">Increase your account limits</p><p className="mt-1 text-sm leading-6 text-[var(--ds-text-secondary)]">Your dedicated account is ready. Verify your NIN when you need higher transaction limits.</p><Button size="sm" className="mt-4" icon={ShieldCheck} onClick={() => setNinOpen(true)}>Verify NIN</Button></div></div>
         </section>
       )}
 
@@ -138,7 +131,6 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {banner?.active && banner?.text && <section className={`flex items-start gap-3 rounded-[var(--ds-radius-card)] p-5 ${bannerStyles[banner.color] || bannerStyles.primary}`}><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/60 dark:bg-black/10"><Gift size={19} /></span><div><p className="text-sm font-bold">Something for you</p><p className="mt-1 text-sm leading-relaxed opacity-80">{banner.text}</p></div></section>}
 
       <section>
         <div className="mb-3 flex items-center justify-between"><h2 className="text-base font-bold text-[var(--ds-text)] sm:text-lg">Recent transactions</h2><Link to="/transactions" className="text-xs font-semibold text-brand-700 sm:text-sm">See all</Link></div>
@@ -153,8 +145,8 @@ export default function Dashboard() {
       <Modal open={transferOpen} onClose={() => setTransferOpen(false)} title="Send money" description="Transfer from your BORHS wallet to another user." size="sm">
         <div className="space-y-4"><Input label="Recipient" hint="Email, phone number or referral code" value={transferForm.recipient} onChange={(event) => setTransferForm({ ...transferForm, recipient: event.target.value })} placeholder="Enter recipient" /><Input label="Amount (₦)" type="number" hint={`Available: ₦${balance.toLocaleString()}`} value={transferForm.amount} onChange={(event) => setTransferForm({ ...transferForm, amount: event.target.value })} placeholder="Minimum ₦100" /><Input label="Transaction PIN" type="password" inputMode="numeric" maxLength={4} value={transferForm.pin} onChange={(event) => setTransferForm({ ...transferForm, pin: event.target.value.replace(/\D/g, '') })} placeholder="••••" /><Button className="w-full" icon={Send} loading={transferMutation.isPending} disabled={!transferForm.recipient.trim() || Number(transferForm.amount) < 100 || (user?.isPinSet && transferForm.pin.length !== 4)} onClick={() => transferMutation.mutate()}>Send money</Button></div>
       </Modal>
-      <Modal open={ninOpen} onClose={() => setNinOpen(false)} title="Verify your NIN" description="Verify your identity to activate automatic bank-transfer funding." size="sm">
-        <div className="space-y-4"><Input label="National Identification Number" type="password" inputMode="numeric" maxLength={11} value={nin} onChange={(event) => setNin(event.target.value.replace(/\D/g, '').slice(0, 11))} hint="Enter the 11-digit NIN registered in your name." placeholder="11-digit NIN" autoFocus /><div className="rounded-2xl bg-[var(--ds-surface-subtle)] p-4 text-xs leading-5 text-[var(--ds-text-secondary)]"><ShieldCheck size={16} className="mb-2 text-brand-700" />Your account number appears only after the identity provider accepts your details.</div><Button className="w-full" icon={Building2} loading={ninMutation.isPending} disabled={nin.length !== 11} onClick={() => ninMutation.mutate()}>Verify and create account</Button></div>
+      <Modal open={ninOpen} onClose={() => setNinOpen(false)} title="Verify your NIN" description="Upgrade your dedicated account to higher transaction limits." size="sm">
+        <div className="space-y-4"><Input label="National Identification Number" type="password" inputMode="numeric" maxLength={11} value={nin} onChange={(event) => setNin(event.target.value.replace(/\D/g, '').slice(0, 11))} hint="Enter the 11-digit NIN registered in your name." placeholder="11-digit NIN" autoFocus /><div className="rounded-2xl bg-[var(--ds-surface-subtle)] p-4 text-xs leading-5 text-[var(--ds-text-secondary)]"><ShieldCheck size={16} className="mb-2 text-brand-700" />Your existing account number stays the same after verification.</div><Button className="w-full" icon={ShieldCheck} loading={ninMutation.isPending} disabled={nin.length !== 11} onClick={() => ninMutation.mutate()}>Verify and increase limits</Button></div>
       </Modal>
     </div>
   );

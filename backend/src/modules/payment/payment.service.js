@@ -187,7 +187,7 @@ const reconcileMonnifyUser = async (userId) => {
   const promise = (async () => {
     const user = await User.findById(userId).select('monnifyVirtualAccount');
     const accountReference = user?.monnifyVirtualAccount?.reference;
-    if (!accountReference || user.monnifyVirtualAccount?.kycSyncStatus !== 'synced') {
+    if (!accountReference) {
       return { checked: false, credited: 0 };
     }
 
