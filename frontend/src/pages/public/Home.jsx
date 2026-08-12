@@ -28,8 +28,7 @@ const services = [
     title: "Electricity",
     text: "Verify meters and pay every major DISCO.",
   },
-  {
-    icon: Tv,
+  {    icon: Tv,
     title: "Cable TV",
     text: "Renew DStv, GOtv and StarTimes in moments.",
   },

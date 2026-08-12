@@ -271,8 +271,7 @@ export default function DataPurchase() {
                   </select>
                 </div>
               </>
-            ) : (
-              <div className="text-center py-8 text-dark-400 text-sm">No plans available for this selection</div>
+            ) : (<div className="text-center py-8 text-dark-400 text-sm">No plans available for this selection</div>
             )}
           </div>
 
