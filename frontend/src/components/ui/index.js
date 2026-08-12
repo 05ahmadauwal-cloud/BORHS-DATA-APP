@@ -9,6 +9,7 @@ export { default as IconButton } from './IconButton';
 export { default as Modal } from './Modal';
 export { default as ServiceHeader } from './ServiceHeader';
 export { default as PaymentSourceSelect } from './PaymentSourceSelect';
+export { default as PurchaseConfirmation } from './PurchaseConfirmation';
 export { default as AutoRenewalOption } from './AutoRenewalOption';
 export { default as Skeleton, CardSkeleton, TransactionSkeleton } from './Skeleton';
 export { default as TransactionRow } from './TransactionRow';

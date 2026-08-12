@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
-import { AutoRenewalOption, PaymentSourceSelect, ServiceHeader } from '../../components/ui';
+import { AutoRenewalOption, PaymentSourceSelect, PurchaseConfirmation, ServiceHeader } from '../../components/ui';
 import { detectNetwork, isPhoneComplete, NETWORK_LABELS } from '../../utils/phoneNetwork';
 
 const NETWORKS = [
@@ -343,25 +343,14 @@ export default function DataPurchase() {
           </button>
         </div>
       ) : (
-        <div className="card p-6 space-y-6">
-          <h2 className="text-lg font-bold text-dark-100">Confirm Purchase</h2>
-          <div className="bg-dark-700/50 rounded-xl p-5 space-y-3">
-            {[
-              ['Network', <NetworkLogo key="net" network={network} size="sm" />],
-              ['Plan', formatPlanSize(selectedPlan)],
-              ['Validity', selectedPlan.validity || 'N/A'],
-              ['Phone', phone],
-              ['Amount', `₦${effectivePrice(selectedPlan).toLocaleString()}`],
-            ].map(([key, val]) => (
-              <div key={key} className="flex justify-between text-sm">
-                <span className="text-dark-400">{key}</span>
-                <span className={`font-semibold ${key === 'Amount' ? 'text-primary-400' : 'text-dark-100'}`}>{val}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-3">
-            <button onClick={() => setStep(1)} className="btn-secondary flex-1">Back</button>
-            <div className="space-y-3">
+        <PurchaseConfirmation title={`${formatPlanSize(selectedPlan)} data bundle`} subtitle={`For ${phone}`} amount={`₦${effectivePrice(selectedPlan).toLocaleString()}`} icon={<Wifi size={21} />} details={[{ label: 'Network', value: <NetworkLogo network={network} size="sm" /> }, { label: 'Plan type', value: dataType }, { label: 'Validity', value: selectedPlan.validity || 'N/A' }, { label: 'Recipient', value: phone }]} onBack={() => setStep(1)} loading={purchaseMutation.isPending} confirmLabel="Buy data bundle" onConfirm={() => {
+          if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
+          const available = paymentSource === 'main' ? Number(user?.walletBalance || 0) : paymentSource === 'reward' ? Number(user?.rewardBalance || 0) : Number(user?.walletBalance || 0) + Number(user?.rewardBalance || 0);
+          if (effectivePrice(selectedPlan) > available) return toast.error('Insufficient balance in the selected wallet source.');
+          if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
+          purchaseMutation.mutate({ network, planId: selectedPlan.planId, phone, dataType, pin, paymentSource });
+        }}>
+            <div className="space-y-4">
               <PaymentSourceSelect value={paymentSource} onChange={setPaymentSource} user={user} />
               <AutoRenewalOption enabled={autoRenew} onEnabledChange={setAutoRenew} frequency={renewalFrequency} onFrequencyChange={setRenewalFrequency} />
               <div>
@@ -381,23 +370,8 @@ export default function DataPurchase() {
                   <p className="text-xs text-red-400 mt-1">Locked due to multiple failed attempts. Try again later.</p>
                 )}
               </div>
-              <button
-                onClick={() => {
-                  if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
-                  const available = paymentSource === 'main' ? Number(user?.walletBalance || 0) : paymentSource === 'reward' ? Number(user?.rewardBalance || 0) : Number(user?.walletBalance || 0) + Number(user?.rewardBalance || 0);
-                  if (effectivePrice(selectedPlan) > available) return toast.error('Insufficient balance in the selected wallet source.');
-                  if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
-                  purchaseMutation.mutate({ network, planId: selectedPlan.planId, phone, dataType, pin, paymentSource });
-                }}
-                disabled={purchaseMutation.isPending}
-                className="btn-primary flex-1 gap-2"
-              >
-                {purchaseMutation.isPending ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
-                {purchaseMutation.isPending ? 'Processing...' : 'Confirm Purchase'}
-              </button>
             </div>
-          </div>
-        </div>
+        </PurchaseConfirmation>
       )}
     </div>
   );

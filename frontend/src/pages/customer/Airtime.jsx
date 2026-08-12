@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import { NetworkButton, NetworkLogo } from '../../components/NetworkLogo';
 import Receipt, { PurchaseLoader } from '../../components/ui/Receipt';
-import { AutoRenewalOption, PaymentSourceSelect, ServiceHeader } from '../../components/ui';
+import { AutoRenewalOption, PaymentSourceSelect, PurchaseConfirmation, ServiceHeader } from '../../components/ui';
 import { detectNetwork, isPhoneComplete, NETWORK_LABELS } from '../../utils/phoneNetwork';
 
 const NETWORKS = [
@@ -223,20 +223,13 @@ export default function Airtime() {
           </button>
         </div>
       ) : (
-        <div className="card p-6 space-y-6">
-          <h2 className="text-lg font-bold text-dark-100">Confirm Purchase</h2>
-          <div className="bg-dark-700/50 rounded-xl p-5 space-y-3">
-            {[
-              ['Network', <NetworkLogo key="net" network={form.network} size="sm" />],
-              ['Phone', form.phone],
-              ['Amount', `₦${Number(form.amount).toLocaleString()}`],
-            ].map(([k, v]) => (
-              <div key={k} className="flex justify-between text-sm">
-                <span className="text-dark-400">{k}</span>
-                <span className={`font-semibold ${k === 'Amount' ? 'text-green-400' : 'text-dark-100'}`}>{v}</span>
-              </div>
-            ))}
-          </div>
+        <PurchaseConfirmation title="Airtime recharge" subtitle={`For ${form.phone}`} amount={`₦${Number(form.amount).toLocaleString()}`} icon={<Phone size={21} />} details={[{ label: 'Network', value: <NetworkLogo network={form.network} size="sm" /> }, { label: 'Recipient', value: form.phone }]} onBack={() => setStep(1)} loading={mutation.isPending} confirmLabel="Buy airtime" onConfirm={() => {
+          if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
+          const available = paymentSource === 'main' ? Number(user?.walletBalance || 0) : paymentSource === 'reward' ? Number(user?.rewardBalance || 0) : Number(user?.walletBalance || 0) + Number(user?.rewardBalance || 0);
+          if (Number(form.amount) > available) return toast.error('Insufficient balance in the selected wallet source.');
+          if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
+          mutation.mutate({ ...form, pin, paymentSource });
+        }}>
             <div className="space-y-3">
               <PaymentSourceSelect value={paymentSource} onChange={setPaymentSource} user={user} />
               <AutoRenewalOption enabled={autoRenew} onEnabledChange={setAutoRenew} frequency={renewalFrequency} onFrequencyChange={setRenewalFrequency} />
@@ -245,24 +238,8 @@ export default function Airtime() {
                 <input className="input text-center tracking-[0.4em]" type="password" inputMode="numeric" autoComplete="off" placeholder="••••" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))} maxLength={4} disabled={lockUntil && Date.now() < lockUntil} />
                 {lockUntil && Date.now() < lockUntil && <p className="text-xs text-red-400 mt-1">Locked due to multiple failed attempts.</p>}
               </div>
-              <div className="flex gap-3">
-                <button onClick={() => setStep(1)} className="btn-secondary flex-1">Back</button>
-                <button
-                  onClick={() => {
-                    if (lockUntil && Date.now() < lockUntil) return toast.error('Locked due to multiple failed attempts');
-                    const available = paymentSource === 'main' ? Number(user?.walletBalance || 0) : paymentSource === 'reward' ? Number(user?.rewardBalance || 0) : Number(user?.walletBalance || 0) + Number(user?.rewardBalance || 0);
-                    if (Number(form.amount) > available) return toast.error('Insufficient balance in the selected wallet source.');
-                    if (!/^[0-9]{4}$/.test(pin)) return toast.error('Enter a valid 4-digit PIN');
-                    mutation.mutate({ ...form, pin, paymentSource });
-                  }}
-                  disabled={mutation.isPending}
-                  className="btn-primary flex-1"
-                >
-                  {mutation.isPending ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : 'Buy Airtime'}
-                </button>
-              </div>
             </div>
-        </div>
+        </PurchaseConfirmation>
       )}
     </div>
   );
