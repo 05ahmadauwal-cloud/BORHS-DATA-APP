@@ -124,6 +124,12 @@ export default function Dashboard() {
         </section>
       )}
 
+      {!fundingAccount && !hasVerifiedFundingAccount && (
+        <section className="rounded-[var(--ds-radius-card)] border border-dashed border-amber-300 bg-amber-50/70 p-5 dark:border-amber-400/25 dark:bg-amber-400/[0.06]">
+          <div className="flex items-start gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-amber-800 shadow-sm ring-1 ring-amber-200 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20"><Building2 size={20} /></span><div className="min-w-0 flex-1"><p className="font-bold text-[var(--ds-text)]">Get your dedicated account number</p><p className="mt-1 text-sm leading-6 text-[var(--ds-text-secondary)]">Monnify requires an 11-digit NIN or BVN before issuing a permanent virtual account. Enter your NIN once to create yours immediately.</p><Button size="sm" className="mt-4" icon={ShieldCheck} onClick={() => setNinOpen(true)}>Create account with NIN</Button></div></div>
+        </section>
+      )}
+
       <section>
         <div className="mb-4 flex items-center justify-between"><div><p className="text-base font-bold text-[var(--ds-text)] sm:text-lg">What would you like to do?</p><p className="mt-1 text-xs text-[var(--ds-text-secondary)] sm:text-sm">Everyday services, in one place.</p></div></div>
         <div className="grid grid-cols-4 gap-x-2 gap-y-5 sm:gap-4">

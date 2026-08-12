@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { walletAPI, paymentAPI, couponAPI, publicAPI } from '../../api';
+import { walletAPI, paymentAPI, couponAPI, publicAPI, kycAPI } from '../../api';
 import { useSearchParams } from 'react-router-dom';
 import {
   Send, CreditCard,
@@ -89,7 +89,9 @@ function CopyButton({ text }) {
 
 function BankTransferTab({ chargeType, chargeValue, provider = 'monnify' }) {
   const [previewAmt, setPreviewAmt] = useState('');
+  const [nin, setNin] = useState('');
   const isBillstack = provider === 'billstack';
+  const queryClient = useQueryClient();
 
   const { data: vaRes, isLoading, isError, refetch } = useQuery({
     queryKey: [isBillstack ? 'billstack-virtual-account' : 'virtual-account'],
@@ -102,6 +104,17 @@ function BankTransferTab({ chargeType, chargeValue, provider = 'monnify' }) {
 
   const va = vaRes;
   const accounts = va?.accounts || [];
+  const createWithNin = useMutation({
+    mutationFn: () => kycAPI.submitNinForAccount(nin),
+    onSuccess: (response) => {
+      toast.success(response.data?.message || 'Dedicated account created');
+      setNin('');
+      queryClient.invalidateQueries({ queryKey: ['virtual-account'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] });
+      refetch();
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'NIN verification could not be completed'),
+  });
 
   return (
     <div className="space-y-4">
@@ -149,14 +162,25 @@ function BankTransferTab({ chargeType, chargeValue, provider = 'monnify' }) {
         <div className="card p-8 text-center space-y-3">
           <AlertCircle size={28} className="text-yellow-400 mx-auto opacity-70" />
           <p className="font-semibold text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Virtual account not available yet
+            {isBillstack ? 'Virtual account not available yet' : 'Create your dedicated account'}
           </p>
           <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-            This is set up automatically when you register. It may take a few minutes or require a page refresh.
+            {isBillstack
+              ? 'This is set up automatically when you register. It may take a few minutes or require a page refresh.'
+              : 'Monnify requires an 11-digit NIN or BVN before it can issue a permanent virtual account.'}
           </p>
-          <button onClick={() => refetch()} className="btn-secondary btn-sm gap-2 mx-auto">
-            <RefreshCw size={14} /> Try Again
-          </button>
+          {isBillstack ? (
+            <button onClick={() => refetch()} className="btn-secondary btn-sm gap-2 mx-auto">
+              <RefreshCw size={14} /> Try Again
+            </button>
+          ) : (
+            <div className="mx-auto max-w-xs space-y-3 pt-2">
+              <input type="password" inputMode="numeric" maxLength={11} className="input text-center" placeholder="Enter your 11-digit NIN" value={nin} onChange={(event) => setNin(event.target.value.replace(/\D/g, '').slice(0, 11))} />
+              <button disabled={nin.length !== 11 || createWithNin.isPending} onClick={() => createWithNin.mutate()} className="btn-primary btn-sm w-full justify-center disabled:opacity-50">
+                {createWithNin.isPending ? 'Creating account…' : 'Create my account'}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <>

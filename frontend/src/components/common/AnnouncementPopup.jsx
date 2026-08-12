@@ -43,7 +43,9 @@ export default function AnnouncementPopup() {
   }, [isAuthenticated, storageKey]);
 
   useEffect(() => {
-    if (banner) considerShowing(banner);
+    // A fresh dashboard load (including a browser refresh or WebView reload)
+    // must always show the active announcement.
+    if (banner) considerShowing(banner, true);
   }, [banner, considerShowing]);
 
   useEffect(() => {
