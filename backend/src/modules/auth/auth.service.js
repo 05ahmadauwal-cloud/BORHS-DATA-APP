@@ -65,13 +65,10 @@ const register = async (data) => {
 
   // Create Monnify virtual account (non-blocking — doesn't fail registration)
   if (process.env.MONNIFY_API_KEY && process.env.MONNIFY_CONTRACT_CODE) {
-    const { createReservedAccount } = require('../../services/monnify');
+    const { ensureStarterAccount } = require('../../services/monnifyAccountProvisioning');
     try {
-      const va = await createReservedAccount(user);
-      await User.findByIdAndUpdate(user._id, {
-        monnifyVirtualAccount: { ...va, kycSyncStatus: 'pending' },
-      });
-      user.monnifyVirtualAccount = { ...va, kycSyncStatus: 'pending' };
+      const result = await ensureStarterAccount(user);
+      if (result.account) user.monnifyVirtualAccount = result.account;
     } catch (e) {
       logger.error('Monnify reserved account creation failed:', e.response?.data || e.message);
     }

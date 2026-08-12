@@ -9,7 +9,8 @@
     "test": "jest --runInBand",
     "watch": "nodemon src/server.js",
     "seed": "node src/utils/seeder.js",
-    "sync:monnify-kyc": "node scripts/sync-monnify-kyc.js"
+    "sync:monnify-kyc": "node scripts/sync-monnify-kyc.js",
+    "backfill:monnify-accounts": "node scripts/backfill-monnify-accounts.js"
   },
   "dependencies": {
     "axios": "^1.19.0",

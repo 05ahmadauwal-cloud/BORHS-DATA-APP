@@ -29,6 +29,8 @@ if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
 connectDB();
 mongoose.connection.once('open', () => {
   require('./modules/renewal/renewal.service').startRenewalWorker();
+  require('./services/monnifyAccountProvisioning').backfillStarterAccounts()
+    .catch((error) => logger.error(`[MonnifyBackfill] Unexpected failure: ${error.message}`));
 });
 
 // ─── Security Middleware ──────────────────────────────────────────────────────

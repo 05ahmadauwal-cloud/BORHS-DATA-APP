@@ -178,11 +178,9 @@ const getOrCreateVirtualAccount = async (req, res) => {
   if (!user.monnifyVirtualAccount?.reference) {
     if (process.env.MONNIFY_API_KEY && process.env.MONNIFY_CONTRACT_CODE) {
       try {
-        const { createReservedAccount } = require('../../services/monnify');
-        const account = await createReservedAccount(user);
-        user = await User.findByIdAndUpdate(req.user._id, {
-          monnifyVirtualAccount: { ...account, kycSyncStatus: 'pending' },
-        }, { new: true });
+        const { ensureStarterAccount } = require('../../services/monnifyAccountProvisioning');
+        await ensureStarterAccount(user);
+        user = await User.findById(req.user._id);
       } catch (e) {
         logger.error('Monnify starter account creation failed:', e.response?.data || e.message);
         return ApiResponse.error(res, 'Your dedicated account is still being prepared. Please try again shortly.', 503);
