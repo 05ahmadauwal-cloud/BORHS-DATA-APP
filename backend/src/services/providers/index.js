@@ -1,6 +1,7 @@
 const smeapi = require('./smeapi');
 const logger = require('../../utils/logger');
 const { notifyProviderBalanceLow } = require('../providerAlertService');
+const { getCustomerActionableProviderMessage } = require('../../utils/providerError');
 
 const providers = [smeapi];
 
@@ -28,6 +29,7 @@ const withFallback = async (operation, args, preferredProviderName = null) => {
       // account balance, credentials/configuration hints, or upstream names.
       // Tag them so the HTTP layer can never send the raw message to customers.
       error.isProviderError = true;
+      error.publicMessage = getCustomerActionableProviderMessage(error);
       notifyProviderBalanceLow({ provider: provider.name, operation, error })
         .catch((alertError) => logger.error(`[ProviderAlert] Unexpected error: ${alertError.message}`));
       lastError = error;

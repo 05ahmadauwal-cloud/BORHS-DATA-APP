@@ -9,6 +9,7 @@ const { TRANSACTION_TYPES, TRANSACTION_STATUS } = require('../../config/constant
 const { processCommission } = require('../agent/agent.service');
 const logger = require('../../utils/logger');
 const { getNetworkStatus, isNetworkEnabled } = require('./networkAvailability');
+const { withRefundNotice } = require('../../utils/providerError');
 
 const getDataPlans = async (network, dataType) => {
   const networkStatus = await getNetworkStatus();
@@ -151,10 +152,12 @@ const purchaseData = async (userId, body, options = {}) => {
       failureReason: `Provider failed: ${error.message}`,
     });
 
-    throw Object.assign(new Error('Data purchase could not be completed. Your wallet has been refunded. Please try again later.'), {
+    const publicMessage = withRefundNotice(error.publicMessage)
+      || 'Data purchase could not be completed. Your wallet has been refunded. Please try again later.';
+    throw Object.assign(new Error(publicMessage), {
       statusCode: 503,
       isProviderError: true,
-      publicMessage: 'Data purchase could not be completed. Your wallet has been refunded. Please try again later.',
+      publicMessage,
     });
   }
 };

@@ -6,6 +6,7 @@ const { generateReference } = require('../../utils/helpers');
 const { TRANSACTION_TYPES, TRANSACTION_STATUS } = require('../../config/constants');
 const { processCommission } = require('../agent/agent.service');
 const logger = require('../../utils/logger');
+const { withRefundNotice } = require('../../utils/providerError');
 
 const CABLE_PACKAGES = {
   dstv: [
@@ -115,10 +116,12 @@ const purchaseCable = async (userId, body) => {
     await purchase.save();
     if (!debitResult) throw error;
     await refundWalletDebit(userId, debitResult);
-    throw Object.assign(new Error('Cable subscription could not be completed. Your wallet has been refunded. Please try again later.'), {
+    const publicMessage = withRefundNotice(error.publicMessage)
+      || 'Cable subscription could not be completed. Your wallet has been refunded. Please try again later.';
+    throw Object.assign(new Error(publicMessage), {
       statusCode: 503,
       isProviderError: true,
-      publicMessage: 'Cable subscription could not be completed. Your wallet has been refunded. Please try again later.',
+      publicMessage,
     });
   }
 };

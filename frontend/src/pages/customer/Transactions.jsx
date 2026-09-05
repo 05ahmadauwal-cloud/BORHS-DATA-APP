@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Capacitor } from '@capacitor/core';
+import { App as CapacitorApp } from '@capacitor/app';
 import { walletAPI } from '../../api';
 import { History, CheckCircle, XCircle, Clock, SlidersHorizontal, Printer } from 'lucide-react';
 import { format } from 'date-fns';
@@ -33,6 +35,7 @@ function txnToReceipt(txn) {
   const details = txn.serviceData || {};
   const metadata = txn.metadata || {};
   return {
+    _id: txn._id,
     type: RECEIPT_TYPES[txn.type] || txn.type,
     reference: details.purchaseReference || txn.reference,
     date: txn.createdAt,
@@ -57,11 +60,36 @@ export default function Transactions() {
   const [showFilters, setShowFilters] = useState(false);
   const [receipt, setReceipt] = useState(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['all-transactions', filters],
     queryFn: () => walletAPI.getTransactions(filters),
     select: (res) => res.data,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: (query) => {
+      const transactions = query.state.data?.data?.data || [];
+      return transactions.some((txn) => ['pending', 'processing'].includes(txn.status)) ? 5_000 : false;
+    },
+    refetchIntervalInBackground: true,
   });
+
+  // Keep an open receipt synchronized when a pending provider transaction is
+  // later marked successful or failed by the API.
+  useEffect(() => {
+    if (!receipt?._id) return;
+    const updated = data?.data?.find((txn) => txn._id === receipt._id);
+    if (updated && updated.status !== receipt.status) setReceipt(txnToReceipt(updated));
+  }, [data, receipt]);
+
+  // Browser focus refresh is not consistently emitted when a Capacitor app is
+  // restored from the background, so explicitly refresh on native resume.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return undefined;
+    const listener = CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) refetch();
+    });
+    return () => { listener.then((handle) => handle.remove()); };
+  }, [refetch]);
 
   return (
     <div className="max-w-3xl mx-auto space-y-4 md:space-y-5">
@@ -95,6 +123,7 @@ export default function Transactions() {
               <option value="success">Success</option>
               <option value="failed">Failed</option>
               <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
             </select>
           </div>
           <div>
@@ -115,7 +144,7 @@ export default function Transactions() {
 
       {/* Status chips */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {[['', 'All'], ['success', 'Success'], ['failed', 'Failed'], ['pending', 'Pending']].map(([val, label]) => (
+        {[['', 'All'], ['success', 'Success'], ['failed', 'Failed'], ['pending', 'Pending'], ['processing', 'Processing']].map(([val, label]) => (
           <button
             key={val}
             onClick={() => setFilters({ ...filters, status: val, page: 1 })}

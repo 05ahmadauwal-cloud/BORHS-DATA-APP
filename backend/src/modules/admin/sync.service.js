@@ -75,7 +75,8 @@ const syncDataPlans = async (commissionRates = {}) => {
   }
 
   const rawPlans = await fetchAllPlans();
-  const results = { synced: 0, networks: {}, errors: [] };
+  const results = { synced: 0, removed: 0, networks: {}, errors: [] };
+  const providerPlanIds = [];
 
   const normalizeType = (t = '') => {
     const lower = t.toLowerCase();
@@ -96,6 +97,7 @@ const syncDataPlans = async (commissionRates = {}) => {
     const { sellingPrice, agentPrice, resellerPrice } = applyCommission(costPrice, commissionRates);
 
     const planId = `${network}-${plan.id}`; // e.g. "mtn-1"
+    providerPlanIds.push(planId);
     const validity = normalizeValidity(plan);
     const planName = String(plan.name || '').trim();
 
@@ -127,7 +129,22 @@ const syncDataPlans = async (commissionRates = {}) => {
     }
   }
 
-  logger.info(`[Sync] Complete: ${results.synced} plans synced from smeapi`);
+  // The provider catalogue is authoritative. Plans previously imported from
+  // it but no longer returned must disappear from every client. Never run this
+  // cleanup for an empty/invalid response, since that may indicate an outage.
+  if (providerPlanIds.length > 0) {
+    const removed = await DataPlan.updateMany(
+      {
+        providerPlanCode: { $exists: true, $ne: '' },
+        planId: { $nin: providerPlanIds },
+        isActive: true,
+      },
+      { $set: { isActive: false } }
+    );
+    results.removed = removed.modifiedCount || 0;
+  }
+
+  logger.info(`[Sync] Complete: ${results.synced} plans synced, ${results.removed} removed from smeapi`);
   return results;
 };
 
