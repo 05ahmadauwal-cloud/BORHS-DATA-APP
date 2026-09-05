@@ -38,6 +38,16 @@ describe('authoritative data-plan sync', () => {
       expect.objectContaining({ planId: { $nin: ['mtn-12'] }, isActive: true }),
       { $set: { isActive: false } }
     );
+    expect(DataPlan.findOneAndUpdate).toHaveBeenCalledWith(
+      { planId: 'mtn-12' },
+      expect.objectContaining({
+        costPrice: 300,
+        sellingPrice: 300,
+        agentPrice: 300,
+        resellerPrice: 300,
+      }),
+      expect.any(Object)
+    );
   });
 
   test('does not deactivate plans when the provider returns an empty catalogue', async () => {

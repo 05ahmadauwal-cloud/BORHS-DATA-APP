@@ -210,9 +210,9 @@ router.get('/test/smeapi-plans/:network', asyncHandler(async (req, res) => {
 // ─── SMEAPI Sync ──────────────────────────────────────────────────────────────
 const { syncDataPlans, updateAllCommissions } = require('./sync.service');
 
-// Sync data plans from SMEAPI with current commission rates
+// Sync data plans from SMEAPI using the provider's current prices exactly.
 router.post('/sync/data-plans', asyncHandler(async (req, res) => {
-  const result = await syncDataPlans(req.body.commissionRates || {});
+  const result = await syncDataPlans();
   return ApiResponse.success(res, result, `Synced ${result.synced} data plans from SMEAPI`);
 }));
 

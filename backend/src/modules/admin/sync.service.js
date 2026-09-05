@@ -58,22 +58,9 @@ const fetchAllPlans = async () => {
 };
 
 /**
- * Sync all data plans from smeapi into the database with your commission markup
+ * Sync all data plans and current provider prices from smeapi into the database.
  */
-const syncDataPlans = async (commissionRates = {}) => {
-  if (commissionRates.customer === undefined) {
-    const settings = await Settings.getMany([
-      'commission_customer',
-      'commission_agent',
-      'commission_reseller',
-    ]);
-    commissionRates = {
-      customer: parseFloat(settings.commission_customer ?? 10),
-      agent:    parseFloat(settings.commission_agent ?? 5),
-      reseller: parseFloat(settings.commission_reseller ?? 3),
-    };
-  }
-
+const syncDataPlans = async () => {
   const rawPlans = await fetchAllPlans();
   const results = { synced: 0, removed: 0, networks: {}, errors: [] };
   const providerPlanIds = [];
@@ -94,7 +81,13 @@ const syncDataPlans = async (commissionRates = {}) => {
     const costPrice = parseFloat(plan.user_price || plan.price || 0);
     if (!costPrice || !plan.id) continue;
 
-    const { sellingPrice, agentPrice, resellerPrice } = applyCommission(costPrice, commissionRates);
+    // The provider catalogue already exposes the current vend price. A sync
+    // must mirror that value exactly; applying our saved commission here made
+    // the app/site price drift from the API after every sync. Admins can still
+    // apply custom markups explicitly with the update-commissions action.
+    const sellingPrice = costPrice;
+    const agentPrice = costPrice;
+    const resellerPrice = costPrice;
 
     const planId = `${network}-${plan.id}`; // e.g. "mtn-1"
     providerPlanIds.push(planId);
