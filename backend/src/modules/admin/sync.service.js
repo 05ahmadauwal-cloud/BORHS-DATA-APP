@@ -45,9 +45,15 @@ const normalizeValidity = (plan = {}) => {
 };
 
 const fetchAllPlans = async () => {
+  const token = String(process.env.SMEAPI_TOKEN || '').trim();
+  if (!token) throw new Error('SMEAPI_TOKEN is not configured on the server');
+
   try {
     const { data } = await axios.get(DATAPLANS_URL, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        Authorization: `Token ${token}`,
+        'Content-Type': 'application/json',
+      },
       timeout: 20000,
     });
     return data?.data || data || [];

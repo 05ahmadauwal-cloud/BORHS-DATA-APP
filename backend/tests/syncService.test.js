@@ -25,7 +25,10 @@ describe('data-plan validity normalization', () => {
 });
 
 describe('authoritative data-plan sync', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env.SMEAPI_TOKEN = 'account-token';
+  });
 
   test('deactivates imported plans missing from the provider response', async () => {
     axios.get.mockResolvedValue({ data: [{ id: 12, network: 'MTN', name: '1GB', type: 'SME', price: 300 }] });
@@ -34,6 +37,12 @@ describe('authoritative data-plan sync', () => {
 
     await expect(syncDataPlans({ customer: 10, agent: 5, reseller: 3 }))
       .resolves.toMatchObject({ synced: 1, removed: 2 });
+    expect(axios.get).toHaveBeenCalledWith(
+      'https://smeapi.com.ng/api/dataplans/',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Token account-token' }),
+      })
+    );
     expect(DataPlan.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ planId: { $nin: ['mtn-12'] }, isActive: true }),
       { $set: { isActive: false } }
@@ -55,5 +64,11 @@ describe('authoritative data-plan sync', () => {
     await expect(syncDataPlans({ customer: 10, agent: 5, reseller: 3 }))
       .resolves.toMatchObject({ synced: 0, removed: 0 });
     expect(DataPlan.updateMany).not.toHaveBeenCalled();
+  });
+
+  test('does not fall back to public prices without an API token', async () => {
+    delete process.env.SMEAPI_TOKEN;
+    await expect(syncDataPlans()).rejects.toThrow('SMEAPI_TOKEN is not configured');
+    expect(axios.get).not.toHaveBeenCalled();
   });
 });
